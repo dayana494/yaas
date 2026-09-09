@@ -1,0 +1,8 @@
+{
+  "installCommand": "cd yaas-site && npm install",
+  "buildCommand": "cd yaas-site && npm run build",
+  "outputDirectory": "yaas-site/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
