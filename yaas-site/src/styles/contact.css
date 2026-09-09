@@ -1,0 +1,205 @@
+/* ---------- Screen 7: Contact ----------
+   Layout reference: jawshw.tilda.ws/#contacts — white section, a rounded
+   gradient panel, centered heading + copy + three contact pills, two
+   product cans tilted diagonally at the panel's top-left/top-right, each
+   one's own top edge breaking out *past* the panel's own top border
+   instead of sitting cropped inside it. .contact-frame is the plain
+   (non-clipping) wrapper both .contact-panel (rounded, clips its own
+   gradient) and .contact-cans (unclipped, painted on top) share — the cans
+   need to visually escape the panel's rounded corner, which a single
+   overflow:hidden box around everything can't do. */
+.contact {
+  position: relative;
+  background: #ffffff;
+  padding: clamp(60px, 9vh, 110px) 0;
+}
+
+.contact-frame {
+  position: relative;
+}
+
+.contact-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  min-height: clamp(420px, 56vw, 620px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.contact-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 640px;
+  padding: clamp(48px, 8vw, 100px) clamp(28px, 7vw, 90px);
+  text-align: center;
+}
+
+.contact-heading {
+  margin: 0 0 clamp(20px, 3vh, 28px);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(32px, 6.2vw, 88px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .contact-heading {
+    font-size: clamp(26px, 8vw, 44px);
+  }
+
+  .contact-copy {
+    font-size: 14px;
+  }
+}
+
+.contact-copy {
+  margin: 0 0 clamp(28px, 4vh, 40px);
+  max-width: 44ch;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  /* The gradient's own pale/white patches can drift under this text at any
+     viewport size (it's animated, not fixed), and this text is small/thin
+     enough that even a tight, dark drop-shadow still washed out against
+     them — a real 1px outline (four offset shadows) plus a soft one for
+     depth is what actually holds contrast at any position. */
+  text-shadow: -1px -1px 0 rgba(0, 0, 0, 0.6), 1px -1px 0 rgba(0, 0, 0, 0.6), -1px 1px 0 rgba(0, 0, 0, 0.6),
+    1px 1px 0 rgba(0, 0, 0, 0.6), 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.contact-channels {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: clamp(28px, 4vh, 40px);
+}
+
+/* Same outline-pill recipe as .hero-pill (site-1's own nav pills) — this
+   panel carries the same gradient, so the pills read as the same family of
+   control. Channels with no real destination yet (see homepageCopy.js —
+   the source doc never names an actual address/handle) render as this
+   same pill shape but non-interactive, not a fabricated link. */
+.contact-channel {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 10px 20px;
+  border-radius: 100px;
+  border: 1px solid #ffffff;
+  /* Darker + blurred than .hero-pill's own resting fill — that one only
+     ever sits over the hero's own can/wordmark art, but this pill can end
+     up over the gradient's palest patches (it's animated, so there's no
+     fixed "safe" spot), where the original near-transparent fill let both
+     the border and the text wash out. */
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(6px);
+  transition: background 200ms ease, color 200ms ease;
+}
+
+a.contact-channel:hover {
+  background: #ffffff;
+  color: #212121;
+}
+
+.contact-channel-static {
+  cursor: default;
+  opacity: 0.85;
+}
+
+/* Same white-pill / hover-inverts recipe as .hero-cta. */
+.contact-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  color: #212121;
+  text-decoration: none;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 100px;
+  padding: 13px 26px;
+  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.contact-cta:hover {
+  background: transparent;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* ---------- Cans ----------
+   Both cans sit at the panel's top corners now (not one top / one bottom
+   like the earlier build) — left one tilted one way, right one the other,
+   each one's own top edge breaking out past .contact-panel's top border.
+   Sourced from the highest-resolution product renders in the project
+   (1200x1600 thumbnails — the strawberry one this used before is only
+   300x400 and visibly softened at this size) so they stay crisp at the
+   larger size the spec asked for. */
+.contact-cans {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.contact-can {
+  position: absolute;
+  top: clamp(-90px, -9vw, -50px);
+  filter: drop-shadow(0 20px 32px rgba(0, 0, 0, 0.28));
+}
+
+.contact-can-1 {
+  left: clamp(0px, 4vw, 60px);
+  width: clamp(160px, 17vw, 260px);
+  transform: rotate(-16deg);
+}
+
+.contact-can-2 {
+  right: clamp(0px, 4vw, 60px);
+  width: clamp(160px, 17vw, 260px);
+  transform: rotate(14deg);
+}
+
+@media (max-width: 900px) {
+  .contact-panel {
+    border-radius: 24px;
+    min-height: 0;
+  }
+
+  .contact-content {
+    padding: clamp(120px, 26vw, 150px) 24px clamp(48px, 10vw, 64px);
+  }
+
+  .contact-can {
+    top: clamp(-56px, -14vw, -36px);
+  }
+
+  .contact-can-1 {
+    left: clamp(4px, 2vw, 16px);
+    width: clamp(96px, 26vw, 140px);
+  }
+
+  .contact-can-2 {
+    right: clamp(4px, 2vw, 16px);
+    width: clamp(96px, 26vw, 140px);
+  }
+}

@@ -1,0 +1,203 @@
+/* ---------- Screen 5: Brand Teaser ----------
+   Figma node 173:2 (frame 48) — a 1200px-wide reference frame, 50px side
+   margins, 20px gutters, 12 columns. Flat white background of its own —
+   unlike Advantages and FAQ on either side, this section does not sit on
+   the shared gradient backdrop. No shadow under the photos, no pin/slide —
+   just the same plain fade-in-once every other simple section already
+   uses. Column math: line 1 starts at column 3; line 2, both body
+   paragraphs and the CTA all start at column 6. */
+.brand-teaser {
+  position: relative;
+  background: #ffffff;
+  padding: clamp(90px, 14vh, 160px) 0 clamp(260px, 32vh, 380px);
+  color: var(--ink-on-light);
+}
+
+.brand-teaser-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: 20px;
+  row-gap: 0;
+  padding: 0 50px;
+}
+
+/* ---------- Heading ----------
+   Unified block-heading scale (matches the site's other h2s) — line 2 sits
+   with no extra margin: plain stacking, not an added gap. */
+.brand-teaser-heading-line {
+  grid-row: auto;
+  align-self: start;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(32px, 6.2vw, 88px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 768px) {
+  .brand-teaser-heading-line {
+    font-size: clamp(26px, 8vw, 44px);
+  }
+
+  .brand-teaser-text {
+    font-size: 14px;
+  }
+}
+
+.brand-teaser-heading-line-1 {
+  grid-column: 3 / -1;
+  grid-row: 1;
+  color: var(--ink-on-light);
+}
+
+.brand-teaser-heading-line-2 {
+  grid-column: 6 / -1;
+  grid-row: 2;
+  color: #e53a6b;
+}
+
+/* Body copy uses the site's own 16px/14px body scale. Figma's own
+   paragraph-to-paragraph and heading-to-paragraph gaps (~50px / ~20px) are
+   kept as the two paragraphs' own margin-top. */
+.brand-teaser-text {
+  grid-column: 6 / 10;
+  align-self: start;
+  margin: 0;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.35;
+  color: var(--ink-on-light);
+}
+
+.brand-teaser-text-1 {
+  grid-row: 3;
+  margin-top: clamp(32px, 5vh, 50px);
+}
+
+.brand-teaser-text-2 {
+  grid-row: 4;
+  margin-top: 20px;
+}
+
+/* White fill / black outline, inverting on hover — same interactive
+   language as .hero-cta and .detail-cta, flipped for this section's own
+   flat white background instead of the gradient those two sit on. */
+.brand-teaser-cta {
+  grid-column: 6 / -1;
+  grid-row: 5;
+  justify-self: start;
+  align-self: start;
+  margin-top: clamp(40px, 7vh, 64px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--ink-on-light);
+  text-decoration: none;
+  background: #ffffff;
+  border: 1px solid var(--ink-on-light);
+  border-radius: 100px;
+  padding: 13px 26px;
+  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.brand-teaser-cta:hover {
+  background: var(--ink-on-light);
+  color: #ffffff;
+}
+
+/* ---------- Photos ----------
+   Photo 1 (the fanned cans) spans columns 1-4, flush to the grid's left
+   edge, rotated -6°; photo 2 (the overhead drinking shot) spans columns
+   10-12, flush to the right edge, rotated +6°. No box-shadow — the Figma
+   frame doesn't have one. position: absolute (anchored to the grid lines
+   via grid-column/grid-row, still) takes both photos out of row-track
+   sizing entirely — as normal grid items, being far taller than the text
+   stack's combined height, they'd force the grid to distribute their extra
+   height across every row they span, inflating the gap between the
+   heading lines even though neither line's own line-height had changed. */
+.brand-teaser-photo {
+  position: absolute;
+  grid-row: 1 / 6;
+  top: 0;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.brand-teaser-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brand-teaser-photo-primary {
+  grid-column: 1 / 5;
+  left: 0;
+  aspect-ratio: 4 / 5;
+  margin-top: calc(clamp(70px, 10vh, 130px) + 30px);
+  transform: rotate(-6deg);
+}
+
+.brand-teaser-photo-secondary {
+  grid-column: 10 / -1;
+  /* 1.4x smaller than the grid area it's pinned to, still flush with the
+     container's right edge (right: 0) rather than filling the full column
+     span. */
+  right: 0;
+  width: calc(100% / 1.4);
+  aspect-ratio: 3 / 4;
+  margin-top: clamp(240px, 28vh, 300px);
+  transform: rotate(6deg);
+}
+
+/* ---------- Mobile/tablet: vertical stack, grid abandoned below 900px ---------- */
+@media (max-width: 899px) {
+  .brand-teaser-grid {
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px;
+  }
+
+  .brand-teaser-heading-line-1,
+  .brand-teaser-heading-line-2 {
+    grid-column: auto;
+  }
+
+  .brand-teaser-text {
+    grid-column: auto;
+    max-width: 46ch;
+  }
+
+  .brand-teaser-cta {
+    grid-column: auto;
+    margin-top: clamp(24px, 5vh, 32px);
+  }
+
+  .brand-teaser-photo {
+    position: static;
+    grid-row: auto;
+    margin-top: clamp(40px, 8vh, 64px);
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .brand-teaser-photo-primary {
+    grid-column: auto;
+    transform: rotate(-3deg);
+  }
+
+  .brand-teaser-photo-secondary {
+    grid-column: auto;
+    width: 100%;
+    margin-top: clamp(40px, 8vh, 64px);
+    margin-left: auto;
+    transform: rotate(3deg);
+  }
+}

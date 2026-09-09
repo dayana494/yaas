@@ -1,0 +1,195 @@
+/* ---------- Screen 6: FAQ ----------
+   Mechanic copied from donedrinks.com's own FAQ block (not its colors or
+   fonts): a column of cards, collapsed to just a question + round "+"
+   toggle, one expanding at a time with an animated reveal instead of an
+   instant snap. Card look (radius, shadow, type) matches the rest of the
+   site's own cards (.advantage-card) instead of donedrinks.com's. Same
+   animated gradient as screen 1 (its own HeroGradientBackground instance,
+   same as Hero/Advantages each render — not a shared cross-section
+   backdrop). */
+.faq {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(90px, 14vh, 160px) 0;
+  color: var(--ink);
+}
+
+.faq-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.faq-heading-grid {
+  padding-bottom: clamp(40px, 6vh, 64px);
+}
+
+/* Off-center now (see .section-heading-grid, index.css) — starts at
+   column 3, left-aligned, instead of centered on the page; the list of
+   cards below it keeps its own separate centered layout. White text, no
+   shadow — this heading sits directly on the gradient (not inside a white
+   card like the questions/answers below it). Same scale as .slider-heading
+   (layout.css). */
+.faq-heading {
+  grid-column: 3 / -1;
+  margin: 0;
+  max-width: 900px;
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(32px, 6.2vw, 88px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .faq-heading-grid {
+    display: block;
+    padding: 0 20px clamp(32px, 6vh, 48px);
+  }
+
+  .faq-heading {
+    max-width: none;
+    text-align: center;
+    font-size: clamp(26px, 8vw, 44px);
+  }
+}
+
+/* Two columns, full container width, 15px gutters — align-items: start so
+   an opened (taller) card in one column doesn't stretch its shorter
+   neighbor's own box to match. */
+.faq-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: start;
+  gap: 15px;
+  width: 100%;
+}
+
+/* Same 20px radius + soft shadow language as .advantage-card — plain white
+   since the section itself sits on the animated gradient, not white
+   itself, so the cards need to read as solid surfaces on their own. */
+.faq-item {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 12px 32px rgba(20, 10, 20, 0.18);
+  overflow: hidden;
+  transition: box-shadow 250ms ease;
+}
+
+.faq-item.is-open {
+  box-shadow: 0 16px 40px rgba(20, 10, 20, 0.16);
+}
+
+.faq-question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  padding: clamp(20px, 3vw, 28px) clamp(20px, 4vw, 32px);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.faq-question-text {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink-on-light);
+}
+
+/* Round +/- toggle: a horizontal bar always visible, a vertical bar
+   layered on top of it that scales away to 0 on open — the pair reads as
+   "+" closed, "-" open, without swapping to a different icon/glyph. */
+.faq-toggle {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--ink-on-light);
+  transition: background 200ms ease, border-color 200ms ease;
+}
+
+.faq-toggle-line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--ink-on-light);
+  transition: transform 250ms ease, background 200ms ease;
+}
+
+.faq-toggle-line-h {
+  width: 14px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.faq-toggle-line-v {
+  width: 14px;
+  height: 2px;
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.faq-item.is-open .faq-toggle-line-v {
+  transform: translate(-50%, -50%) rotate(90deg) scaleX(0);
+}
+
+/* The animated-to-auto-height reveal: a grid row that tweens from 0fr to
+   1fr (rather than max-height guesswork) with the actual content wrapped
+   in an overflow:hidden, min-height:0 inner box, as the grid-rows trick
+   requires — plus a fade so the text doesn't just snap into view the
+   instant the row has room. */
+.faq-answer-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms ease;
+}
+
+.faq-item.is-open .faq-answer-wrap {
+  grid-template-rows: 1fr;
+}
+
+.faq-answer-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.faq-answer {
+  margin: 0;
+  padding: 0 clamp(20px, 4vw, 32px) clamp(20px, 3vw, 28px);
+  max-width: 62ch;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-on-light-soft);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.faq-item.is-open .faq-answer {
+  opacity: 1;
+  transition: opacity 300ms ease 100ms;
+}
+
+@media (max-width: 768px) {
+  .faq-answer {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 700px) {
+  .faq-list {
+    grid-template-columns: 1fr;
+  }
+}

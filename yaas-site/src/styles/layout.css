@@ -1,0 +1,351 @@
+/* ---------- Logo (kept for reuse, not shown on screen 1 anymore) ---------- */
+.logo-text {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4.2vw, 46px);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  line-height: 1;
+}
+
+/* ---------- Center highlight glow (sits between the flat bg and the canvas) ---------- */
+.center-glow {
+  position: absolute;
+  left: 50%;
+  top: calc(54% + 20px);
+  width: min(70vw, 900px);
+  height: min(70vw, 900px);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.22) 38%, rgba(255, 255, 255, 0) 68%);
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 600ms ease;
+  pointer-events: none;
+}
+
+.center-glow.is-visible {
+  opacity: 1;
+}
+
+/* ---------- Screen 1: slider ---------- */
+.slider-screen {
+  position: absolute;
+  inset: 0;
+  /* Shifts the heading, carousel and flavor name down together, as one
+     group, per feedback — everything in here is already positioned
+     relative to this box, so a transform moves all of it without having
+     to retune each child's own offset. */
+  transform: translateY(30px);
+  transition: opacity 500ms ease;
+}
+
+.slider-screen.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.slider-heading {
+  position: absolute;
+  top: clamp(16px, 4vh, 40px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0 24px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(32px, 6.2vw, 88px);
+  line-height: 1;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.slider-stage {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.slider-stage:active {
+  cursor: grabbing;
+}
+
+/* --ox carries the horizontal offset so hover only adds a scale on top of
+   it — redeclaring the full transform on :hover (as before) dropped the
+   offset entirely and made the arrows jump to center. */
+.arrow {
+  position: absolute;
+  top: calc(54% + 20px);
+  left: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 200ms ease, opacity 200ms ease;
+  opacity: 0.9;
+  --arrow-scale: 1;
+  transform: translate(calc(-50% + var(--ox)), -50%) scale(var(--arrow-scale));
+}
+
+.arrow img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.arrow:hover {
+  opacity: 1;
+  --arrow-scale: 1.08;
+}
+
+.arrow-left {
+  --ox: -10.5vw;
+}
+
+.arrow-right {
+  --ox: 10.5vw;
+}
+
+.flavor-name {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(28px, 10vh, 70px);
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.6vw, 38px);
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  animation: flavor-name-in 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes flavor-name-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ---------- Screen 2: detail card ---------- */
+.detail-screen {
+  position: absolute;
+  inset: 0;
+}
+
+.detail-copy {
+  position: absolute;
+  top: clamp(28px, 8vh, 88px);
+  left: clamp(24px, 6vw, 80px);
+  max-width: 560px;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 550ms cubic-bezier(0.22, 1, 0.36, 1), transform 550ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.detail-copy.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.detail-title {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(38px, 5.6vw, 72px);
+  line-height: 1.02;
+  margin: 0 0 20px;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+
+.detail-description {
+  /* Site-wide body-copy: Bounded (--font-beiruti), 16px desktop / 14px
+     mobile (see the max-width: 768px override below) — was its own
+     one-off clamp() in the default body font. */
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 0 0 24px;
+  max-width: 38ch;
+}
+
+@media (max-width: 768px) {
+  .detail-description {
+    font-size: 14px;
+  }
+}
+
+.detail-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  color: #212121;
+  text-decoration: none;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 100px;
+  padding: 12px 26px;
+  pointer-events: auto;
+  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.detail-cta:hover {
+  background: transparent;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.detail-switcher-wrap {
+  position: absolute;
+  left: clamp(24px, 6vw, 80px);
+  bottom: clamp(28px, 6vh, 64px);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 550ms cubic-bezier(0.22, 1, 0.36, 1) 120ms, transform 550ms cubic-bezier(0.22, 1, 0.36, 1) 120ms;
+}
+
+.detail-switcher-wrap.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.choose-label {
+  margin: 0 0 24px;
+  font-family: var(--font-display);
+  font-size: 23px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.flavor-switcher {
+  display: flex;
+  gap: 14px;
+}
+
+.flavor-thumb {
+  position: relative;
+  width: 83px;
+  height: 109px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-6deg);
+  transition: transform 200ms ease;
+}
+
+.flavor-thumb:nth-child(even) {
+  transform: rotate(6deg);
+}
+
+.flavor-thumb:hover {
+  transform: rotate(0deg) translateY(-4px);
+}
+
+.flavor-thumb.is-active {
+  transform: rotate(0deg) translateY(-4px);
+}
+
+.flavor-thumb-pill {
+  position: absolute;
+  inset: -6px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.28);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.flavor-thumb:hover .flavor-thumb-pill,
+.flavor-thumb.is-active .flavor-thumb-pill {
+  opacity: 1;
+}
+
+.flavor-thumb img {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 768px) {
+  .slider-heading {
+    font-size: clamp(26px, 8vw, 44px);
+  }
+
+  .arrow {
+    /* 44px touch-target minimum. */
+    width: 44px;
+    height: 44px;
+    /* Realigned to sit next to the can itself — .site-canvas (index.css)
+       moves from full-bleed to a bottom band at this same breakpoint (see
+       the mobile hero banner, hero.css), so the old 54%-of-viewport
+       vertical center (tuned for the full-bleed canvas) now sits well
+       above where the can actually renders. */
+    top: 79vh;
+  }
+
+  .arrow-left {
+    --ox: -25vw;
+  }
+
+  .arrow-right {
+    --ox: 25vw;
+  }
+
+  .flavor-name {
+    bottom: clamp(56px, 12vh, 90px);
+    font-size: clamp(20px, 6vw, 28px);
+  }
+
+  .detail-copy {
+    left: 0;
+    right: 0;
+    top: clamp(20px, 4vh, 36px);
+    max-width: none;
+    padding: 0 22px;
+    text-align: center;
+  }
+
+  .detail-title {
+    font-size: clamp(36px, 12vw, 56px);
+  }
+
+  .detail-description {
+    margin: 0 auto;
+  }
+
+  .detail-switcher-wrap {
+    left: 0;
+    right: 0;
+    bottom: clamp(18px, 3.5vh, 30px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .choose-label {
+    text-align: center;
+  }
+
+  .flavor-switcher {
+    justify-content: center;
+  }
+
+  .flavor-thumb {
+    width: 48px;
+    height: 64px;
+  }
+}

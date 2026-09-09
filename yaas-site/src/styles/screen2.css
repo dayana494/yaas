@@ -1,0 +1,328 @@
+/* ---------- Screen 2 (homepage): line-by-line headline + scenario cards ---------- */
+
+.site-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 30px;
+}
+
+.screen2 {
+  position: relative;
+  /* The gap between the end of the scenario cards and the start of
+     AdvantagesScreen — 150px, per spec. Padding here (not a margin on the
+     cards section itself) so it stays inside .screen2's own box and
+     .screen2-bg-fixed's white keeps covering it, instead of the margin
+     collapsing through .screen2's bottom edge and leaving that stretch bare
+     (would show raw body background there instead of white). */
+  padding-bottom: 150px;
+  color: var(--ink-on-light);
+}
+
+/* White base + the same faint line-art overlay the flavor gallery uses on
+   its own background (.background-texture in index.css — opacity 0.1,
+   mix-blend-mode: overlay). position:absolute (not fixed) sized to
+   .screen2's own box (position:relative, spans this section's full height —
+   headline + cards + the cards' own reserved scroll room) so it scrolls in
+   as an ordinary part of this section instead of being glued to the
+   viewport from the moment the component mounts: a viewport-fixed
+   background isn't scoped to Screen2's actual document range at all, so it
+   can flash in as soon as anything in front of it (the hero above) stops
+   fully covering the screen — before the real headline has scrolled into
+   place — reading as an abrupt white block sliding in/overlaying the hero
+   rather than an ordinary scroll into the next section. */
+.screen2-bg-fixed {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #ffffff;
+}
+
+.screen2-bg-texture {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+  background: url('/textures/bg-texture.jpg') center / cover no-repeat;
+  pointer-events: none;
+}
+
+/* ---------- Headline ----------
+   Figma node 196:17: three separately-positioned lines (not one wrapping
+   paragraph) inside .screen2-h2-grid below — see that rule and
+   ScenarioHeadline.jsx's own comment. */
+.screen2-headline {
+  position: relative;
+  padding: clamp(170px, 21vh, 260px) 0 0;
+}
+
+/* r3f's <Canvas> wrapper carries its own inline position/width/height, so
+   the full-bleed breakout lives on a plain div we control instead of
+   fighting those inline styles — the canvas itself just stays at r3f's
+   default 100%/100%, filling this wrapper. Escapes .screen2-headline's own
+   max-width so the can positions (screen2Layout.js), computed against
+   full-viewport coordinates, line up the same way hero's own cans do. */
+.screen2-cans-wrap {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100vw;
+  height: 100%;
+  transform: translateX(-50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.screen2-cans-canvas {
+  pointer-events: none !important;
+}
+
+/* Reference frame is 1200px wide (same convention as .brand-teaser-grid) —
+   every line/subline below positions itself with calc(% - px) coordinates
+   lifted directly from that Figma export, so this just needs to *be* that
+   1200px box, centered, for the math to line up. Height is explicit
+   (position:absolute children don't contribute to it) — sized to clear the
+   subline's own worst-case wrapped height with room to spare. */
+.screen2-h2-grid {
+  position: relative;
+  z-index: 2;
+  /* Shared with .screen2-h2-lines/.screen2-subline below via calc() so both
+     the lines' own stacking and the subline's position under them scale
+     together with the same unified block-heading clamp() shape as the
+     site's other h2s (.slider-heading's own clamp(32px, 6.2vw, 88px))
+     instead of the fixed 64px this used to be locked to — capped at 68px
+     rather than the full 88px, though: each line here is `white-space:
+     nowrap` at a Figma-derived fixed `left` offset (not centered/wrapped
+     like the other blocks' headings), so the box it has to fit inside
+     without overflowing .screen2-h2-grid's own 1200px is fixed regardless
+     of font size. Measured directly — line 1 ("This isn't about hyping you
+     up.") is the tightest of the three and clips past 1200px above ~69px.
+     Same kind of deviation as .advantages-heading's own documented cap,
+     same reason: the unified scale's full ceiling doesn't fit this
+     particular layout. */
+  --h2-size: clamp(32px, 6.2vw, 68px);
+  max-width: 1200px;
+  min-height: 360px;
+  margin: 0 auto;
+}
+
+/* Just the three lines' own containing block — deliberately excludes the
+   subline. Height covers line 3's own top plus its line-height, in the
+   same --h2-size-relative units the lines' own top offsets use below, so it
+   still clears them at any viewport width. */
+.screen2-h2-lines {
+  position: relative;
+  height: calc(4.3 * var(--h2-size));
+}
+
+.screen2-h2-line {
+  position: absolute;
+  left: 0;
+  margin: 0;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: var(--h2-size);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* Top offsets: the original Figma export's own 44/114/184px, expressed as
+   ratios of the 64px size that export was drawn at (0.6875em/1.78125em/
+   2.875em) and now driven off --h2-size instead of that one fixed value, so
+   the three lines keep the same relative stacking/overlap-free spacing at
+   any size this clamp() actually resolves to. */
+.screen2-h2-line-1 {
+  left: calc(58.33% - 463px);
+  top: calc(0.6875 * var(--h2-size));
+  color: var(--ink-on-light);
+}
+
+.screen2-h2-line-2 {
+  left: calc(70.83% - 520px);
+  top: calc(1.78125 * var(--h2-size));
+  color: #e53a6b;
+}
+
+.screen2-h2-line-3 {
+  left: calc(50% - 457px);
+  top: calc(2.875 * var(--h2-size));
+  color: #e53a6b;
+}
+
+.screen2-subline {
+  position: absolute;
+  left: calc(45.83% - 220px);
+  /* Same treatment as the lines' own top offsets above: originally a fixed
+     273px (== 4.27 * the old 64px size), now scaled off --h2-size so it
+     stays clear of line 3 regardless of viewport. */
+  top: calc(4.27 * var(--h2-size));
+  z-index: 2;
+  max-width: 40ch;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  /* Site-wide body-copy size: 16px desktop / 14px mobile (see the
+     max-width: 768px override below) — was its own one-off clamp. */
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--ink-on-light-soft);
+}
+
+@media (max-width: 768px) {
+  /* Simple stacked/centered fallback — same pattern every other
+     Figma-positioned block on this site falls back to below its own
+     desktop breakpoint (.brand-teaser-grid). */
+  .screen2-h2-grid {
+    min-height: 0;
+    padding: 0 30px;
+    text-align: center;
+  }
+
+  .screen2-h2-lines {
+    height: auto;
+  }
+
+  .screen2-h2-line {
+    position: static;
+    left: auto;
+    top: auto;
+    white-space: normal;
+    margin: 0 auto;
+    max-width: 420px;
+    font-size: clamp(26px, 8vw, 44px);
+  }
+
+  .screen2-subline {
+    position: static;
+    left: auto;
+    top: auto;
+    margin: clamp(28px, 4vh, 44px) auto 0;
+    text-align: center;
+    font-size: 14px;
+  }
+}
+
+/* ---------- Scenario cards ----------
+   Full-bleed (100vw x 100vh, no radius) — each card is stacked with a
+   rising z-index (set in ScenarioCards.jsx) and the incoming one wipes
+   open left-to-right via clip-path, covering whichever card sits under it
+   instead of the previous lift/tilt/fade transform. */
+.scenario-cards {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.scenario-cards-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.scenario-card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  will-change: clip-path;
+}
+
+.scenario-card-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Bottom shade so title/caption stay legible over any photo — stops match
+   the Figma reference (transparent to 56%, solid black at the bottom). */
+.scenario-card-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 56%, rgba(0, 0, 0, 0.95) 100%);
+}
+
+.scenario-card-copy {
+  position: absolute;
+  left: 30px;
+  right: 30px;
+  bottom: clamp(24px, 4vh, 56px);
+  max-width: 640px;
+}
+
+.scenario-card-title {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 3.4vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.scenario-card-caption {
+  margin: 0;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 768px) {
+  .scenario-card-copy {
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+  }
+
+  .screen2-subline,
+  .scenario-card-caption {
+    font-size: 14px;
+  }
+}
+
+/* ---------- Scenario cards — isometric stack variant ----------
+   See ScenarioCardsIsometric.jsx: an alternate to the wipe version above,
+   restoring an earlier build's card treatment — full-height panels sized to
+   the site's own container width/gutters (.site-container's 1400px + 30px
+   pattern, not full-bleed), 20px corners, stacked and flipped away one at a
+   time instead of wiped over. .scenario-card-bg/-shade/-copy/-title/-caption
+   above are shared as-is — same photo treatment and text padding either
+   way, only the card's own box and the transition differ. */
+.scenario-cards-iso {
+  position: relative;
+  height: 100vh;
+  /* A bit more breathing room after the subheading, per feedback. The
+     matching gap *after* the card stack lives on .screen2's own
+     padding-bottom instead of a margin here — a margin on this element (the
+     one GSAP pins) collapses straight through .screen2's bottom edge since
+     nothing stops it, landing outside .screen2-bg-fixed's covered area and
+     showing bare (dark) body background for that stretch instead of white. */
+  margin-top: 50px;
+  overflow: hidden;
+}
+
+.scenario-cards-iso-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.scenario-card-iso {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: min(1400px, calc(100% - 60px));
+  border-radius: 20px;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+@media (max-width: 768px) {
+  .scenario-card-iso {
+    width: calc(100% - 40px);
+    border-radius: 16px;
+  }
+}
+

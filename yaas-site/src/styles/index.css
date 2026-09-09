@@ -1,0 +1,251 @@
+@font-face {
+  font-family: 'Soledago';
+  src: url('/fonts/Soledago.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Replaces Beiruti site-wide — see --font-beiruti below. Name kept as
+   'Bounded' (not 'Beiruti') so it's obvious at a glance which family is
+   actually loaded when reading font stacks elsewhere in the CSS. */
+@font-face {
+  font-family: 'Bounded';
+  src: url('/fonts/Bounded-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-display: 'Soledago', 'Arial Narrow', system-ui, -apple-system, sans-serif;
+  --font-body: 'Helvetica Neue', Arial, system-ui, -apple-system, sans-serif;
+  /* Was Beiruti — swapped to Bounded-Medium. Every consumer of this
+     variable (hero-pill, hero-cta, hero-subhead, detail-cta,
+     screen2-subline, brand-teaser text/cta, faq-answer, contact copy/
+     channel/cta, footer, choose-label, etc.) picks up the new family
+     automatically; the variable name stays put on purpose. */
+  --font-beiruti: 'Bounded', 'Helvetica Neue', Arial, system-ui, -apple-system, sans-serif;
+  --ink: #ffffff;
+  --ink-soft: rgba(255, 255, 255, 0.85);
+  --ink-on-light: #212121;
+  --ink-on-light-soft: rgba(33, 33, 33, 0.72);
+  --paper: #fdfaf1;
+  --bg-color: #f3d118;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  /* Every screen on the site sits on a dark base — set it here too so
+     there's no flash of default white before the first paint (or before
+     the preloader's own JS-driven background exists at all). */
+  background: #0b0a09;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Whole-page fade-in on first load — App.jsx flips `is-loaded` on one frame
+   after mount, so the browser has already painted the opacity: 0 state
+   before the transition starts (skipping the rAF would make it a no-op,
+   since the "from" and "to" states would land in the same paint). Locked to
+   1s per spec. Scroll is left free the whole time — see App.jsx's comment on
+   why it isn't locked. */
+.homepage {
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+.homepage.is-loaded {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .homepage {
+    opacity: 1;
+    transition: none;
+  }
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Screens 1+2 are merged into one continuously-pinned section — the hero
+   (gradient, the cluster cans, logo/nav/copy) and the flavor gallery
+   (background, all 5 cans, slider/detail UI) share the same .intro-pin
+   viewport AND the same Canvas (see Scene.jsx/CanRig.jsx — hero and gallery
+   render the same 5 can objects, never two separate instances), so the hero
+   can visibly blur/fade away while those cans flip into their gallery slot
+   underneath it. .intro-pin holds in place for two back-to-back scroll
+   windows (see the ENTRANCE_UNITS/INTERACTIVE_UNITS constants in App.jsx):
+   first the hero->gallery entrance (scrubbed via --h2g, 0 -> 1, set
+   imperatively from App.jsx's ScrollTrigger — see the App.jsx comment by
+   its setup), then the existing slider<->detail wheel/touch sub-navigation
+   (unchanged, just gated to wait for --h2g to finish first). The pin's own
+   pinSpacing:true (the default) reserves that scroll room automatically via
+   its own spacer — same as every other pinned section on this page (the
+   scenario-cards stack, the advantages carousel) — so .intro-wrap doesn't
+   need an explicit height of its own to match; it just sizes to its pinned
+   child + GSAP's spacer. Scrolling past both releases the pin straight into
+   Screen2, exactly at the spacer's own end — no lingering "hero still
+   visually scrolling away" tail to arbitrate with z-index tricks, no cover
+   panel to line up either (a stand-in copy of Screen2's own heading used to
+   slide up here first, but it never quite lined up with the real one, so
+   scrolling through the handoff showed both at once) — and continues
+   normally, in either direction, so the page still behaves like one
+   continuously scrollable site.
+   .intro-pin is pinned via ScrollTrigger (App.jsx), not plain CSS
+   `position: sticky` — sticky hit a real Chromium compositing bug here (see
+   the App.jsx comment on the pin ScrollTrigger for details), so this starts
+   as a plain positioned box and GSAP swaps in position:fixed itself while
+   pinned. */
+.intro-wrap {
+  position: relative;
+}
+
+.intro-pin {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+  --h2g: 0;
+}
+
+.hero-gradient-wrap {
+  z-index: 0;
+}
+
+.app-root {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* .hero-screen (nav/copy only — see HeroScreen.jsx) itself carries no
+   z-index so it doesn't box its own stacking context — .hero-stage-front
+   (hero.css) stays a flat sibling of .app-root/.hero-gradient-wrap right
+   here in .intro-pin, above both. The giant wordmark (HeroWordmark) instead
+   renders *inside* .app-root, between the flavor background and the can
+   canvas (see the z-index stack below), preserving the original order:
+   wordmark BEHIND the cans, nav/copy IN FRONT of them. Both still fade +
+   blur away together over the first half of the entrance (same --h2g-driven
+   rule on .hero-stage, hero.css) — pointer-events only switch off once
+   that's actually under way (`.is-entrance-active`, toggled in App.jsx), so
+   the CTA/nav stay clickable at rest (--h2g: 0). */
+.intro-pin.is-entrance-active .hero-screen {
+  pointer-events: none;
+}
+
+/* ---------- .app-root's own internal stack ----------
+   flavor background (0) < giant wordmark, .hero-stage-back (1, hero.css)
+   < can canvas (2) < slider/detail UI (3). */
+.site-canvas {
+  position: absolute !important;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Mobile hero banner (≤768px, hero.css) moves the logo/text/CTA into a
+   normal top-anchored block instead of the desktop's full-bleed absolute
+   layers — the can canvas moves down to a bottom band to match, clearing
+   the text above it instead of both occupying the same full-screen space.
+   Safe to just resize the canvas element itself (not touch CanRig/
+   heroLayout's own math at all): every position in there is expressed in
+   camera-relative world units via a fixed vertical FOV, which r3f keeps
+   correct for whatever aspect ratio the canvas's own on-screen box ends up
+   with — same reasoning already confirmed for Screen2CanRig elsewhere on
+   this page (no raw window.* reads to go stale). */
+@media (max-width: 768px) {
+  .site-canvas {
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 42vh !important;
+  }
+}
+
+/* Slider/detail UI (labels, arrows, drag stage) only fades in once the
+   entrance is mostly settled, so it isn't sitting there clickable/visible
+   underneath the hero mid-transition; pointer-events flips on only once
+   --h2g actually reaches 1 (`.is-entrance-done`, see App.jsx), not mid-fade. */
+.ui-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: clamp(0, calc((var(--h2g) - 0.7) * 3.3333), 1);
+}
+
+.intro-pin.is-entrance-done .ui-layer a,
+.intro-pin.is-entrance-done .ui-layer button,
+.intro-pin.is-entrance-done .ui-layer [data-interactive] {
+  pointer-events: auto;
+}
+
+.background-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transition: background-color 900ms ease;
+  opacity: var(--h2g);
+}
+
+/* Shared piece wrapper for DropText (see components/DropText.jsx) — every
+   split character/word across every heading on the site gets this. */
+.drop-text-piece {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+
+.drop-text-piece-block {
+  display: block;
+}
+
+/* Shared 12-column heading grid — same column math as .brand-teaser-grid
+   (50px side margins, 20px gutters), reused by .advantages-heading and
+   .faq-heading so their block headings sit off-center (starting at column
+   3, left-aligned) instead of centered on the page. Only positions the
+   heading itself; the content below it (ArcCards, the FAQ list) keeps its
+   own separate centered/full-width layout. */
+.section-heading-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: 20px;
+  padding: 0 50px;
+}
+
+.background-texture {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  mix-blend-mode: overlay;
+  background-image: url('/textures/bg-texture.jpg');
+  background-size: cover;
+  background-position: center;
+}

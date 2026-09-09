@@ -1,0 +1,343 @@
+/* ---------- Hero screen (homepage, screen 1) ---------- */
+
+.hero-gradient-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero-gradient-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hero-screen {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---------- Stage ----------
+   Mobile-first base: the two stage wrappers are plain full-bleed layers
+   (relative sizing throughout). At the desktop breakpoint below, both
+   switch to a fixed 1200x650 canvas — matching the Figma frame (node 47:21)
+   1:1 — scaled uniformly via scale(var(--hero-scale)) (computed in
+   HeroScreen.jsx as min(vw/1200, vh/650): a *contain* fit, so the stage
+   never grows taller or wider than the actual viewport and nothing gets
+   clipped or overlaps on short/wide windows). The two wrappers share this
+   sizing so they stay pixel-aligned even though they're no longer siblings
+   in the DOM: .hero-stage-back (HeroWordmark) renders inside .app-root, its
+   z-index only competing with that box's own children (background/cans/UI
+   — see index.css), while .hero-stage-front (HeroScreen's nav/copy) stays
+   outside it, above the whole .app-root layer. */
+.hero-stage {
+  position: absolute;
+  inset: 0;
+  /* Fades + blurs away over the first half of the hero->gallery entrance
+     (see .intro-pin's --h2g in index.css) — applied to both stages so the
+     giant wordmark and the nav/copy fade together as one unit, even though
+     they sit on opposite sides of the can canvas in z-index. */
+  opacity: clamp(0, calc(1 - var(--h2g, 0) * 2), 1);
+  filter: blur(calc(var(--h2g, 0) * 14px));
+}
+
+.hero-stage-back {
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero-stage-front {
+  z-index: 3;
+}
+
+.hero-logo-giant {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-logo-giant .logo-text {
+  font-size: clamp(160px, 78vw, 420px);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+/* ---------- Nav ----------
+   One flex row, one shared gap value between every pair of neighbors
+   (including "Collaboration", now just the 4th item here instead of a
+   separately-positioned sibling with its own align-self) — was a column of
+   two rows (three pills, then Collaboration alone on its own line via
+   align-self: flex-end), which read as visually disconnected from the
+   other three instead of one nav. flex-wrap here is just a safety net for
+   truly narrow widths; at every width this project actually targets the
+   four pills fit on one line. */
+.hero-nav {
+  position: absolute;
+  top: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px;
+}
+
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Text/padding alone only made this ~26px tall — under the 44px touch
+     target minimum. min-height (with align-items: center already doing the
+     vertical centering) grows the tappable box without touching the small
+     resting font-size/visual chip look. */
+  min-height: 44px;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 7px 12px;
+  border-radius: 100px;
+  border: 1px solid #ffffff;
+  background: rgba(217, 217, 217, 0.05);
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.hero-pill:hover {
+  background: #ffffff;
+  color: #212121;
+}
+
+/* ---------- Side copy ---------- */
+/* inset:0 makes this a full-stage layer, which — being later in the DOM
+   than <nav> — paints over it and silently ate every pointer event on the
+   nav pills, even though nothing was visibly there. pointer-events: none
+   here keeps that layer transparent to clicks now that it holds nothing
+   interactive, same "layer with holes" pattern as .ui-layer elsewhere in
+   this app. */
+.hero-copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 22px;
+  padding: 0 20px clamp(24px, 5vh, 48px);
+  pointer-events: none;
+}
+
+/* ---------- Mobile/tablet-portrait hero banner (≤768px) ----------
+   Reference: kisadrink.ru's own mobile hero — logo full-width at top (not
+   cropped, unlike the desktop giant-wordmark's deliberate edge-bleed),
+   description + CTA right below it, then the product visual. The
+   interactive flavor slider (arrows/drag/detail-view — CanRig.jsx,
+   entirely canvas-relative math, no raw window.* reads) stays fully wired
+   up; only .site-canvas's own on-screen box moves from full-bleed to a
+   bottom band below this text block, and the slider's own DOM UI
+   (arrows/flavor-name — layout.css) moves down to match. */
+.hero-mobile-banner-logo-row {
+  position: absolute;
+  top: 132px;
+  /* left/right insets, not padding: useFillWidth measures this row's own
+     getBoundingClientRect().width as the target to scale into — padding
+     would shrink the *available* space for its child without shrinking
+     that measured width, so the scaled logo would overshoot by exactly
+     the padding amount (confirmed directly: it did). */
+  left: 24px;
+  right: 24px;
+  overflow: hidden;
+  pointer-events: none;
+  /* Same fade-away-during-entrance as .hero-stage (this row replaces
+     .hero-stage-back at this breakpoint, so it needs that behavior
+     re-declared directly instead of inheriting it from that class) —
+     without this the logo stayed fully visible/sharp all the way through
+     the hero->gallery scroll transition while the copy below it (still a
+     .hero-stage child) correctly faded, an inconsistent, obviously-wrong
+     mismatch confirmed by scrolling through it directly. */
+  opacity: clamp(0, calc(1 - var(--h2g, 0) * 2), 1);
+  filter: blur(calc(var(--h2g, 0) * 14px));
+}
+
+/* inline-block (not block) on purpose — useFillWidth measures this
+   element's own *natural* (shrink-to-fit content) width to compute the
+   scaleX ratio; a block-level element would just report the row's own
+   full width back, making that ratio a no-op and leaving the oversized
+   text to overflow the row instead of being scaled down to fit it. */
+.logo-text.hero-mobile-banner-logo {
+  display: inline-block;
+  font-size: clamp(64px, 22vw, 110px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  transform-origin: left center;
+}
+
+@media (max-width: 768px) {
+  .hero-copy {
+    inset: auto;
+    top: 244px;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 0 24px;
+  }
+}
+
+/* Pass-through at mobile — the row wrapper only matters for the desktop
+   side-by-side layout below; here the subhead and CTA just stack as two
+   plain children of the .hero-copy flex column. */
+.hero-copy-row {
+  display: contents;
+}
+
+.hero-subhead {
+  margin: 0;
+  font-family: var(--font-beiruti);
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 650ms cubic-bezier(0.22, 1, 0.36, 1) 120ms, transform 650ms cubic-bezier(0.22, 1, 0.36, 1) 120ms;
+}
+
+/* Solid pill, dark text — visually distinct from the outlined nav pills.
+   Hover inverts it: fill drops out, border and text go white — the
+   opposite direction from the nav pills' hover (which fill solid white),
+   so the two never read as the same control. */
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 14px;
+  color: #212121;
+  text-decoration: none;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 100px;
+  padding: 12px 22px;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 650ms cubic-bezier(0.22, 1, 0.36, 1) 240ms, transform 650ms cubic-bezier(0.22, 1, 0.36, 1) 240ms,
+    background 200ms ease, color 200ms ease, transform 200ms ease;
+}
+
+.hero-cta:hover {
+  background: transparent;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.hero-copy.is-visible .hero-subhead {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-copy.is-visible .hero-cta {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+/* ---------- Desktop: fixed 1200x650 stage (Figma frame 47:21), contain-scaled ---------- */
+@media (min-width: 1024px) {
+  .hero-stage {
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    width: 1200px;
+    height: 650px;
+    transform-origin: center center;
+    transform: translate(-50%, -50%) scale(var(--hero-scale, 1));
+  }
+
+  /* Explicit position — the flex-centering on .hero-logo-giant (the
+     mobile/base default) centers this in the *full* 650-tall stage, which
+     isn't the same as centering it between the nav and the headline (the
+     two don't sit symmetrically around the stage's own midpoint), so at
+     desktop it needs its own top, tuned so the gap above (to the nav) and
+     below (to the headline's first line) come out equal. */
+  .hero-logo-giant .logo-text {
+    position: absolute;
+    left: 0;
+    top: 46px;
+    width: 1200px;
+    font-size: 539px;
+    text-align: center;
+  }
+
+  .hero-nav {
+    top: 20px;
+    left: 0;
+    right: 0;
+    flex-wrap: nowrap;
+    align-items: center;
+    /* Same shared gap between every pair, "Collaboration" included — was
+       justify-content: space-between pushing it alone to the stage's far
+       right edge with a much larger gap in front of it than between the
+       other three. */
+    justify-content: flex-start;
+    gap: 15px;
+    padding: 0;
+  }
+
+  .hero-pill {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.4px;
+    padding: 6.5px 20px;
+  }
+
+  .hero-copy {
+    display: block;
+    padding: 0;
+  }
+
+  /* Row sits at the grid position the headline's second line ("everything
+     just") used to occupy (+10px per feedback), stretching to the stage's
+     own right edge so the CTA can pin flush right; the two children then
+     split that space with the subhead on the left and the CTA pushed to
+     the end, both centered on the row's cross-axis (vertically centered
+     against the subhead's height). */
+  .hero-copy-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    position: absolute;
+    left: 421px;
+    top: 549px;
+    right: 0;
+  }
+
+  .hero-subhead {
+    width: 380px;
+    /* Site-wide body-copy size: 16px desktop / 14px mobile (see the base
+       rule above) — was its own one-off 20px. */
+    font-size: 16px;
+    letter-spacing: -0.4px;
+    line-height: 1.4;
+  }
+
+  .hero-cta {
+    flex: none;
+    font-size: 18px;
+    padding: 13px 26px;
+  }
+}

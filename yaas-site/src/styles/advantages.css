@@ -1,0 +1,219 @@
+/* ---------- Screen 4: "Why YAAS beats..." advantages carousel ---------- */
+
+/* Fullscreen + the pinned arc carousel both run at every width now, mobile
+   included, per spec — previously gated behind min-width: 1024px (a plain,
+   non-pinned, non-arc scroll-snap row below that instead). The arc itself
+   (ArcCards.jsx) already measures its own card's real rendered width via
+   ResizeObserver rather than assuming a fixed desktop size, so the same
+   motion math works at any card size — only the CSS sizing below (and the
+   AdvantagesScreen.jsx gate that used to skip all of this under 1024px)
+   needed to change, not the arc math itself. */
+.advantages {
+  position: relative;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--ink);
+}
+
+/* Top padding — same recipe as .screen2-headline's own
+   clamp(170px, 21vh, 260px) top padding (src/styles/screen2.css) — plus a
+   bottom gap down to the card carousel below (was a flex `gap` between
+   heading and cards when both lived in .advantages-content together; the
+   heading has since moved out into its own .section-heading-grid above
+   this, off-center, per spec). */
+.advantages-heading-grid {
+  /* Nudged down from the original (-55px) reduction — heading now reads
+     "Why YAAS" alone (was a 3-line-wrapping full sentence), so it needs
+     less top clearance to sit comfortably lower in the pinned viewport. */
+  padding-top: calc(clamp(170px, 21vh, 260px) - 25px);
+  /* Exact 50px gap to the cards below, per spec (was 63px). */
+  padding-bottom: 50px;
+}
+
+.advantages-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 20px clamp(64px, 10vh, 100px);
+  text-align: center;
+}
+
+/* Off-center now (see .section-heading-grid, index.css) — starts at
+   column 3, left-aligned, instead of centered on the page; content below
+   (ArcCards) keeps its own separate centered layout.
+   DEVIATES from the site's shared .slider-heading scale (88px cap) on
+   purpose: at the full 88px cap, "Why YAAS Beats Whatever's" no longer
+   fits this column's own width at any common desktop size, so it wrapped
+   into 5 lines instead of 2 — inside this section's *pinned* 100vh
+   viewport, that pushed the heading tall enough to overlap the ArcCards
+   carousel below it (unlike the other headings this task unified, this
+   one doesn't get to just take more vertical space when it wraps more).
+   76px keeps the original break after "Whatever's" at typical desktop
+   widths while still landing meaningfully larger than the 64px this used
+   to cap at. */
+.advantages-heading {
+  grid-column: 3 / -1;
+  margin: 0;
+  max-width: 1080px;
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(32px, 5.4vw, 76px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .advantages-heading-grid {
+    display: block;
+    padding: calc(clamp(170px, 21vh, 260px) - 55px) 20px 40px;
+  }
+
+  .advantages-heading {
+    max-width: none;
+    text-align: center;
+    font-size: clamp(26px, 8vw, 44px);
+  }
+}
+
+/* ---------- Cards ----------
+   Base rules here are the prefers-reduced-motion fallback only now: a
+   plain horizontal scroll-snap row, one full-width card at a time, no
+   side-peek. Everyone else gets .is-arc-active (below) — ArcCards.jsx adds
+   that class itself based on the same `active` prop that gates whether it
+   ever writes to these elements' inline style, so the two states can never
+   disagree about which layout is in charge. */
+.advantages-arc-cards {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.advantages-arc-cards::-webkit-scrollbar {
+  display: none;
+}
+
+.advantage-card {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 352px;
+  aspect-ratio: 352 / 385;
+  margin: 0 auto;
+  /* Not a %-padding — this card is position:absolute on desktop, so a
+     percentage would resolve against the (much wider) containing block
+     instead of the card's own width. clamp() pinned to roughly 8% of the
+     card's own width at each breakpoint's own sizing instead. */
+  padding: clamp(20px, 7.2vw, 28px);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 24px 48px rgba(20, 10, 20, 0.28);
+  text-align: left;
+}
+
+.advantage-card-number {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(48px, 16vw, 90px);
+  line-height: 1.1;
+  letter-spacing: -1.8px;
+  color: var(--card-color, var(--ink-on-light));
+}
+
+.advantage-card-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 8vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+  color: var(--card-color, var(--ink-on-light));
+}
+
+/* Sits near the card's bottom edge with visibly more air above it than
+   between the number and the title — margin-top: auto pushes it down
+   regardless of copy length, so this holds even for the longest
+   description in the set. */
+.advantage-card-description {
+  margin: auto 0 0;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: clamp(15px, 4.2vw, 20px);
+  line-height: 1.15;
+  color: var(--ink-on-light);
+}
+
+/* ---------- Desktop: the pinned 3-slot carousel ---------- */
+@media (min-width: 1024px) {
+  /* flex-direction: column (+ justify-content: center replacing the old
+     align-items: center) — this used to vertically-center a single child
+     (.advantages-content, heading and cards both stacked inside it via its
+     own flex-direction: column); now that the heading lives in its own
+     sibling (.advantages-heading-grid, off-center per spec), a row flex
+     would put them side by side instead of stacked. align-items: stretch
+     (the default) leaves each child's own width rules (the grid's 12
+     columns, .advantages-content's own max-width/margin: auto) in charge,
+     same as normal block flow would. */
+  .advantages {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .advantages-content {
+    max-width: 1400px;
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  .advantages-arc-cards {
+    position: relative;
+    display: block;
+    overflow: visible;
+    width: 100%;
+    height: clamp(340px, 34vw, 420px);
+  }
+
+  .advantage-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    flex: none;
+    /* Sized so the 3 resting slots (left neighbor / center / right neighbor)
+       exactly fill the stage's width: 3 cards plus the 2 gaps between them
+       (see CARD_GAP_PX in ArcCards.jsx, kept in sync at 40px here) add up to
+       100%. Overrides the base rule's mobile max-width so it can grow past
+       352px here — internal padding above is untouched, so more width just
+       means more breathing room around the same content. */
+    width: calc((100% - 80px) / 3);
+    max-width: none;
+    /* Height is set inline by ArcCards.jsx from this same resolved width
+       (width's natural aspect-ratio height minus a flat trim) — a CSS
+       calc() here couldn't reuse the width calc above without its embedded
+       % re-resolving against the height axis instead. */
+    margin: 0;
+    padding: clamp(19px, 1.92vw, 28px);
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+}

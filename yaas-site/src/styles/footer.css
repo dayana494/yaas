@@ -1,0 +1,156 @@
+/* ---------- Site footer ----------
+   Rebuilt per spec: same animated gradient background as the hero/
+   advantages/faq/contact panels (HeroGradientBackground), full-height,
+   with a large dominant wordmark on top and the link columns moved below
+   it instead of sitting beside a small inline brand block. Link data
+   (SITE_LINKS/FLAVORS/CONTACT.channels) is unchanged — only the layout. */
+.site-footer {
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  color: var(--ink);
+}
+
+.site-footer-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding-top: clamp(56px, 8vh, 88px);
+  padding-bottom: clamp(24px, 4vh, 32px);
+}
+
+.site-footer-logo-row {
+  width: 100%;
+  text-align: center;
+}
+
+/* Stretched edge-to-edge across the row by Footer.jsx's own useFillWidth
+   (scaleX from the text's natural rendered width to the row's real width —
+   no font-size alone lands a fixed 4-character string exactly on a
+   container's own width) — same "giant wordmark" spirit as
+   .hero-logo-giant (hero.css), not the same technique: that one is a
+   full-bleed 100vw background layer sized by clamp() alone, this one sits
+   inline within .site-container's own width and needs to hit it exactly.
+   The font-size clamp() below still matters — it sets this row's height
+   (so the section doesn't get a huge blank gap here) and keeps the
+   scaleX stretch itself modest rather than distorting tiny text hugely. */
+.logo-text.site-footer-logo-giant {
+  display: inline-block;
+  font-size: clamp(96px, 18vw, 280px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  transform-origin: center center;
+}
+
+.site-footer-tagline {
+  margin: clamp(16px, 3vh, 28px) auto 0;
+  max-width: 46ch;
+  text-align: center;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* Full width of the container (1fr columns, no minmax cap + centering) —
+   was a narrow, center-clustered 3-column block leaving large empty
+   margins on either side; the three columns now spread across the same
+   full width every other section's own content uses. */
+.site-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(32px, 5vw, 56px);
+  margin-top: clamp(48px, 9vh, 96px);
+  padding-bottom: clamp(40px, 6vh, 56px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.site-footer-col-title {
+  display: block;
+  margin-bottom: 18px;
+  font-family: var(--font-beiruti);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.site-footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.site-footer-links a,
+.site-footer-static {
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--ink);
+  text-decoration: none;
+  opacity: 0.85;
+  transition: opacity 200ms ease;
+}
+
+.site-footer-static {
+  cursor: default;
+}
+
+.site-footer-links a:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.site-footer-bottom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: clamp(20px, 3vh, 28px);
+  font-family: var(--font-beiruti);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 800px) {
+  .site-footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .site-footer-tagline,
+  .site-footer-links a,
+  .site-footer-static {
+    font-size: 14px;
+  }
+
+  /* Each link's own tap target was only ~13px tall (just the text line) —
+     padding here grows it toward a real touch target; the list's own gap
+     drops by the same amount added so the column doesn't get noticeably
+     taller overall, just each row's hit area within it. */
+  .site-footer-links {
+    gap: 0;
+  }
+
+  .site-footer-links a,
+  .site-footer-static {
+    display: block;
+    padding: 12px 0;
+  }
+}
