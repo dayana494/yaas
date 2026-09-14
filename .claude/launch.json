@@ -5,13 +5,13 @@
       "name": "yaas-site",
       "runtimeExecutable": "C:\\Users\\Krasotka\\Desktop\\банки газировки -v2\\yaas-site\\dev-server.cmd",
       "runtimeArgs": [],
-      "port": 5173
+      "port": 5174
     },
     {
       "name": "yaas-site-preview",
       "runtimeExecutable": "C:\\Users\\Krasotka\\Desktop\\банки газировки -v2\\yaas-site\\preview-server.cmd",
       "runtimeArgs": [],
-      "port": 4173
+      "port": 4174
     }
   ]
 }

@@ -1,0 +1,370 @@
+/* ---------- /flavors/:slug — the per-flavor detail page ---------- */
+
+.flavor-detail-page {
+  background: #0b0a09;
+}
+
+/* ---------- Section A: the pinned can story ---------- */
+
+/* Natural height only. The scroll length for the tumble comes from GSAP's own
+   pin spacer (FlavorStorySection pins this element with pinSpacing left at its
+   default), so giving the section a tall height here as well would buy the
+   same scroll twice and leave the can released halfway down it. */
+.flavor-story-wrap {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.flavor-story-sticky {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  /* .background-layer takes its opacity from --h2g, the homepage's own
+     hero->gallery entrance progress. Nothing scrubs that here, so it is
+     pinned on rather than left to the property's fallback. */
+  --h2g: 1;
+}
+
+/* The can's canvas sits *between* the two copy layers on purpose: the giant
+   wordmark is behind it, the flavor name and product line in front, so the
+   can passes over its own headline as it turns. */
+.flavor-story-canvas-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.flavor-hero-copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  color: var(--ink);
+  pointer-events: none;
+  padding: clamp(24px, 6vh, 72px) clamp(16px, 4vw, 56px);
+}
+
+.flavor-hero-copy-back {
+  z-index: 1;
+  justify-content: center;
+}
+
+.flavor-hero-copy-front {
+  z-index: 3;
+  justify-content: flex-end;
+}
+
+/* Its own unpadded row so the scaleX fit in FlavorStorySection measures the
+   width the wordmark should actually span, not the copy layer's padding box. */
+.flavor-story-yaas-row {
+  width: 100%;
+  text-align: center;
+}
+
+.flavor-story-yaas {
+  /* inline-block, not block: the scaleX fit divides the row's width by the
+     wordmark's own natural width, and a block-level heading already measures
+     the full row — which makes the ratio 1 and the fit a no-op. */
+  display: inline-block;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(96px, 17vw, 260px);
+  line-height: 0.82;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transform-origin: 50% 50%;
+}
+
+.flavor-story-flavorname {
+  margin: 0 0 14px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 5vw, 64px);
+  line-height: 1;
+}
+
+.flavor-hero-badges {
+  margin: 0 0 14px;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: clamp(12px, 1.2vw, 15px);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.flavor-hero-line {
+  margin: 0;
+  max-width: 46ch;
+  font-family: var(--font-beiruti);
+  font-size: clamp(14px, 1.5vw, 18px);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* All four blocks share one grid cell so they crossfade in the same place
+   rather than sliding through different ones. */
+.flavor-rotation-blocks {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-items: end center;
+  padding: clamp(24px, 6vh, 72px) clamp(16px, 4vw, 56px) clamp(36px, 9vh, 96px);
+  pointer-events: none;
+}
+
+.flavor-rotation-block {
+  grid-area: 1 / 1;
+  width: 100%;
+  max-width: 780px;
+  text-align: center;
+  color: var(--ink);
+}
+
+.flavor-rotation-kicker {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(26px, 4.4vw, 56px);
+  line-height: 1.02;
+}
+
+.flavor-rotation-line {
+  margin: 0 auto;
+  max-width: 44ch;
+  font-family: var(--font-beiruti);
+  font-size: clamp(14px, 1.5vw, 18px);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ---------- Section A, simple mode ---------- */
+
+/* Below the tablet breakpoint, or under prefers-reduced-motion, there is no
+   pin and no scrub (see FlavorDetailPage) — everything that was stacked into
+   one viewport unstacks into ordinary flow, and the can just turns on its own
+   axis. Only the layout changes here; the copy and the colors are the same. */
+.flavor-story-wrap.is-simple {
+  height: auto;
+}
+
+.flavor-story-wrap.is-simple .flavor-story-sticky {
+  height: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(56px, 11vh, 112px) clamp(16px, 5vw, 48px) clamp(48px, 10vh, 96px);
+}
+
+.flavor-story-wrap.is-simple .flavor-hero-copy {
+  position: relative;
+  inset: auto;
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.flavor-story-wrap.is-simple .flavor-hero-copy-front {
+  margin-top: clamp(18px, 4vh, 36px);
+}
+
+.flavor-story-wrap.is-simple .flavor-story-canvas-layer {
+  position: relative;
+  inset: auto;
+  height: min(52vh, 420px);
+  margin: clamp(16px, 4vh, 40px) 0;
+}
+
+.flavor-story-wrap.is-simple .flavor-rotation-blocks {
+  position: relative;
+  inset: auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(40px, 8vh, 76px);
+  padding: clamp(48px, 9vh, 88px) 0 0;
+}
+
+.flavor-story-wrap.is-simple .flavor-rotation-block {
+  grid-area: auto;
+  margin: 0 auto;
+}
+
+/* ---------- Section B: the "Try the Other Flavors" gallery ---------- */
+
+/* Climbs up and covers the story section's last frame, using the site's
+   shared rise transition: the negative margin puts this section's top edge a
+   viewport early so ordinary flow *is* the climb, while the story section
+   above is held still for exactly that stretch (its pin runs RISE_UNITS
+   longer than its tumble). --rise-radius is written per frame by the shared
+   driver in scroll/riseTransition.js, attached in FlavorDetailPage — the same
+   one .screen2 and .advantages already run off, not a second copy. It starts
+   at half this section's own rendered width, so the top edge opens as a true
+   semicircular dome, and reaches 0 as the section finishes covering. */
+.flavor-gallery {
+  position: relative;
+  /* Paints over .flavor-story-wrap, which is position: fixed while pinned. */
+  z-index: 2;
+  margin-top: -100vh;
+  margin-top: -100dvh;
+  border-top-left-radius: var(--rise-radius, 0px);
+  border-top-right-radius: var(--rise-radius, 0px);
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink-on-light);
+  padding: clamp(56px, 10vh, 104px) 0 clamp(64px, 11vh, 120px);
+}
+
+/* Nothing above it is pinned in simple mode, so there is nothing to climb
+   over — it just follows the story section in flow. */
+.flavor-gallery.is-simple {
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.flavor-gallery-heading {
+  margin: 0 0 clamp(28px, 5vh, 56px);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(30px, 5vw, 68px);
+  line-height: 1.02;
+  text-align: center;
+  color: var(--ink-on-light);
+}
+
+.flavor-gallery-viewport {
+  position: relative;
+}
+
+.flavor-gallery-track {
+  --gallery-gap: clamp(12px, 1.6vw, 24px);
+  --gallery-visible: 3;
+  display: flex;
+  column-gap: var(--gallery-gap);
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+.flavor-gallery-card {
+  flex: 0 0 calc((100% - (var(--gallery-visible) - 1) * var(--gallery-gap)) / var(--gallery-visible));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: clamp(320px, 46vh, 480px);
+  padding: clamp(20px, 2.4vw, 32px) 16px 0;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--card-color);
+  color: var(--ink);
+  text-decoration: none;
+  /* Keeps the texture's overlay blend inside the card instead of letting it
+     composite against the paper background behind it. */
+  isolation: isolate;
+}
+
+/* .background-texture is position: absolute, so without an explicit z-index
+   it would paint above the card's own static children. */
+.flavor-gallery-card .background-texture {
+  z-index: 0;
+}
+
+.flavor-gallery-card-title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(18px, 1.7vw, 26px);
+  line-height: 1.05;
+  text-align: center;
+}
+
+/* Pushed past the card's bottom edge so only the top of the can is in frame
+   at rest; the card's own overflow: hidden does the cropping. */
+.flavor-gallery-can {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(86%, 250px);
+  height: auto;
+  margin-top: auto;
+  margin-bottom: -34%;
+  transform-origin: 50% 100%;
+  transition: transform 250ms ease;
+}
+
+.flavor-gallery-card:hover .flavor-gallery-can,
+.flavor-gallery-card:focus-visible .flavor-gallery-can {
+  transform: scale(1.12) rotate(-4deg);
+}
+
+.flavor-gallery-card.is-active {
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.85);
+}
+
+/* Reuses .arrow (layout.css) for the hover/scale treatment, but replaces its
+   slider-stage placement: that rule centers itself on the stage via a --ox
+   offset, which has no meaning here. The icon's stroke is a hardcoded white,
+   so the button carries a dark disc for it to read against on paper. */
+.arrow-gallery {
+  --ox: 0px;
+  --arrow-scale: 1;
+  top: 50%;
+  left: auto;
+  transform: translateY(-50%) scale(var(--arrow-scale));
+  z-index: 3;
+  width: 52px;
+  height: 52px;
+  padding: 13px;
+  border: none;
+  border-radius: 50%;
+  background: var(--ink-on-light);
+  cursor: pointer;
+}
+
+.arrow-gallery-prev {
+  left: clamp(-26px, -1.6vw, -10px);
+}
+
+.arrow-gallery-next {
+  right: clamp(-26px, -1.6vw, -10px);
+}
+
+.arrow-gallery.is-disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+@media (max-width: 1024px) {
+  .flavor-gallery-track {
+    --gallery-visible: 2;
+  }
+
+  .arrow-gallery-prev {
+    left: 4px;
+  }
+
+  .arrow-gallery-next {
+    right: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+  .flavor-gallery-track {
+    --gallery-visible: 1;
+  }
+
+  .flavor-gallery-card {
+    height: clamp(340px, 58vh, 460px);
+  }
+
+  .flavor-gallery-can {
+    width: min(72%, 230px);
+  }
+}

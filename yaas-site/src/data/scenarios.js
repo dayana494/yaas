@@ -28,7 +28,7 @@ export const SCENARIOS = [
     title: 'Hanging with the squad till sunrise',
     caption: "When the night's just getting started and your battery isn't",
     flavor: 'strawberry',
-    href: '/catalog/strawberry',
+    href: '/flavors/strawberry',
     photo: '/photos/scenarios/party.jpg',
   },
   {
@@ -36,7 +36,7 @@ export const SCENARIOS = [
     title: 'Road trip / festival run',
     caption: "When the drive's long and the vibe's gotta stay maxed",
     flavor: 'lemon',
-    href: '/catalog/lemon',
+    href: '/flavors/lemon',
     photo: '/photos/scenarios/road.jpg',
   },
   {
@@ -44,7 +44,7 @@ export const SCENARIOS = [
     title: "Lecture/class that won't end",
     caption: "When the professor's on hour three and you're somehow still with it",
     flavor: 'apple',
-    href: '/catalog/apple',
+    href: '/flavors/apple',
     photo: '/photos/scenarios/univer.jpg',
   },
   {
@@ -52,7 +52,7 @@ export const SCENARIOS = [
     title: 'Workout, gym session',
     caption: "When it's not your last set and you already thought you were done",
     flavor: 'orange',
-    href: '/catalog/orange',
+    href: '/flavors/orange',
     photo: '/photos/scenarios/sport.png',
   },
   {
@@ -60,7 +60,7 @@ export const SCENARIOS = [
     title: 'Late-night gaming session',
     caption: 'When one more round decides everything',
     flavor: 'blueberry',
-    href: '/catalog/blueberry',
+    href: '/flavors/blueberry',
     photo: '/photos/scenarios/game.png',
   },
 ];

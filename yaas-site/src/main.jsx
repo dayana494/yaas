@@ -11,6 +11,7 @@ import './styles/faq.css';
 import './styles/contact.css';
 import './styles/footer.css';
 import './styles/flavors-page.css';
+import './styles/flavor-detail.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -16,7 +16,7 @@ export default function DetailScreen({ activeFlavor, onPickFlavor, textVisible }
             that same moment instead of dropping in while still invisible. */}
         <DropText as="h1" className="detail-title" text={flavor.title} animateOnScroll={false} play={textVisible} />
         <p className="detail-description">{flavor.description}</p>
-        <a className="detail-cta" href={`/catalog/${flavor.id}`} data-interactive>
+        <a className="detail-cta" href={`/flavors/${flavor.id}`} data-interactive>
           Learn more →
         </a>
       </div>
