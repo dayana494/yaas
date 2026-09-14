@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { useCarouselDrag } from '../hooks/useCarouselDrag';
-import DropText from './DropText';
+import SectionHeading from './SectionHeading';
 import { FLAVORS, FLAVOR_COUNT } from '../data/flavors';
 import { SCREEN3_HEADING } from '../data/gallery';
 
@@ -55,7 +55,7 @@ export default function SliderScreen({ sceneRef, activeFlavor, onPickFlavor, onE
 
   return (
     <div className={`slider-screen ${visible ? '' : 'is-hidden'}`}>
-      <DropText as="h2" className="slider-heading" text={SCREEN3_HEADING} />
+      <SectionHeading as="h2" className="slider-heading" text={SCREEN3_HEADING} />
 
       <div className="slider-stage" data-interactive {...handlers} />
 

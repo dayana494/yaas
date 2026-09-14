@@ -1,28 +1,37 @@
 /* ---------- Screen 7: Contact ----------
-   Layout reference: jawshw.tilda.ws/#contacts — white section, a rounded
-   gradient panel, centered heading + copy + three contact pills, two
-   product cans tilted diagonally at the panel's top-left/top-right, each
-   one's own top edge breaking out *past* the panel's own top border
-   instead of sitting cropped inside it. .contact-frame is the plain
-   (non-clipping) wrapper both .contact-panel (rounded, clips its own
-   gradient) and .contact-cans (unclipped, painted on top) share — the cans
-   need to visually escape the panel's rounded corner, which a single
-   overflow:hidden box around everything can't do. */
+   Figma node 309:195, a 1920x971 frame: a rounded gradient panel 1820 x 771
+   (radius 20) inset 50px from the frame's sides, a centred 80px heading on it,
+   two outline pills under that, and two cans tilted +-15deg overlapping the
+   panel's corners.
+
+   The section itself paints nothing — it sits on the About the Brand section's
+   own background, which it renders inside (see ContactSection.jsx), so the two
+   blocks read as one continuous field with no seam at the join. */
 .contact {
   position: relative;
-  background: #ffffff;
-  padding: clamp(60px, 9vh, 110px) 0;
+  z-index: 1;
+  /* The site's standard 120px between blocks, top and bottom — the same inset
+     .advantages uses between its cards, the FAQ and its own edges. */
+  padding: 120px 0;
 }
 
+/* Non-clipping wrapper shared by the panel and the can canvas: the cans have to
+   cross the panel's rounded corner, which one overflow:hidden box around both
+   cannot do. */
 .contact-frame {
   position: relative;
+  padding: 0 50px;
 }
 
 .contact-panel {
   position: relative;
   overflow: hidden;
-  border-radius: 32px;
-  min-height: clamp(420px, 56vw, 620px);
+  border-radius: 20px;
+  /* 1820 x 771 in the mock. Held as an aspect ratio rather than a height so the
+     panel keeps the mock's proportions at any width, with a floor for short and
+     narrow screens where that ratio alone would leave no room for the heading. */
+  aspect-ratio: 1820 / 771;
+  min-height: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,171 +44,110 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 640px;
-  padding: clamp(48px, 8vw, 100px) clamp(28px, 7vw, 90px);
+  /* 824px of a 1820px panel in the mock. */
+  width: 45.3%;
+  min-width: 280px;
   text-align: center;
 }
 
+/* The one heading scale every block on this page shares — .screen2-h2,
+   .advantages-title, .advantages .faq-heading and .about-brand-heading-line-1
+   all carry these same numbers, and the mock's own 80px at a 1920 frame is the
+   top of this clamp, so the two agree exactly at the mock's width. */
 .contact-heading {
-  margin: 0 0 clamp(20px, 3vh, 28px);
+  margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(32px, 6.2vw, 88px);
+  font-size: clamp(30px, 4.17vw, 80px);
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   color: var(--ink);
+  text-wrap: balance;
 }
 
-@media (max-width: 768px) {
-  .contact-heading {
-    font-size: clamp(26px, 8vw, 44px);
-  }
-
-  .contact-copy {
-    font-size: 14px;
-  }
-}
-
-.contact-copy {
-  margin: 0 0 clamp(28px, 4vh, 40px);
-  max-width: 44ch;
-  font-family: var(--font-beiruti);
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-  /* The gradient's own pale/white patches can drift under this text at any
-     viewport size (it's animated, not fixed), and this text is small/thin
-     enough that even a tight, dark drop-shadow still washed out against
-     them — a real 1px outline (four offset shadows) plus a soft one for
-     depth is what actually holds contrast at any position. */
-  text-shadow: -1px -1px 0 rgba(0, 0, 0, 0.6), 1px -1px 0 rgba(0, 0, 0, 0.6), -1px 1px 0 rgba(0, 0, 0, 0.6),
-    1px 1px 0 rgba(0, 0, 0, 0.6), 0 2px 10px rgba(0, 0, 0, 0.45);
-}
-
-.contact-channels {
+.contact-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: clamp(28px, 4vh, 40px);
+  /* 15px between the two pills in the mock. */
+  gap: 15px;
+  margin-top: clamp(28px, 5vh, 56px);
 }
 
-/* Same outline-pill recipe as .hero-pill (site-1's own nav pills) — this
-   panel carries the same gradient, so the pills read as the same family of
-   control. Channels with no real destination yet (see homepageCopy.js —
-   the source doc never names an actual address/handle) render as this
-   same pill shape but non-interactive, not a fabricated link. */
-.contact-channel {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-beiruti);
-  font-weight: 500;
-  font-size: 15px;
-  color: var(--ink);
-  text-decoration: none;
-  white-space: nowrap;
-  padding: 10px 20px;
-  border-radius: 100px;
-  border: 1px solid #ffffff;
-  /* Darker + blurred than .hero-pill's own resting fill — that one only
-     ever sits over the hero's own can/wordmark art, but this pill can end
-     up over the gradient's palest patches (it's animated, so there's no
-     fixed "safe" spot), where the original near-transparent fill let both
-     the border and the text wash out. */
-  background: rgba(0, 0, 0, 0.18);
-  backdrop-filter: blur(6px);
-  transition: background 200ms ease, color 200ms ease;
-}
-
-a.contact-channel:hover {
-  background: #ffffff;
-  color: #212121;
-}
-
-.contact-channel-static {
-  cursor: default;
-  opacity: 0.85;
-}
-
-/* Same white-pill / hover-inverts recipe as .hero-cta. */
-.contact-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+/* The pills ARE the first screen's nav pills — .hero-pill (hero.css) is on the
+   element itself, so the font, padding, border, fill and hover are that one
+   definition and cannot drift from it. This adds the trailing arrow and
+   nothing else, which is the mock's only difference from a nav pill. Fixed px
+   throughout by way of .hero-pill, so widening the panel never resizes them. */
+.contact-pill {
   gap: 8px;
-  font-family: var(--font-beiruti);
-  font-weight: 500;
-  font-size: 16px;
-  color: #212121;
-  text-decoration: none;
-  background: #ffffff;
-  border: 1px solid #ffffff;
-  border-radius: 100px;
-  padding: 13px 26px;
-  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
+  /* These render as <button> until the addresses exist, so the browser's own
+     button chrome has to come off before .hero-pill's own box shows through.
+     cursor is set here rather than left to the element: a <button> defaults to
+     the arrow, and an <a> only gets the pointer once it has an href. */
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
 }
 
-.contact-cta:hover {
-  background: transparent;
-  color: #ffffff;
-  transform: translateY(-1px);
+.contact-pill-arrow {
+  /* Its own line-height so the glyph sits on the text baseline rather than
+     stretching the pill. */
+  line-height: 1;
 }
 
-/* ---------- Cans ----------
-   Both cans sit at the panel's top corners now (not one top / one bottom
-   like the earlier build) — left one tilted one way, right one the other,
-   each one's own top edge breaking out past .contact-panel's top border.
-   Sourced from the highest-resolution product renders in the project
-   (1200x1600 thumbnails — the strawberry one this used before is only
-   300x400 and visibly softened at this size) so they stay crisp at the
-   larger size the spec asked for. */
-.contact-cans {
-  position: absolute;
-  inset: 0;
+/* ---------- The cans ----------
+   Covers the whole section, including its 120px padding, because both cans
+   cross the panel's edge in the mock — the left one above its top, the right
+   one below its bottom — and a WebGL canvas clips to its own box. Purely
+   decorative, so it never takes a pointer event. */
+.contact-cans-canvas {
+  /* Every one of these needs !important: react-three-fiber writes
+     position/width/height as inline styles on the canvas, and an inline
+     height: 100% beats any stylesheet `bottom`. Left as-is the box stopped at
+     the panel's own bottom edge and cut the right-hand can in half (measured:
+     canvas 1425x561 inside an 801-tall section).
+
+     It has to reach past the section's own 120px padding on both sides because
+     in the mock the left can crosses the panel's top edge and the right one
+     crosses its bottom, and a WebGL canvas clips to its own box. */
+  position: absolute !important;
+  left: 0 !important;
+  top: -120px !important;
+  width: 100% !important;
+  height: calc(100% + 240px) !important;
   z-index: 2;
-  pointer-events: none;
+  /* !important for the same reason as the box above: react-three-fiber sets
+     pointer-events: auto inline on the canvas, and since this layer is stretched
+     over the whole section it sat on top of the Email/Telegram buttons and ate
+     every click and hover on them (measured: elementFromPoint over each pill
+     returned the canvas). It is decoration — it should never take an event. */
+  pointer-events: none !important;
 }
 
-.contact-can {
-  position: absolute;
-  top: clamp(-90px, -9vw, -50px);
-  filter: drop-shadow(0 20px 32px rgba(0, 0, 0, 0.28));
-}
+@media (max-width: 899px) {
+  .contact {
+    padding: 120px 0;
+  }
 
-.contact-can-1 {
-  left: clamp(0px, 4vw, 60px);
-  width: clamp(160px, 17vw, 260px);
-  transform: rotate(-16deg);
-}
+  .contact-frame {
+    padding: 0 20px;
+  }
 
-.contact-can-2 {
-  right: clamp(0px, 4vw, 60px);
-  width: clamp(160px, 17vw, 260px);
-  transform: rotate(14deg);
-}
-
-@media (max-width: 900px) {
   .contact-panel {
-    border-radius: 24px;
-    min-height: 0;
+    /* Squarer than the mock's 2.36:1 — at phone widths that ratio is a letterbox
+       with no room for a four-line heading. */
+    aspect-ratio: 3 / 4;
+    max-height: 620px;
+    border-radius: 20px;
   }
 
   .contact-content {
-    padding: clamp(120px, 26vw, 150px) 24px clamp(48px, 10vw, 64px);
+    width: 78%;
   }
 
-  .contact-can {
-    top: clamp(-56px, -14vw, -36px);
-  }
-
-  .contact-can-1 {
-    left: clamp(4px, 2vw, 16px);
-    width: clamp(96px, 26vw, 140px);
-  }
-
-  .contact-can-2 {
-    right: clamp(4px, 2vw, 16px);
-    width: clamp(96px, 26vw, 140px);
+  /* Matches every other block heading's own mobile override. */
+  .contact-heading {
+    font-size: clamp(26px, 8vw, 44px);
   }
 }

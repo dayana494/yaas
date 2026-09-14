@@ -153,67 +153,326 @@
    between the number and the title — margin-top: auto pushes it down
    regardless of copy length, so this holds even for the longest
    description in the set. */
+/* The site's ordinary body size at the site's own breakpoint for it: 14px,
+   going to 16px at min-width 1024 — the same pair .hero-subhead and .hero-pill
+   use (hero.css). Was its own clamp(15px, 4.2vw, 20px). */
 .advantage-card-description {
   margin: auto 0 0;
   font-family: var(--font-beiruti);
   font-weight: 500;
-  font-size: clamp(15px, 4.2vw, 20px);
+  font-size: 14px;
   line-height: 1.15;
   color: var(--ink-on-light);
 }
 
-/* ---------- Desktop: the pinned 3-slot carousel ---------- */
 @media (min-width: 1024px) {
-  /* flex-direction: column (+ justify-content: center replacing the old
-     align-items: center) — this used to vertically-center a single child
-     (.advantages-content, heading and cards both stacked inside it via its
-     own flex-direction: column); now that the heading lives in its own
-     sibling (.advantages-heading-grid, off-center per spec), a row flex
-     would put them side by side instead of stacked. align-items: stretch
-     (the default) leaves each child's own width rules (the grid's 12
-     columns, .advantages-content's own max-width/margin: auto) in charge,
-     same as normal block flow would. */
-  .advantages {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  .advantage-card-description {
+    font-size: 16px;
+  }
+}
+
+/* ---------- Arc carousel (every width — see the top-of-file comment) ---------- */
+.advantages-content {
+  max-width: 1400px;
+  padding-left: clamp(20px, 6vw, 40px);
+  padding-right: clamp(20px, 6vw, 40px);
+}
+
+.advantages-arc-cards.is-arc-active {
+  position: relative;
+  display: block;
+  overflow: visible;
+  width: 100%;
+  /* Scales down smoothly to the mobile floor instead of the old fixed
+     340px-plus-up-only clamp — that floor was never reached below
+     1024px before (this whole block was desktop-only then), so it was
+     never tuned against anything narrower. */
+  height: clamp(220px, 34vw, 420px);
+}
+
+.advantages-arc-cards.is-arc-active .advantage-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  flex: none;
+  /* Was a fixed "3 equal slots fill the stage" formula (100%-80px)/3 —
+     only ever made sense at desktop widths, where the stage is wide
+     enough for a centered card plus two full neighbor slots side by side.
+     Below that, a single reasonably-sized centered card with its
+     neighbors peeking in from the edges (ArcCards.jsx's own arc math
+     positions them there automatically, via each card's real measured
+     width — see its own comment) reads better than three cramped slots;
+     this clamp keeps roughly the same visual scale as the old formula
+     at typical desktop widths (≈420px at 1440px container) while
+     shrinking gracefully on narrower ones instead of hitting that floor
+     abruptly at 1024px. */
+  width: clamp(220px, 58vw, 420px);
+  max-width: none;
+  /* Height is set inline by ArcCards.jsx from this same resolved width
+     (width's natural aspect-ratio height minus a flat trim) — a CSS
+     calc() here couldn't reuse the width calc above without its embedded
+     % re-resolving against the height axis instead. */
+  margin: 0;
+  padding: clamp(19px, 1.92vw, 28px);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* ================================================================
+   Rise into place + heading — the same shell Screen 2 uses.
+   ================================================================ */
+
+/* The section becomes the rise container. Three ingredients, all mirrored
+   from .screen2 (screen2.css):
+     - pulled up a full viewport so it already overlaps the section above,
+       which turns ordinary document flow into the climb itself;
+     - a higher stacking order so it paints over that section;
+     - top corners clipped to --rise-radius, written per frame by
+       scroll/riseTransition.js — a true semicircular dome as the section
+       clears the bottom of the screen, flat by the time it has covered it.
+   height: auto (not the 100dvh it had) because this box now holds the pinned
+   child *and* the pin-spacer GSAP wraps around it, so it has to be free to be
+   taller than one viewport.
+   The 120px inset lives here, ABOVE .advantages-pin, exactly where .screen2
+   keeps its own: scroll passed through during the rise rather than padding
+   inside the pinned state, so it doesn't reduce the one viewport the heading
+   and carousel share. */
+.advantages {
+  --advantages-inset: 120px;
+
+  /* Whatever sits between the card stack's pin-spacer and this section has to
+     come off this margin as well as the viewport, or the climb ends later than
+     the hold does. Today that is .screen2's own padding-bottom
+     (SCREEN2_BOTTOM_GAP, 120px — screen2.css): it is never visible, since this
+     section is pulled up over it, but it pushes this section that much further
+     down the document, so the card stack's pin released while the climb still
+     had 120px to run. Measured before the fix: the stack went from fixed to
+     relative at a section top of +120 and then scrolled up alongside this
+     section for the rest of the way, corner radius still at 124px and nothing
+     holding the background still behind it.
+     Lengthening that pin does NOT fix this — its spacer grows by the same
+     amount and carries this section down with it, so the offset survives.
+     Cancelling it here is what makes the two ends coincide. */
+  --advantages-lead-gap: 120px;
+
+  height: auto;
+  display: block;
+  margin-top: calc(-100vh - var(--advantages-lead-gap));
+  margin-top: calc(-100dvh - var(--advantages-lead-gap));
+  z-index: 3;
+  padding-top: var(--advantages-inset);
+  border-top-left-radius: var(--rise-radius, 0px);
+  border-top-right-radius: var(--rise-radius, 0px);
+  /* ...and the mirror of it on the way out. The About the Brand section below
+     is pulled up under this one's last viewport and held still there, so this
+     section slides up off the screen to uncover it — and its bottom edge closes
+     over as it goes instead of ending on a flat cut, the same shape of handover
+     the reference site uses ahead of its own photo-stack section. Written per
+     frame by the fall driver in scroll/riseTransition.js; the overflow: hidden
+     at the top of this file is what makes it clip the FAQ inside. */
+  border-bottom-left-radius: var(--fall-radius, 0px);
+  border-bottom-right-radius: var(--fall-radius, 0px);
+}
+
+/* The one-viewport box that gets pinned.
+
+   overflow is deliberately NOT hidden. It was, and that is what cut the top
+   off the dome: .advantages-backdrop reaches 120px above this box to cover the
+   section's inset, and a clip here threw that part away. Probed directly —
+   with the clip on, the element painting 40px below the section's top edge was
+   .advantages itself (i.e. nothing); with it off, it is the gradient canvas.
+   Nothing here needs clipping: the rounded corners are clipped by .advantages
+   one level up, and a full-page sweep at 1920x920 with the clip removed
+   measured 0px of horizontal overflow, so the arc's side cards don't escape
+   either. */
+.advantages-pin {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/* Section-level fill — the same idea as .screen2-bg-fixed / .screen2-bg-texture
+   (screen2.css), which are absolutely positioned to .screen2's whole box and
+   therefore cover its padding too. This one does the same for .advantages, so
+   every part of the section is painted at every moment, the 120px inset above
+   the pinned box included. That inset *is* the dome while the section climbs.
+
+   It carries a static approximation of the animated gradient — sampled from the
+   rendered canvas: periwinkle top-left, pink through the middle, coral right,
+   yellow along the bottom — because the real gradient is a WebGL canvas that is
+   not painted at all times. createGradient.js parks its render loop behind an
+   IntersectionObserver and sizes the canvas from inside that loop, so until a
+   frame has run the canvas is still at its 300x150 default and paints nothing:
+   measured 300x150 on a freshly loaded page with the section below the fold,
+   and permanently so wherever requestAnimationFrame is throttled (a
+   backgrounded tab, an embedded preview pane — 0 frames in 500ms there). The
+   canvas is opaque and covers this completely the moment it does paint.
+
+   Sized to the climb rather than stretched over the section's full height (the
+   pin-spacer makes that several viewports): the gradients paint across the one
+   viewport plus inset that is ever visible during the rise, and the base colour
+   fills whatever is below, which the pinned box covers anyway. */
+.advantages-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  /* One viewport tall, not the section's full height: the same single layer
+     stays in frame from the top of the advantages block to the bottom of the
+     FAQ by switching to `fixed` while the section covers the screen (see the
+     two states below). A layer stretched over the whole section would have to
+     squash the gradient across several viewports instead.
+     No will-change, and nothing animates this: promoting it put black bands
+     through the gradient while scrolling, because a promoted layer inside this
+     section's rounded overflow clip makes Chromium re-rasterise that mask every
+     frame. */
+  height: 100vh;
+  height: 100dvh;
+  z-index: 0;
+  pointer-events: none;
+  background-color: #f0a3b4;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image:
+    radial-gradient(60% 55% at 8% 18%, #bcc6f2 0%, rgba(188, 198, 242, 0) 70%),
+    radial-gradient(55% 50% at 88% 22%, #f4764a 0%, rgba(244, 118, 74, 0) 72%),
+    radial-gradient(65% 55% at 92% 92%, #f9b23c 0%, rgba(249, 178, 60, 0) 70%),
+    radial-gradient(60% 55% at 10% 88%, #f7dce9 0%, rgba(247, 220, 233, 0) 70%),
+    radial-gradient(70% 60% at 50% 55%, #f2879f 0%, rgba(242, 135, 159, 0) 75%);
+}
+
+/* While the section covers the screen the layer is genuinely fixed, so the
+   compositor holds it still and there is nothing for JS to keep in step with —
+   which is the whole point: the hand-animated version juddered a frame behind
+   every wheel tick. By the time this state applies the corner radius is 0, so
+   escaping the section's overflow clip costs nothing. */
+.advantages-bg.is-fixed {
+  position: fixed;
+  top: 0;
+}
+
+/* Past the section: parked on its bottom edge so the last viewport of the FAQ
+   stays covered after the fixed state lets go. */
+.advantages-bg.is-parked {
+  position: absolute;
+  top: auto;
+  bottom: 0;
+}
+
+/* The animated canvas fills that same layer, so it inherits the layer's
+   viewport-tracking and covers the whole section — the advantages block, the
+   gap and the FAQ — from one instance. */
+.advantages-bg .hero-gradient-wrap {
+  position: absolute;
+  inset: 0;
+}
+
+/* Top offset copied verbatim from .screen2-arc-inner's own padding-top
+   (screen2.css) — the declaration, not a resolved number, so the two headings
+   land on the same line at every width rather than only at the one that was
+   measured. That value is the whole offset: .screen2 also carries a 120px
+   padding-top, but it sits above .screen2-arc (the element GSAP pins) and is
+   scrolled past before the pin engages, so it contributes nothing to where the
+   heading sits on screen. Measured with Screen 2 pinned at 1440x900: headline
+   54px from the viewport top, .screen2's own top edge already at -520. */
+.advantages-title-row {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  padding: clamp(36px, 6vh, 76px) 30px 0;
+}
+
+/* Deliberately the same rule set as .screen2-h2 (screen2.css), value for
+   value, so the two block headings sit on one typographic scale at every
+   width instead of being matched by eye. */
+.advantages-title {
+  max-width: clamp(320px, 62vw, 1160px);
+  margin: 0 auto;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(30px, 4.17vw, 80px);
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: var(--ink);
+}
+
+/* 50px from the heading to the top of the cards, per spec. flex: none so the
+   carousel keeps its own height instead of being stretched, which would let
+   the cards drift down the leftover space. */
+.advantages .advantages-content {
+  flex: none;
+  margin-top: 50px;
+  padding-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  /* Only the side gutters narrow. The top offset stays the shared clamp —
+     .screen2-arc-inner has no mobile override of its own, so giving this one
+     would put the two headings on different lines below 768px. */
+  .advantages-title-row {
+    padding-left: 20px;
+    padding-right: 20px;
   }
 
-  .advantages-content {
-    max-width: 1400px;
-    padding-left: 40px;
-    padding-right: 40px;
+  /* Matches .screen2-h2's own mobile override, same as the rule above matches
+     its desktop one. */
+  .advantages-title {
+    font-size: clamp(26px, 8vw, 44px);
+  }
+}
+
+/* ---------- FAQ, nested inside this section ----------
+   It renders inside .advantages (AdvantagesScreen.jsx) so the two blocks share
+   the one backdrop above instead of each mounting its own gradient instance.
+   These rules only undo what the standalone version needed for itself. */
+
+/* No backdrop of its own, and no vertical padding of its own — the 120px gap
+   below the cards is declared once here so it matches the section's other
+   insets exactly. */
+.advantages .faq {
+  overflow: visible;
+  padding: 120px 0 var(--advantages-inset);
+  background: none;
+}
+
+/* Centred, on the same scale as every other block heading on the page —
+   .screen2-h2 and .advantages-title carry these exact values. The standalone
+   version sat off-grid at column 3, left-aligned, on its own larger scale. */
+.advantages .faq-heading-grid {
+  display: block;
+  padding: 0 30px clamp(40px, 6vh, 64px);
+}
+
+.advantages .faq-heading {
+  max-width: clamp(320px, 62vw, 1160px);
+  margin: 0 auto;
+  text-align: center;
+  font-size: clamp(30px, 4.17vw, 80px);
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+/* Card titles in Bounded at a flat 20px, per spec — the display face and its
+   viewport-scaled clamp are gone. */
+.advantages .faq-question-text {
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 768px) {
+  .advantages .faq-heading-grid {
+    padding: 0 20px clamp(32px, 6vh, 48px);
   }
 
-  .advantages-arc-cards {
-    position: relative;
-    display: block;
-    overflow: visible;
-    width: 100%;
-    height: clamp(340px, 34vw, 420px);
-  }
-
-  .advantage-card {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    flex: none;
-    /* Sized so the 3 resting slots (left neighbor / center / right neighbor)
-       exactly fill the stage's width: 3 cards plus the 2 gaps between them
-       (see CARD_GAP_PX in ArcCards.jsx, kept in sync at 40px here) add up to
-       100%. Overrides the base rule's mobile max-width so it can grow past
-       352px here — internal padding above is untouched, so more width just
-       means more breathing room around the same content. */
-    width: calc((100% - 80px) / 3);
-    max-width: none;
-    /* Height is set inline by ArcCards.jsx from this same resolved width
-       (width's natural aspect-ratio height minus a flat trim) — a CSS
-       calc() here couldn't reuse the width calc above without its embedded
-       % re-resolving against the height axis instead. */
-    margin: 0;
-    padding: clamp(19px, 1.92vw, 28px);
-    opacity: 0;
-    will-change: transform, opacity;
+  /* Matches .screen2-h2's own mobile override, same as the headings above. */
+  .advantages .faq-heading {
+    font-size: clamp(26px, 8vw, 44px);
   }
 }

@@ -485,6 +485,54 @@ const CanRig = forwardRef(function CanRig(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, activeFlavor]);
 
+  // Feeds pointerTarget, which the frame loop below smooths into
+  // pointerCurrent and turns into the cans' tilt. Nothing wrote it before, so
+  // every `pointerCurrent.current.x * PARALLAX_AMOUNT` in that loop was
+  // multiplying by a permanent zero and the cans never reacted to the cursor
+  // at all — the maths was there, the input was not.
+  //
+  // Normalised to -1..1 from the centre of the window rather than from the
+  // canvas: the cans read as reacting to the cursor anywhere on the screen,
+  // which is how the reference (ciaoenergy.com) behaves.
+  //
+  // Mouse only. A coarse pointer has no hover position to follow, and a touch
+  // drag would otherwise yank the cans sideways mid-swipe; reduced motion opts
+  // out entirely and leaves the target at rest.
+  useEffect(() => {
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    if (reduced) return undefined;
+
+    const onPointerMove = (event) => {
+      if (event.pointerType && event.pointerType !== 'mouse') return;
+      pointerTarget.current.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointerTarget.current.y = (event.clientY / window.innerHeight) * 2 - 1;
+    };
+    const onPointerLeave = () => {
+      pointerTarget.current.x = 0;
+      pointerTarget.current.y = 0;
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    document.addEventListener('pointerleave', onPointerLeave);
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerleave', onPointerLeave);
+    };
+  }, []);
+
+  // The same tilt the gallery and the detail card already apply, factored out
+  // so the hero cluster can use it too: mostly a left/right turn on Y, with a
+  // much smaller nod on X, both on the inner mesh so nothing that poses the
+  // outer group has to know about it.
+  function applyPointerTilt() {
+    for (let i = 0; i < meshRefs.length; i += 1) {
+      const mesh = meshRefs[i].current;
+      if (!mesh) continue;
+      mesh.rotation.y = pointerCurrent.current.x * PARALLAX_AMOUNT;
+      mesh.rotation.x = -pointerCurrent.current.y * PARALLAX_AMOUNT * 0.5;
+    }
+  }
+
   useFrame((_, delta) => {
     const lerpF = 1 - Math.exp(-LERP_SPEED * delta);
     pointerCurrent.current.x += (pointerTarget.current.x - pointerCurrent.current.x) * lerpF;
@@ -492,6 +540,12 @@ const CanRig = forwardRef(function CanRig(
 
     if (!entranceDoneRef.current) {
       applyEntrancePose(entranceProgressRef.current);
+      // The hero cluster lives in this branch — it is the state the page opens
+      // on, and it used to be the one state with no cursor response at all,
+      // because applyEntrancePose returns before the tilt below ever runs.
+      // applyEntrancePose only writes each can's *group* transform, so putting
+      // the tilt on the inner mesh adds to it instead of fighting it.
+      applyPointerTilt();
       return;
     }
 

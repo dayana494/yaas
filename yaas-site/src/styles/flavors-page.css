@@ -8,6 +8,16 @@
   background: #ffffff;
 }
 
+/* The gallery half of /flavors — the homepage's own first screen, minus its
+   pinned scroll machinery. .intro-pin already carries the full-viewport box and
+   the stacking order that Scene/SliderScreen expect (index.css); here it simply
+   sits in flow instead of being pinned, and .is-entrance-done (normally set by
+   the homepage's entrance scrub) is what re-enables pointer events on the UI
+   layer. */
+.flavors-gallery {
+  position: relative;
+}
+
 .flavors-page {
   padding: clamp(64px, 10vh, 120px) 0 clamp(48px, 8vh, 88px);
   color: var(--ink);

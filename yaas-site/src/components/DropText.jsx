@@ -119,12 +119,45 @@ const DropText = forwardRef(function DropText(
     }
 
     if (animateOnScroll) {
-      const ctx = gsap.context(() => {
-        ScrollTrigger.create({ trigger: container, start: scrollStart, once: true, onEnter: playPieces });
-      }, container);
+      // An IntersectionObserver, not a ScrollTrigger.
+      //
+      // ScrollTrigger resolves 'top 85%' into an absolute scroll position at
+      // creation time, and for a heading inside a *pinned* box that position is
+      // not trustworthy: while pinned the element is position: fixed, so its own
+      // rect reports where it is stuck on screen rather than the document slot
+      // it came from, and every pin on this page also has its start corrected by
+      // hand one frame after mount (see HomePage), which moves the spacers and
+      // therefore everything measured against them. Two separate defects came
+      // out of that. First the trigger fired at load for headings still
+      // thousands of pixels below the fold — patched here with a two-frame
+      // deferral and a geometric guard. Then, once the About the Brand and
+      // Contact blocks joined the pinned sections, the opposite: measured on a
+      // full slow scroll of the page, .advantages-title, .faq-heading and
+      // .contact-heading revealed 0 of 10, 0 of 5 and 0 of 12 pieces — their
+      // triggers had resolved somewhere already behind the reader and never
+      // called back, so the guard never got a chance to say yes.
+      //
+      // An observer has no resolved position to be wrong about. It reports
+      // whether the element is actually on screen, which is the only thing this
+      // reveal ever wanted to know, and it is just as true of a pinned element
+      // as a static one. rootMargin trims the bottom 15% of the viewport so it
+      // still fires where 'top 85%' did — as the heading comes up into view,
+      // not the instant its first pixel clears the edge.
+      let played = false;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (played || !entries.some((entry) => entry.isIntersecting)) return;
+          played = true;
+          observer.disconnect();
+          playPieces();
+        },
+        { threshold: 0, rootMargin: '0px 0px -15% 0px' }
+      );
+      observer.observe(container);
+
       return () => {
+        observer.disconnect();
         gsap.killTweensOf(pieces);
-        ctx.revert();
       };
     }
 

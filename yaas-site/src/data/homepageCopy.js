@@ -29,20 +29,16 @@ export const BRAND_TEASER = {
 };
 
 export const CONTACT = {
-  h2: 'Hit Us Up',
-  copy: "Questions, ideas, partnership pitches — hit us up, we'll figure it out.",
-  // The source doc (yaas-homepage.md, Screen 7) only names these three
-  // channel types — email / Telegram / VK — with no actual address/handle
-  // for any of them, plus its own dev note that Telegram/VK were carried
-  // over from the RU site and should be swapped for the US brand's real
-  // socials before shipping. No invented address/handle/link here as a
-  // result — `href: null` renders as a plain (non-clickable) label instead
-  // of a fabricated contact.
-  channels: [
+  // Figma node 309:195 — one sentence, no separate sub-paragraph any more.
+  h2: "Questions, ideas, partnership pitches — hit us up, we'll figure it out",
+  // The two channels the mock shows, as pills with a trailing arrow. The
+  // source doc (yaas-homepage.md, Screen 7) names channel types but no actual
+  // address or handle for either, and its own dev note says the RU site's
+  // Telegram should be swapped for the US brand's real one before shipping —
+  // so no address is invented here. href: null renders the pill as a
+  // non-clickable label rather than a link to nowhere.
+  actions: [
     { label: 'Email', href: null },
     { label: 'Telegram', href: null },
-    { label: 'VK', href: null },
   ],
-  cta: 'See All Contact Info →',
-  ctaHref: '/contacts',
 };

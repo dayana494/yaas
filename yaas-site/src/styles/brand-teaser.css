@@ -1,69 +1,191 @@
-/* ---------- Screen 5: Brand Teaser ----------
-   Figma node 173:2 (frame 48) — a 1200px-wide reference frame, 50px side
-   margins, 20px gutters, 12 columns. Flat white background of its own —
-   unlike Advantages and FAQ on either side, this section does not sit on
-   the shared gradient backdrop. No shadow under the photos, no pin/slide —
-   just the same plain fade-in-once every other simple section already
-   uses. Column math: line 1 starts at column 3; line 2, both body
-   paragraphs and the CTA all start at column 6. */
-.brand-teaser {
+/* ---------- Screen 5: About the Brand ----------
+   Two Figma frames: 302:2 is the opening state (the heading alone, centred in
+   the viewport), 302:146 is the assembled one (a stack of four photos in the
+   middle, body copy left, body copy + CTA right). The motion between them
+   follows the reference site's "The Cliff Villa" section — see
+   BrandTeaserScreen.jsx for the phase-by-phase breakdown.
+
+   The section is laid out once, in its final positions, and everything the
+   animation does is a transform on top of that. Nothing here depends on a
+   scroll state, so the assembled state is also exactly what
+   prefers-reduced-motion (and a JS failure) falls back to. */
+
+.about-brand {
+  /* The one heading scale shared by every block on this page — .screen2-h2,
+     .advantages-title and .advantages .faq-heading all carry these same
+     numbers. Figma's own 80px for "Not For Everyone." at a 1920 frame is the
+     top of this clamp, so the two agree exactly at the mock's own width. */
+  --about-heading-size: clamp(30px, 4.17vw, 80px);
+  /* "For Our People." is 150px against that 80px in the mock. Keeping the
+     ratio rather than the pixel value is what makes it survive autoscale: the
+     second line is always 1.875x the first, so the pair looks like the mock at
+     every width instead of only at 1920. Deliberately NOT a transform: scale()
+     or a %/em off some container — the same trap the Screen 3 cards hit. */
+  --about-heading-ratio: 1.875;
+
+  /* The photo card, 560 x 706.796 in the mock — 72.8% of that frame's height.
+     Width is the constrained side: it has to clear the two text columns beside
+     it, so it is capped by both the viewport's width and what its height
+     allows, and the height is derived back from it so the aspect ratio can
+     never drift. The heading has dissolved by the time the stack lands, so the
+     stack has the whole viewport to be centred in. */
+  --about-card-w: clamp(180px, min(29vw, calc((100dvh - 140px) * 0.7923)), 560px);
+  --about-card-h: calc(var(--about-card-w) / 0.7923);
+
   position: relative;
+  /* Below .advantages (z-index: 3), which is what makes the handover read as
+     that section sliding off to uncover this one rather than the two meeting
+     edge to edge. Paired with the negative margin below: this section's top
+     edge sits exactly one viewport above the bottom of the block above, so its
+     pin engages at the moment that block's bottom edge is at the bottom of the
+     screen and travels up across it. The rounding of that edge on its way out
+     is --fall-radius, written onto .advantages by the fall driver in
+     scroll/riseTransition.js. */
+  z-index: 2;
+  margin-top: -100vh;
+  margin-top: -100dvh;
   background: #ffffff;
-  padding: clamp(90px, 14vh, 160px) 0 clamp(260px, 32vh, 380px);
+  overflow: hidden;
   color: var(--ink-on-light);
+  /* Leaves the same way the Advantages/FAQ section does: its bottom edge closes
+     over as it travels up off the footer, instead of ending on a flat cut.
+     Written per frame by the same fall driver in scroll/riseTransition.js — not
+     a second implementation of it — and clipped by the overflow above. */
+  border-bottom-left-radius: var(--fall-radius, 0px);
+  border-bottom-right-radius: var(--fall-radius, 0px);
 }
 
-.brand-teaser-grid {
+/* prefers-reduced-motion gets no pin, and therefore no pin-spacer to hold the
+   scroll room the negative margin above is paid out of — leaving this section
+   with zero net height in the flow, entirely behind the block above it. Without
+   the climb there is nothing for that margin to do anyway. */
+.about-brand.is-static {
+  margin-top: 0;
+}
+
+/* The one-viewport box GSAP pins, same split as .advantages/.advantages-pin:
+   the outer box keeps the negative margin and stays in flow (GSAP folds a
+   pinned element's own margins into its spacer, which would swallow it),
+   the inner one is what actually holds still.
+
+   overflow: hidden belongs HERE, not one level up: while pinned this box is
+   position: fixed, and a fixed element is not clipped by an ancestor's
+   overflow. This is the clip the cards fly in from behind. */
+.about-brand-pin {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  column-gap: 20px;
-  row-gap: 0;
-  padding: 0 50px;
+  z-index: 1;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+/* Figma 302:148 — an oversized YAAS wordmark at 5% opacity; the mock's pale
+   pink field is the inside of the letters and the white is the space between
+   them. Sized off this box's own height (not a vw width) so it stays the same
+   watermark on a phone as on a desktop instead of thinning to a band.
+
+   One viewport tall and moved between three states by the backdrop driver in
+   scroll/riseTransition.js — absolute at the section's top, fixed while the
+   section covers the viewport, parked at its bottom once past. That is what
+   carries this one field across both the About block and the Contact block
+   below it: the section's own white fill covers the whole box at every moment
+   (so there is never a gap), and the watermark rides the viewport rather than
+   restarting per block, so the join between the two has nothing to show. The
+   boundaries are invisible because at each one the two positions coincide. */
+.about-brand-bg {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: #ffffff;
+}
+
+.about-brand-bg.is-fixed {
+  position: fixed;
+  top: 0;
+}
+
+.about-brand-bg.is-parked {
+  position: absolute;
+  top: auto;
+  bottom: 0;
+}
+
+.about-brand-bg img {
+  position: absolute;
+  left: 50%;
+  top: -1%;
+  height: 128%;
+  width: auto;
+  max-width: none;
+  transform: translateX(-50%);
 }
 
 /* ---------- Heading ----------
-   Unified block-heading scale (matches the site's other h2s) — line 2 sits
-   with no extra margin: plain stacking, not an added gap. */
-.brand-teaser-heading-line {
-  grid-row: auto;
-  align-self: start;
+   Centred in the pinned viewport, and it stays exactly there: phase 2 dissolves
+   it in place with blur + opacity from JS, never a translate or a scale. So
+   nothing here has to know about the animation — the slot is just "the middle
+   of the screen".
+
+   Under the stage rather than over it, so the cards arriving on their arc pass
+   in front of the heading while it is going out of focus instead of being
+   overlaid by it. */
+.about-brand-heading-slot {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.about-brand-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: calc(100% - 40px);
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(32px, 6.2vw, 88px);
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  text-align: center;
 }
 
-@media (max-width: 768px) {
-  .brand-teaser-heading-line {
-    font-size: clamp(26px, 8vw, 44px);
-  }
-
-  .brand-teaser-text {
-    font-size: 14px;
-  }
-}
-
-.brand-teaser-heading-line-1 {
-  grid-column: 3 / -1;
-  grid-row: 1;
+.about-brand-heading-line-1 {
+  font-size: var(--about-heading-size);
   color: var(--ink-on-light);
 }
 
-.brand-teaser-heading-line-2 {
-  grid-column: 6 / -1;
-  grid-row: 2;
+.about-brand-heading-line-2 {
+  font-size: calc(var(--about-heading-size) * var(--about-heading-ratio));
   color: #e53a6b;
 }
 
-/* Body copy uses the site's own 16px/14px body scale. Figma's own
-   paragraph-to-paragraph and heading-to-paragraph gaps (~50px / ~20px) are
-   kept as the two paragraphs' own margin-top. */
-.brand-teaser-text {
-  grid-column: 6 / 10;
-  align-self: start;
+/* ---------- Stage: copy left, photo stack centre, copy + CTA right ----------
+   Figma 302:146's own columns — left copy at x=50 w=440, right column at
+   x=1430 w=435, i.e. both flush to the frame's 50px margins, with the stack
+   centred between them. */
+.about-brand-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 50px;
+}
+
+/* The site's own body scale (16px / 14px), same as .brand-teaser-text was and
+   as .faq-answer and the contact copy still are. */
+.about-brand-text {
   margin: 0;
   font-family: var(--font-beiruti);
   font-weight: 500;
@@ -72,25 +194,122 @@
   color: var(--ink-on-light);
 }
 
-.brand-teaser-text-1 {
-  grid-row: 3;
-  margin-top: clamp(32px, 5vh, 50px);
+/* The left paragraph is the one exception the spec carves out: the site's body
+   size plus 4px, nothing else about it changed. */
+.about-brand-text-lead {
+  flex: none;
+  width: 440px;
+  max-width: 28vw;
+  font-size: 20px;
 }
 
-.brand-teaser-text-2 {
-  grid-row: 4;
-  margin-top: 20px;
+.about-brand-aside {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 435px;
+  max-width: 28vw;
+  /* 46px between the paragraph and the button in the mock. */
+  gap: clamp(24px, 4vh, 46px);
 }
 
-/* White fill / black outline, inverting on hover — same interactive
-   language as .hero-cta and .detail-cta, flipped for this section's own
-   flat white background instead of the gradient those two sit on. */
+/* The CTA is the site's existing one, reused as-is per spec — .brand-teaser-cta
+   below is unchanged. Only its grid-era spacing is neutralised here, since it
+   is a flex child now and the column's own gap already spaces it. */
+.about-brand-aside .brand-teaser-cta {
+  margin-top: 0;
+}
+
+/* ---------- The photo stack ----------
+   Four identical cards on one centre. In the mock the fan is made out of
+   rotation alone (6.58deg / 2.5deg / -1.08deg / -3deg back-to-front, with a
+   small opposing skew), which is why the slots in data/aboutBrand.js are
+   rotations rather than offsets — and why cycling a card between slots in
+   phase 4 is just a re-tween of the same three numbers. */
+.about-brand-deck {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  width: var(--about-card-w);
+  height: var(--about-card-h);
+  transform: translate(-50%, -50%);
+}
+
+.about-brand-card {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ffffff;
+  will-change: transform;
+}
+
+.about-brand-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Mobile/tablet ----------
+   Three stacked rows instead of three columns — the same rearrangement the
+   reference site makes at its own breakpoint — with the stack shrunk enough
+   that heading, copy, photos and CTA still fit one viewport. */
+@media (max-width: 899px) {
+  .about-brand {
+    --about-card-w: clamp(150px, 46vw, 260px);
+  }
+
+  .about-brand-stage {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: clamp(12px, 2.2vh, 20px);
+    padding: clamp(24px, 4vh, 40px) 20px;
+  }
+
+  .about-brand-deck {
+    position: relative;
+    left: auto;
+    top: auto;
+    flex: none;
+    align-self: center;
+    transform: none;
+  }
+
+  .about-brand-text-lead,
+  .about-brand-aside {
+    width: 100%;
+    max-width: none;
+  }
+
+  .about-brand-text {
+    font-size: 14px;
+  }
+
+  .about-brand-text-lead {
+    font-size: 18px;
+  }
+
+  .about-brand-aside {
+    gap: clamp(14px, 2.4vh, 22px);
+  }
+}
+
+@media (max-width: 768px) {
+  .about-brand {
+    /* Matches every other block heading's own mobile override. */
+    --about-heading-size: clamp(26px, 8vw, 44px);
+  }
+}
+
+/* ---------- CTA ----------
+   White fill / black outline, inverting on hover — the same interactive
+   language as .hero-cta and .detail-cta, and unchanged from the previous
+   version of this section. */
 .brand-teaser-cta {
-  grid-column: 6 / -1;
-  grid-row: 5;
-  justify-self: start;
-  align-self: start;
-  margin-top: clamp(40px, 7vh, 64px);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -110,94 +329,4 @@
 .brand-teaser-cta:hover {
   background: var(--ink-on-light);
   color: #ffffff;
-}
-
-/* ---------- Photos ----------
-   Photo 1 (the fanned cans) spans columns 1-4, flush to the grid's left
-   edge, rotated -6°; photo 2 (the overhead drinking shot) spans columns
-   10-12, flush to the right edge, rotated +6°. No box-shadow — the Figma
-   frame doesn't have one. position: absolute (anchored to the grid lines
-   via grid-column/grid-row, still) takes both photos out of row-track
-   sizing entirely — as normal grid items, being far taller than the text
-   stack's combined height, they'd force the grid to distribute their extra
-   height across every row they span, inflating the gap between the
-   heading lines even though neither line's own line-height had changed. */
-.brand-teaser-photo {
-  position: absolute;
-  grid-row: 1 / 6;
-  top: 0;
-  overflow: hidden;
-  border-radius: 20px;
-}
-
-.brand-teaser-photo img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.brand-teaser-photo-primary {
-  grid-column: 1 / 5;
-  left: 0;
-  aspect-ratio: 4 / 5;
-  margin-top: calc(clamp(70px, 10vh, 130px) + 30px);
-  transform: rotate(-6deg);
-}
-
-.brand-teaser-photo-secondary {
-  grid-column: 10 / -1;
-  /* 1.4x smaller than the grid area it's pinned to, still flush with the
-     container's right edge (right: 0) rather than filling the full column
-     span. */
-  right: 0;
-  width: calc(100% / 1.4);
-  aspect-ratio: 3 / 4;
-  margin-top: clamp(240px, 28vh, 300px);
-  transform: rotate(6deg);
-}
-
-/* ---------- Mobile/tablet: vertical stack, grid abandoned below 900px ---------- */
-@media (max-width: 899px) {
-  .brand-teaser-grid {
-    display: flex;
-    flex-direction: column;
-    padding: 0 24px;
-  }
-
-  .brand-teaser-heading-line-1,
-  .brand-teaser-heading-line-2 {
-    grid-column: auto;
-  }
-
-  .brand-teaser-text {
-    grid-column: auto;
-    max-width: 46ch;
-  }
-
-  .brand-teaser-cta {
-    grid-column: auto;
-    margin-top: clamp(24px, 5vh, 32px);
-  }
-
-  .brand-teaser-photo {
-    position: static;
-    grid-row: auto;
-    margin-top: clamp(40px, 8vh, 64px);
-    width: 100%;
-    max-width: 420px;
-  }
-
-  .brand-teaser-photo-primary {
-    grid-column: auto;
-    transform: rotate(-3deg);
-  }
-
-  .brand-teaser-photo-secondary {
-    grid-column: auto;
-    width: 100%;
-    margin-top: clamp(40px, 8vh, 64px);
-    margin-left: auto;
-    transform: rotate(3deg);
-  }
 }

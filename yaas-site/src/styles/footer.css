@@ -1,156 +1,135 @@
 /* ---------- Site footer ----------
-   Rebuilt per spec: same animated gradient background as the hero/
-   advantages/faq/contact panels (HeroGradientBackground), full-height,
-   with a large dominant wordmark on top and the link columns moved below
-   it instead of sitting beside a small inline brand block. Link data
-   (SITE_LINKS/FLAVORS/CONTACT.channels) is unchanged — only the layout. */
+   Figma node 309:231, a 1920x951 frame: the animated gradient full bleed, the
+   YAAS wordmark filling the block (1820 x 594 at top 93), a row of nav pills at
+   top 738, a hairline at 847, and the copyright / credit row at ~885. One
+   viewport tall, like the site's other full-screen blocks. */
 .site-footer {
   position: relative;
   overflow: hidden;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
   color: var(--ink);
+}
+
+/* On the homepage only (Footer's own `reveal` prop). It underlaps the About the
+   Brand + Contacts section by exactly one viewport and is pinned there for one,
+   so that section's bottom edge travels up across it and uncovers it — the
+   rounding on the way out is --fall-radius on .about-brand (brand-teaser.css),
+   the same mechanism and the same driver the Advantages/FAQ section leaves by.
+   Below it in the stacking order, which is what makes the handover read as one
+   block sliding off the other rather than the two meeting edge to edge. */
+.site-footer.is-reveal {
+  z-index: 1;
+  margin-top: -100vh;
+  margin-top: -100dvh;
 }
 
 .site-footer-inner {
   position: relative;
   z-index: 1;
-  width: 100%;
-  padding-top: clamp(56px, 8vh, 88px);
-  padding-bottom: clamp(24px, 4vh, 32px);
-}
-
-.site-footer-logo-row {
-  width: 100%;
-  text-align: center;
-}
-
-/* Stretched edge-to-edge across the row by Footer.jsx's own useFillWidth
-   (scaleX from the text's natural rendered width to the row's real width —
-   no font-size alone lands a fixed 4-character string exactly on a
-   container's own width) — same "giant wordmark" spirit as
-   .hero-logo-giant (hero.css), not the same technique: that one is a
-   full-bleed 100vw background layer sized by clamp() alone, this one sits
-   inline within .site-container's own width and needs to hit it exactly.
-   The font-size clamp() below still matters — it sets this row's height
-   (so the section doesn't get a huge blank gap here) and keeps the
-   scaleX stretch itself modest rather than distorting tiny text hugely. */
-.logo-text.site-footer-logo-giant {
-  display: inline-block;
-  font-size: clamp(96px, 18vw, 280px);
-  line-height: 1;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  transform-origin: center center;
-}
-
-.site-footer-tagline {
-  margin: clamp(16px, 3vh, 28px) auto 0;
-  max-width: 46ch;
-  text-align: center;
-  font-family: var(--font-beiruti);
-  font-weight: 500;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
-/* Full width of the container (1fr columns, no minmax cap + centering) —
-   was a narrow, center-clustered 3-column block leaving large empty
-   margins on either side; the three columns now spread across the same
-   full width every other section's own content uses. */
-.site-footer-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(32px, 5vw, 56px);
-  margin-top: clamp(48px, 9vh, 96px);
-  padding-bottom: clamp(40px, 6vh, 56px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
-}
-
-.site-footer-col-title {
-  display: block;
-  margin-bottom: 18px;
-  font-family: var(--font-beiruti);
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.site-footer-links {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  width: 100%;
+  /* 56px side margins in the mock. */
+  padding: 0 56px;
 }
 
-.site-footer-links a,
-.site-footer-static {
+/* ---------- Wordmark ----------
+   Sized entirely from JS (Footer.jsx's useWordmarkFit): font-size solved for
+   the mock's own height, then a scaleX onto its own width. Nothing here sets a
+   size — a clamp() here would just fight it. */
+.site-footer-logo-row {
+  /* Full bleed back out of .site-footer-inner's 56px padding: in the mock the
+     wordmark is inset 50px from the frame while the pills below it start at 56,
+     so measuring it against the padded row would inset it twice (measured 1244
+     against the mock's own 1351 at this width). */
+  margin: 0 -56px;
+  width: auto;
+  text-align: center;
+  line-height: 0.78;
+}
+
+/* The wordmark doubles as the link home. Inline-block so the link's own box is
+     exactly the wordmark's, and nothing bigger sits over the rows below it. */
+.site-footer-logo-link {
+  display: inline-block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo-text.site-footer-logo-giant {
+  display: inline-block;
+  transform-origin: center center;
+  color: var(--ink);
+  white-space: nowrap;
+  line-height: 0.78;
+}
+
+/* ---------- Nav ----------
+   The first screen's nav pills, unchanged: .hero-pill (hero.css) is on the
+   element itself, so font, padding, border, fill and hover are that one
+   definition. No arrow here — the mock's footer pills are plain. Fixed px by
+   way of .hero-pill, so they stay the size they are on screen 1 no matter how
+   wide this block gets. */
+/* Above the wordmark row in both paint and hit-testing. The height cap in
+   Footer.jsx's fit already keeps the two from overlapping; this is the backstop,
+   so a wordmark that ever did spill could not swallow the links again. */
+.site-footer-nav,
+.site-footer-bottom {
+  position: relative;
+  z-index: 1;
+}
+
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  /* 12px between pills in the mock. */
+  gap: 12px;
+  margin-top: clamp(24px, 5vh, 56px);
+}
+
+/* ---------- Bottom row ----------
+   Copyright left, credit right, separated from the block above by a hairline —
+   the mock's own line at y=847, full bleed. The site's own body scale, 16px /
+   14px — the same size every other run of text on the page uses, per spec; the
+   mock's own 22px is not a scale this site has anywhere else. Fixed px rather
+   than a viewport unit so it stays that size instead of scaling with the block
+   (the autoscale rule this section shares with the Screen 3 cards). */
+.site-footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: clamp(24px, 5vh, 60px);
+  padding-top: clamp(16px, 3vh, 36px);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
   font-family: var(--font-beiruti);
   font-weight: 500;
   font-size: 16px;
+  line-height: 1.35;
   color: var(--ink);
-  text-decoration: none;
-  opacity: 0.85;
-  transition: opacity 200ms ease;
 }
 
-.site-footer-static {
-  cursor: default;
-}
-
-.site-footer-links a:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-
-.site-footer-bottom {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: clamp(20px, 3vh, 28px);
-  font-family: var(--font-beiruti);
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-
-@media (max-width: 800px) {
-  .site-footer-grid {
-    grid-template-columns: repeat(2, 1fr);
-    row-gap: 40px;
+@media (max-width: 899px) {
+  .site-footer-inner {
+    padding: 0 20px;
   }
-}
 
-@media (max-width: 480px) {
-  .site-footer-grid {
-    grid-template-columns: 1fr;
+  .site-footer-logo-row {
+    margin: 0 -20px;
   }
-}
 
-@media (max-width: 768px) {
-  .site-footer-tagline,
-  .site-footer-links a,
-  .site-footer-static {
+  .site-footer-nav {
+    gap: 8px;
+  }
+
+  .site-footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     font-size: 14px;
-  }
-
-  /* Each link's own tap target was only ~13px tall (just the text line) —
-     padding here grows it toward a real touch target; the list's own gap
-     drops by the same amount added so the column doesn't get noticeably
-     taller overall, just each row's hit area within it. */
-  .site-footer-links {
-    gap: 0;
-  }
-
-  .site-footer-links a,
-  .site-footer-static {
-    display: block;
-    padding: 12px 0;
   }
 }

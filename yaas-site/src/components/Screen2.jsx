@@ -1,17 +1,19 @@
-import ScenarioHeadline from './ScenarioHeadline';
+import ScenarioArcGallery from './ScenarioArcGallery';
 import ScenarioCardsIsometric from './ScenarioCardsIsometric';
 
-// Homepage screen 2 — line-by-line headline, then the scroll-pinned
-// scenario card stack. Pure composition; each half owns its own GSAP work.
-// The background (brand pink + a faint texture) is fixed (position:fixed,
-// see .screen2-bg-fixed/.screen2-bg-texture) so it stays put behind both
-// halves instead of scrolling away with them.
+// Homepage screen 2 — a pinned stage holding the headline, the concave-arc
+// scenario gallery and its expand (Figma node 258:208), handing straight
+// over to the existing scroll-pinned scenario card stack. The two pins sit
+// back to back: the arc's last frame leaves the party photo at exactly the
+// geometry .scenario-card-iso uses, so the stack's own first card takes over
+// in place rather than sliding in. Background (white + a faint texture) is
+// one layer behind both halves.
 export default function Screen2() {
   return (
     <section className="screen2">
       <div className="screen2-bg-fixed" aria-hidden="true" />
       <div className="screen2-bg-texture" aria-hidden="true" />
-      <ScenarioHeadline />
+      <ScenarioArcGallery />
       <ScenarioCardsIsometric />
     </section>
   );

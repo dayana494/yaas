@@ -225,8 +225,9 @@ button {
   display: block;
 }
 
-/* Shared 12-column heading grid — same column math as .brand-teaser-grid
-   (50px side margins, 20px gutters), reused by .advantages-heading and
+/* Shared 12-column heading grid — 50px side margins, 20px gutters (the same
+   column math the About the Brand section still lays its two text columns on),
+   reused by .advantages-heading and
    .faq-heading so their block headings sit off-center (starting at column
    3, left-aligned) instead of centered on the page. Only positions the
    heading itself; the content below it (ArcCards, the FAQ list) keeps its
@@ -248,4 +249,12 @@ button {
   background-image: url('/textures/bg-texture.jpg');
   background-size: cover;
   background-position: center;
+}
+
+/* Shared piece wrapper for ScrollAssembleText (see
+   components/ScrollAssembleText.jsx) — each character is transformed
+   independently, so it needs a box of its own to transform. */
+.assemble-piece {
+  display: inline-block;
+  will-change: transform;
 }

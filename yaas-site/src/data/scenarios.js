@@ -1,25 +1,19 @@
-// Screen 2 copy — verbatim from yaas-homepage.md ("Screen 2 — About the Drink").
-// The original doc gives 5 fragments revealed line by line; the live build
-// groups them into two phrases that swap in place on scroll (see
-// ScenarioHeadline.jsx) instead of stacking as 5 separate lines.
-export const SCREEN2_HEADLINE_LINES = [
-  "This isn't about",
-  'hyping you up.',
-  "It's about",
-  'staying locked in',
-  'to your own thing.',
-];
-
+// Screen 2 copy — verbatim from yaas-homepage.md ("Screen 2 — About the
+// Drink"). The doc gives the headline as 5 fragments revealed line by line;
+// the build uses them as the two sentences Figma node 258:208 colours
+// separately — GROUP_1 in ink, GROUP_2 in the brand pink, both wrapping
+// naturally inside one centred measure (see ScenarioArcGallery.jsx).
 export const SCREEN2_HEADLINE_GROUP_1 = "This isn't about hyping you up.";
 export const SCREEN2_HEADLINE_GROUP_2 = "It's about staying locked in to your own thing.";
 
-// Figma node 196:17 breaks GROUP_2 across two lines instead of one — same
-// verbatim text as SCREEN2_HEADLINE_GROUP_2 above, just split where that
-// frame splits it. ScenarioHeadline.jsx renders these two plus GROUP_1 as
-// three lines at both breakpoints — absolutely positioned per the Figma
-// grid on desktop, simply stacked and centered on mobile.
-export const SCREEN2_HEADLINE_LINE_2 = "It's about staying";
-export const SCREEN2_HEADLINE_LINE_3 = 'locked in to your own thing.';
+// Screen 2's arc gallery (Figma node 258:208) — left-to-right order of the
+// looping strip, with the party shot dead centre: that's the photo the
+// scroll-driven travel stops on before it expands (see
+// ScenarioArcGallery.jsx). Photos themselves all come from
+// /public/photos/scenarios — the Figma mockup's own images are placement
+// stand-ins only, never assets.
+export const SCREEN2_ARC_ORDER = ['gaming', 'roadtrip', 'squad', 'workout', 'lecture'];
+export const SCREEN2_ARC_STOP_ID = 'squad';
 
 export const SCREEN2_SUBLINE =
   "You don't drink YAAS on a schedule — you drink it when you need to show up 100%.";

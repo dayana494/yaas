@@ -5,21 +5,38 @@ import { HERO } from '../data/homepageCopy';
 
 gsap.registerPlugin(ScrollToPlugin);
 
-// The only real in-page anchor jump on the site — eased instead of an
-// instant native jump. #flavors (App.jsx) is now the merged hero+gallery
-// section itself, so its own top is scrollY 0 (a jump straight to it would
-// be a no-op); the real destination is one viewport height further down,
-// exactly where the hero->gallery entrance ScrollTrigger's own `end` sits
-// (start: 'top top', end: '+=innerHeight' — see App.jsx), i.e. past the
-// entrance with the gallery cans already settled. Left as a real <a href>
-// for accessibility/middle-click/etc.; this only intercepts a plain
-// left-click.
+// Every in-page jump on this screen — eased instead of an instant native
+// jump. Anything already pinned by GSAP is wrapped in a pin-spacer by then,
+// and it's the spacer that holds the section's real document slot (the
+// section itself is position:fixed while pinned, so its own rect reports
+// where it's stuck on screen instead), so the scroll target is read off
+// whichever of the two is actually in normal flow.
+//
+// #flavors (the merged hero+gallery section) is the one special case: its
+// own top is scrollY 0, so jumping straight there would be a no-op. The real
+// destination is one viewport further down, exactly where the hero->gallery
+// entrance ScrollTrigger's own `end` sits — i.e. past the entrance, with the
+// gallery cans already settled.
+function scrollToSection(hash) {
+  const el = document.querySelector(hash);
+  if (!el) return false;
+  const box = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el;
+  let y = box.getBoundingClientRect().top + window.scrollY;
+  if (hash === '#flavors') y += window.innerHeight;
+  gsap.to(window, { duration: 1, ease: 'power2.inOut', scrollTo: { y } });
+  return true;
+}
+
+function handleNavClick(event) {
+  const hash = event.currentTarget.getAttribute('href');
+  if (!hash?.startsWith('#')) return;
+  // Only take over once the target actually exists on this page; otherwise
+  // the plain anchor keeps working.
+  if (scrollToSection(hash)) event.preventDefault();
+}
+
 function handleFlavorsCtaClick(event) {
-  const wrap = document.querySelector('#flavors');
-  if (!wrap) return;
-  event.preventDefault();
-  const targetY = wrap.getBoundingClientRect().top + window.scrollY + window.innerHeight;
-  gsap.to(window, { duration: 1, ease: 'power2.inOut', scrollTo: { y: targetY } });
+  if (scrollToSection('#flavors')) event.preventDefault();
 }
 
 // Matches the Figma frame exactly (node 47:21, Frame 40: 1200x650) so every
@@ -60,7 +77,15 @@ function useHeroScale() {
   }, []);
 }
 
-const NAV_LINKS = ['Flavors', 'About us', 'Contacts', 'Collaboration'];
+// Figma node 270:174: three pills together at the left, one on its own at
+// the right edge. Each points at a real section of this page, so the click
+// handler above can ease the scroll to it.
+const NAV_LINKS_LEFT = [
+  { label: 'Flavors', href: '#flavors' },
+  { label: 'About us', href: '#about' },
+  { label: 'FAQ', href: '#faq' },
+];
+const NAV_LINK_RIGHT = { label: 'Contacts', href: '#contact' };
 
 // DOM layer for the hero's nav/headline/copy (the "front" stage — see
 // .hero-stage in hero.css for the fixed-canvas + scale-transform sizing).
@@ -79,11 +104,17 @@ export default function HeroScreen({ textVisible }) {
     <div className="hero-screen">
       <div className="hero-stage hero-stage-front">
         <nav className="hero-nav">
-          {NAV_LINKS.map((label) => (
-            <a key={label} className="hero-pill" href="#" data-interactive>
-              {label}
-            </a>
-          ))}
+          <div className="hero-nav-left">
+            {NAV_LINKS_LEFT.map((link) => (
+              <a key={link.label} className="hero-pill" href={link.href} data-interactive onClick={handleNavClick}>
+                {link.label}
+              </a>
+            ))}
+          </div>
+
+          <a className="hero-pill hero-nav-right" href={NAV_LINK_RIGHT.href} data-interactive onClick={handleNavClick}>
+            {NAV_LINK_RIGHT.label}
+          </a>
         </nav>
 
         <div className={`hero-copy ${textVisible ? 'is-visible' : ''}`}>

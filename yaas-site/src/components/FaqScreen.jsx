@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import HeroGradientBackground from './HeroGradientBackground';
+import SectionHeading from './SectionHeading';
 import { FAQ_HEADING, FAQ_ITEMS } from '../data/faq';
 
 // Screen 6 — FAQ. Mechanic copied from donedrinks.com's own FAQ block (not
@@ -14,9 +14,8 @@ export default function FaqScreen() {
 
   return (
     <section className="faq" id="faq">
-      <HeroGradientBackground />
       <div className="section-heading-grid faq-heading-grid">
-        <h2 className="faq-heading">{FAQ_HEADING}</h2>
+        <SectionHeading as="h2" className="faq-heading" text={FAQ_HEADING} />
       </div>
       <div className="site-container faq-container">
         <div className="faq-list">

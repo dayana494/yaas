@@ -68,24 +68,40 @@
 }
 
 /* ---------- Nav ----------
-   One flex row, one shared gap value between every pair of neighbors
-   (including "Collaboration", now just the 4th item here instead of a
-   separately-positioned sibling with its own align-self) — was a column of
-   two rows (three pills, then Collaboration alone on its own line via
-   align-self: flex-end), which read as visually disconnected from the
-   other three instead of one nav. flex-wrap here is just a safety net for
-   truly narrow widths; at every width this project actually targets the
-   four pills fit on one line. */
+   Figma node 270:174: three pills grouped at the left, one on its own at the
+   right edge. The group keeps one shared gap between its own three, and the
+   lone right-hand pill is pushed out by the row's space-between rather than
+   by a margin of its own, so it always sits against the container edge. */
 .hero-nav {
   position: absolute;
   top: 16px;
   left: 0;
   right: 0;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 0 20px;
+}
+
+.hero-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Four pills at 14px don't fit one row at 375px — the right-hand one was
+   running off the edge. It drops to its own row there instead, still pinned
+   to the right; margin-left: auto is what holds it there once wrapping puts
+   it alone on a line (space-between has nothing left to push against). On
+   desktop nothing wraps and this changes nothing. */
+.hero-nav {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+.hero-nav-right {
+  margin-left: auto;
 }
 
 .hero-pill {
@@ -99,11 +115,15 @@
   min-height: 44px;
   font-family: var(--font-beiruti);
   font-weight: 500;
-  font-size: 11px;
+  /* Site-wide text scale: 16px desktop / 14px mobile (see the min-width:
+     1024px block below) — was 11px here and 20px there, both one-offs. */
+  font-size: 14px;
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
-  padding: 7px 12px;
+  /* Tight enough that all four pills hold one row at 375px — at wider
+     horizontal padding the left group wrapped onto a second line. */
+  padding: 8px 12px;
   border-radius: 100px;
   border: 1px solid #ffffff;
   background: rgba(217, 217, 217, 0.05);
@@ -224,13 +244,18 @@
   gap: 8px;
   font-family: var(--font-beiruti);
   font-weight: 500;
+  /* Type size and horizontal padding match .hero-pill (see the desktop rule
+     below for the pair at that breakpoint); the vertical padding is the one
+     deliberate difference — 10px instead of the pill's 8px, so the solid
+     button carries a little more weight than an outlined chip. */
   font-size: 14px;
   color: #212121;
   text-decoration: none;
   background: #ffffff;
   border: 1px solid #ffffff;
   border-radius: 100px;
-  padding: 12px 22px;
+  padding: 10px 12px;
+  min-height: 44px;
   pointer-events: auto;
   opacity: 0;
   transform: translateY(14px);
@@ -286,22 +311,24 @@
     top: 20px;
     left: 0;
     right: 0;
-    flex-wrap: nowrap;
     align-items: center;
-    /* Same shared gap between every pair, "Collaboration" included — was
-       justify-content: space-between pushing it alone to the stage's far
-       right edge with a much larger gap in front of it than between the
-       other three. */
-    justify-content: flex-start;
-    gap: 15px;
+    justify-content: space-between;
     padding: 0;
   }
 
+  .hero-nav-left {
+    flex-wrap: nowrap;
+    gap: 15px;
+  }
+
   .hero-pill {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 500;
-    letter-spacing: -0.4px;
-    padding: 6.5px 20px;
+    letter-spacing: -0.2px;
+    /* Trimmed along with the type: at 20px the pill needed this much room,
+       at 16px the same padding left the label adrift in the middle of it. */
+    padding: 8px 20px;
+    min-height: 0;
   }
 
   .hero-copy {
@@ -335,9 +362,16 @@
     line-height: 1.4;
   }
 
+  /* Same type size and same box as a nav pill (.hero-pill above): 16px and
+     8px/20px padding. Only the size is shared — the fill, the border and the
+     inverting hover stay the CTA's own, which is what keeps it reading as the
+     primary action rather than a fourth pill. Its place in the row is
+     unchanged: .hero-copy-row centres it against the subhead on the left and
+     space-between holds it against the stage's right edge. */
   .hero-cta {
     flex: none;
-    font-size: 18px;
-    padding: 13px 26px;
+    font-size: 16px;
+    padding: 10px 20px;
+    min-height: 0;
   }
 }

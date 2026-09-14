@@ -1,6 +1,12 @@
-// Screen 4 heading — shortened to just "Why YAAS" per spec (was the full
-// "Why YAAS Beats Whatever's Sitting in Your Fridge Right Now" line).
+// The short heading this screen carried for a while. Nothing renders it now —
+// kept so the wording isn't lost if it's wanted back.
 export const ADVANTAGES_HEADING = 'Why YAAS';
+
+// What the screen actually shows: the full line, centred, on Screen 2's own
+// heading scale. It fits at that size because the 120px inset above it sits
+// outside the pin (see .advantages in advantages.css) rather than eating into
+// the one viewport the heading and the carousel have to share.
+export const ADVANTAGES_HEADING_FULL = "Why YAAS Beats Whatever's Sitting in Your Fridge Right Now";
 
 export const ADVANTAGES = [
   {

@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SCENARIOS } from '../data/scenarios';
 import { FLAVORS } from '../data/flavors';
 import { SCENARIO_CARDS_TRIGGER_ID } from '../data/layout';
+import { RISE_UNITS } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -79,7 +80,21 @@ export default function ScenarioCardsIsometric() {
           id: SCENARIO_CARDS_TRIGGER_ID,
           trigger: pinRef.current,
           start: 'top top',
-          end: () => `+=${(N - 1) * window.innerHeight}`,
+          // (N-1) viewports of card flips, plus RISE_UNITS more during which
+          // this stack is simply held still while Screen 3 climbs up over it —
+          // the same handover Screen 2 gets from the intro pin above it. The
+          // matching idle tail on the timeline below is what keeps the flips
+          // themselves at exactly one viewport each despite the longer pin: a
+          // scrubbed timeline maps the trigger's whole 0->1 onto its own
+          // duration, so adding scroll without adding timeline would stretch
+          // every flip instead of appending a hold.
+          //
+          // Nothing is added here for whatever sits between this pin's spacer
+          // and Screen 3 — lengthening the pin grows its spacer by the same
+          // amount and pushes that section down with it, so the two never
+          // converge. That offset is cancelled on .advantages's own negative
+          // margin instead (see advantages.css).
+          end: () => `+=${(N - 1 + RISE_UNITS) * window.innerHeight}`,
           scrub: 1,
           pin: true,
           invalidateOnRefresh: true,
@@ -94,6 +109,10 @@ export default function ScenarioCardsIsometric() {
           i + 0.65
         );
       }
+
+      // The hold. Animates nothing — it exists only to give the timeline the
+      // same total duration as the pin's extended length.
+      tl.to({}, { duration: RISE_UNITS }, N - 1);
     }, pinRef);
 
     return () => ctx.revert();

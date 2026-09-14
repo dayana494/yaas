@@ -9,18 +9,27 @@ import HeroScreen from '../components/HeroScreen';
 import Screen2 from '../components/Screen2';
 import AdvantagesScreen from '../components/AdvantagesScreen';
 import BrandTeaserScreen from '../components/BrandTeaserScreen';
-import FaqScreen from '../components/FaqScreen';
-import ContactSection from '../components/ContactSection';
 import Footer from '../components/Footer';
 import SliderScreen from '../components/SliderScreen';
 import ThumbnailShot from '../components/ThumbnailShot';
 import { FLAVORS, DEFAULT_FLAVOR_INDEX } from '../data/flavors';
 import {
+  attachRiseDriver,
+  createFallDriver,
+  createRiseDriver,
+  createViewportBackdropDriver,
+} from '../scroll/riseTransition';
+import {
   ENTRANCE_UNITS,
   INTERACTIVE_UNITS,
+  SCREEN2_GAP_PX,
+  SCREEN2_RISE_UNITS,
   INTRO_TRIGGER_ID,
+  SCREEN2_ARC_TRIGGER_ID,
   SCENARIO_CARDS_TRIGGER_ID,
   ADVANTAGES_TRIGGER_ID,
+  ABOUT_TRIGGER_ID,
+  FOOTER_TRIGGER_ID,
 } from '../data/layout';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -117,7 +126,10 @@ export default function HomePage() {
   // corrected spacer has a different height than its placeholder one, which
   // shifts everything below it, .advantages included.
   useEffect(() => {
-    const raf = requestAnimationFrame(() => {
+    let raf = 0;
+    let resizeTimer = 0;
+
+    const correctPinStarts = () => {
       // Each correction below is now gated on *only* its own trigger/element
       // existing, not on every other one too. They used to share one
       // all-or-nothing guard requiring cards, advantages *and* brand-teaser
@@ -133,6 +145,39 @@ export default function HomePage() {
       // made the card stack appear to pin and show through *underneath* the
       // still-in-flow Screen2 headline on mobile — the headline hadn't
       // actually reached the pin yet; the pin had just already engaged.
+      // Every measurement below reads a section's *spacer* where GSAP has
+      // already wrapped one around it, never the section itself: a pinned
+      // element is position:fixed, so its own rect reports where it's stuck
+      // on screen rather than the document slot it came from — and with the
+      // placeholder 'top top' these pins can already be engaged by the time
+      // this pass runs. The spacer always stays in normal flow and always
+      // holds the real slot. Reading the element directly put Screen 2's arc
+      // pin 934px early on mobile (measured), which ran its whole
+      // travel-then-expand timeline before the section had even reached the
+      // top of the viewport.
+      const slotTop = (el) => {
+        const box = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el;
+        return box.getBoundingClientRect().top + window.scrollY;
+      };
+
+      // .intro-wrap's own spacer is what everything below sits on top of, and
+      // its height comes from an `end` function that may not have been
+      // evaluated yet this frame — settle it first so the very first
+      // measurement below isn't taken against a short spacer.
+      ScrollTrigger.getById(INTRO_TRIGGER_ID)?.refresh();
+
+      // Screen 2's arc gallery is now the first pin after .intro-wrap, so it
+      // inherits the same unreliable 'top top' resolution and gets corrected
+      // first — everything below measures against its settled spacer.
+      const arcTrigger = ScrollTrigger.getById(SCREEN2_ARC_TRIGGER_ID);
+      const arcEl = document.querySelector('.screen2-arc');
+      if (arcTrigger && arcEl) {
+        const arcVars = { ...arcTrigger.vars, start: slotTop(arcEl), animation: arcTrigger.animation };
+        arcTrigger.kill(true, true);
+        const newArcTrigger = ScrollTrigger.create(arcVars);
+        newArcTrigger.refresh();
+      }
+
       const cardsTrigger = ScrollTrigger.getById(SCENARIO_CARDS_TRIGGER_ID);
       const cardsIsoEl = document.querySelector('.scenario-cards-iso');
       if (cardsTrigger && cardsIsoEl) {
@@ -152,7 +197,7 @@ export default function HomePage() {
         // stale residue instead of clean natural flow) and, for cards
         // specifically, kills its linked flip-card timeline too (passed back
         // in via `animation` below — it needs to keep running).
-        const cardsStart = cardsIsoEl.getBoundingClientRect().top + window.scrollY;
+        const cardsStart = slotTop(cardsIsoEl);
         const cardsVars = { ...cardsTrigger.vars, start: cardsStart, animation: cardsTrigger.animation };
         cardsTrigger.kill(true, true);
         const newCardsTrigger = ScrollTrigger.create(cardsVars);
@@ -165,28 +210,79 @@ export default function HomePage() {
         newCardsTrigger.refresh();
       }
 
-      // Advantages' own pinned carousel is desktop-only (min-width: 1024px —
-      // see its own simpleMode gate); on narrower viewports there's no
-      // ADVANTAGES_TRIGGER_ID to correct at all, and that's fine — its
-      // mobile fallback uses a plain self-relative 'top 85%' fade-in with no
-      // dependency on a previous pin's real end position.
+      // Either Screen 3 variant may be mounted here, and each pins a
+      // different box: the hover-stack version pins .advantages-pin (the
+      // full-viewport box nested inside the rise container — the container
+      // itself must stay in flow, since GSAP folds a pinned element's margins
+      // into its spacer and that negative margin *is* the rise), the legacy
+      // arc version pins .advantages itself. Under prefers-reduced-motion the
+      // legacy version creates no ADVANTAGES_TRIGGER_ID at all and there's
+      // nothing here to correct — that's fine, its fallback uses a plain
+      // self-relative 'top 85%' fade with no dependency on a previous pin.
       const advantagesTrigger = ScrollTrigger.getById(ADVANTAGES_TRIGGER_ID);
-      const advantagesEl = document.querySelector('.advantages');
+      const advantagesEl = document.querySelector('.advantages-pin') || document.querySelector('.advantages');
       if (advantagesTrigger && advantagesEl) {
         // Reading .advantages only *after* cards' trigger has been rebuilt
         // (not before) matters: cards' corrected spacer has a different
         // height than its placeholder one, which shifts everything below it,
         // .advantages included.
-        const advantagesStart = advantagesEl.getBoundingClientRect().top + window.scrollY;
+        const advantagesStart = slotTop(advantagesEl);
         const advantagesVars = { ...advantagesTrigger.vars, start: advantagesStart, animation: advantagesTrigger.animation };
         advantagesTrigger.kill(true, true);
         const newAdvantagesTrigger = ScrollTrigger.create(advantagesVars);
         newAdvantagesTrigger.refresh();
       }
 
+      // About the Brand is chained after Advantages' own pin and inherits the
+      // same unreliable 'top top' resolution, so it gets the same treatment,
+      // measured last of all — every spacer above it is settled by this point.
+      // Under prefers-reduced-motion it creates no trigger at all (the section
+      // renders in its assembled state instead), hence the guard.
+      const aboutTrigger = ScrollTrigger.getById(ABOUT_TRIGGER_ID);
+      const aboutEl = document.querySelector('.about-brand-pin');
+      if (aboutTrigger && aboutEl) {
+        const aboutVars = { ...aboutTrigger.vars, start: slotTop(aboutEl), animation: aboutTrigger.animation };
+        aboutTrigger.kill(true, true);
+        const newAboutTrigger = ScrollTrigger.create(aboutVars);
+        newAboutTrigger.refresh();
+      }
+
+      // Last of all, the footer's own reveal pin — measured after everything
+      // above it has settled, same as each step before it.
+      const footerTrigger = ScrollTrigger.getById(FOOTER_TRIGGER_ID);
+      const footerEl = document.querySelector('.site-footer.is-reveal');
+      if (footerTrigger && footerEl) {
+        const footerVars = { ...footerTrigger.vars, start: slotTop(footerEl) };
+        footerTrigger.kill(true, true);
+        ScrollTrigger.create(footerVars).refresh();
+      }
+
       ScrollTrigger.refresh();
-    });
-    return () => cancelAnimationFrame(raf);
+    };
+
+    raf = requestAnimationFrame(correctPinStarts);
+
+    // Those corrected starts are plain numbers, so — unlike the string
+    // starts GSAP resolves itself — they don't re-resolve when the viewport
+    // changes: after a resize every one of them still describes the old
+    // layout, which lands Screen 2's whole travel-and-expand timeline at the
+    // wrong scroll position (measured ~930px early). Re-running the pass is
+    // what keeps them honest; debounced, and on the next frame so
+    // ScrollTrigger's own resize refresh has already settled the new layout.
+    const onResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(correctPinStarts);
+      }, 250);
+    };
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', onResize);
+    };
   }, []);
 
   const handleHeroEntranceStart = useCallback(() => {
@@ -287,14 +383,50 @@ export default function HomePage() {
     // there to be seen at all. pinSpacing:true removes the tail entirely:
     // release lands exactly at the spacer's own end, same as every other
     // pinned section on this page.
+    // Held past the gallery for two more stretches: a plain SCREEN2_GAP_PX
+    // pause, then SCREEN2_RISE_UNITS while Screen 2 climbs up over this
+    // still-pinned screen and covers it (see .screen2's own negative margin,
+    // which lines the end of this pin up with the top of that section).
     const pinTrigger = ScrollTrigger.create({
       id: INTRO_TRIGGER_ID,
       trigger: introWrapRef.current,
       start: 'top top',
-      end: () => `+=${(ENTRANCE_UNITS + INTERACTIVE_UNITS) * window.innerHeight}`,
+      end: () =>
+        `+=${(ENTRANCE_UNITS + INTERACTIVE_UNITS + SCREEN2_RISE_UNITS) * window.innerHeight + SCREEN2_GAP_PX}`,
       pin,
       invalidateOnRefresh: true,
     });
+
+    // Top corners round off while a section is mid-climb and flatten out as it
+    // finishes covering — the giveaway detail of this transition, and only
+    // ever visible during the rise itself. Both rising sections run off this
+    // one driver. See scroll/riseTransition.js for how the radius is derived,
+    // why it reads each section's live position rather than a trigger's
+    // progress, and why attachRiseDriver listens to scroll and resize on top
+    // of the ticker instead of trusting the ticker alone.
+    const driveRise = createRiseDriver(['.screen2', '.advantages']);
+    // Screen 3 and the FAQ nested inside it share one gradient layer; this
+    // keeps it in frame for as long as that section is (see its own comment in
+    // scroll/riseTransition.js), and rides the same attach helper so it can
+    // never be left frozen either.
+    const driveBackdrop = createViewportBackdropDriver('.advantages', '.advantages-bg');
+    // The same idea for the wordmark field the About and Contact blocks share.
+    const driveAboutBackdrop = createViewportBackdropDriver('.about-brand', '.about-brand-bg');
+    // The other half of the same idea, one section further down: Advantages/FAQ
+    // is uncovered by climbing over Screen 2, and is itself left behind by
+    // sliding up off About the Brand — so it rounds at the top on the way in and
+    // at the bottom on the way out.
+    // Both blocks that are left behind by the one below them: Advantages/FAQ
+    // slides up off About the Brand, and About the Brand + Contacts slides up
+    // off the footer. Same driver, same radius formula.
+    const driveFall = createFallDriver(['.advantages', '.about-brand']);
+    const driveAll = () => {
+      driveRise();
+      driveFall();
+      driveBackdrop();
+      driveAboutBackdrop();
+    };
+    const detachRiseDriver = attachRiseDriver(gsap.ticker, driveAll);
 
     const entranceTrigger = ScrollTrigger.create({
       trigger: introWrapRef.current,
@@ -308,6 +440,7 @@ export default function HomePage() {
     return () => {
       pinTrigger.kill();
       entranceTrigger.kill();
+      detachRiseDriver();
     };
   }, []);
 
@@ -449,9 +582,7 @@ export default function HomePage() {
       <Screen2 />
       <AdvantagesScreen />
       <BrandTeaserScreen />
-      <FaqScreen />
-      <ContactSection />
-      <Footer />
+      <Footer reveal />
     </div>
   );
 }

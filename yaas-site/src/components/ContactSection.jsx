@@ -1,52 +1,65 @@
+import { useRef } from 'react';
+import SectionHeading from './SectionHeading';
 import HeroGradientBackground from './HeroGradientBackground';
+import ContactCansScene from '../three/ContactCansScene';
 import { CONTACT } from '../data/homepageCopy';
 
-// Screen 7 — Contact. Layout reference: jawshw.tilda.ws/#contacts — a full
-// white section, a rounded gradient panel inside it (this site's own Hero
-// gradient, not a copy of the reference's own), heading + contact channels
-// centered on the panel, two product cans tilted diagonally at the
-// panel's top-left/top-right, each one's own top edge breaking out past
-// the panel's own top border rather than sitting cropped inside it.
-// Shared as one component between the homepage's own Screen 7 slot
-// (HomePage.jsx) and the standalone /contacts page (ContactsPage.jsx) — the
-// same design, the same content, per spec, not two separate builds.
+// Screen 7 — Contact. Figma node 309:195: a rounded gradient panel inset from
+// the section's own edges, the heading centred on it at the site's shared block
+// scale, two outline pills below it, and an Orange can and a Blueberry can
+// tilted +-15deg overlapping the panel's corners.
+//
+// The cans are the site's existing 3D model with its existing label materials
+// (three/ContactCanRig.jsx), not flat renders — the same can.glb the hero
+// cluster, the gallery and Screen 2 all use. They float on an endless sine
+// yoyo.
+//
+// Rendered inside the About the Brand section (BrandTeaserScreen.jsx) rather
+// than as a sibling of it, so the two share one background layer and the join
+// between them has no seam — the same arrangement the FAQ has inside the
+// Advantages section.
 export default function ContactSection() {
+  const panelRef = useRef(null);
+
   return (
     <section className="contact" id="contact">
-      <div className="site-container">
-        <div className="contact-frame">
-          <div className="contact-panel">
-            <HeroGradientBackground />
+      <div className="contact-frame">
+        <div className="contact-panel" ref={panelRef}>
+          <HeroGradientBackground />
 
-            <div className="contact-content">
-              <h2 className="contact-heading">{CONTACT.h2}</h2>
-              <p className="contact-copy">{CONTACT.copy}</p>
+          <div className="contact-content">
+            <SectionHeading as="h2" className="contact-heading" text={CONTACT.h2} />
 
-              <div className="contact-channels">
-                {CONTACT.channels.map((channel) =>
-                  channel.href ? (
-                    <a key={channel.label} className="contact-channel" href={channel.href}>
-                      {channel.label}
-                    </a>
-                  ) : (
-                    <span key={channel.label} className="contact-channel contact-channel-static">
-                      {channel.label}
+            <div className="contact-actions">
+              {/* A real control either way. With an address it is a link; until
+                  there is one it is a button — which still hovers, still takes
+                  the pointer cursor and still takes keyboard focus, where the
+                  <span> it used to be did none of those and read as dead. Adding
+                  the href later switches this branch and nothing else. */}
+              {CONTACT.actions.map((action) =>
+                action.href ? (
+                  <a key={action.label} className="hero-pill contact-pill" href={action.href}>
+                    {action.label}
+                    <span className="contact-pill-arrow" aria-hidden="true">
+                      →
                     </span>
-                  )
-                )}
-              </div>
-
-              <a className="contact-cta" href={CONTACT.ctaHref}>
-                {CONTACT.cta}
-              </a>
+                  </a>
+                ) : (
+                  <button key={action.label} className="hero-pill contact-pill" type="button">
+                    {action.label}
+                    <span className="contact-pill-arrow" aria-hidden="true">
+                      →
+                    </span>
+                  </button>
+                )
+              )}
             </div>
           </div>
-
-          <div className="contact-cans" aria-hidden="true">
-            <img className="contact-can contact-can-1" src="/textures/thumbnails/blueberry.png" alt="" />
-            <img className="contact-can contact-can-2" src="/textures/thumbnails/orange.png" alt="" />
-          </div>
         </div>
+
+        {/* Over the whole section, not just the panel: in the mock both cans
+            cross the panel's edge, and a WebGL canvas clips to its own box. */}
+        <ContactCansScene panelRef={panelRef} />
       </div>
     </section>
   );

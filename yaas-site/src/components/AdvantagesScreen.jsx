@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ArcCards from './ArcCards';
-import DropText from './DropText';
+import SectionHeading from './SectionHeading';
+import FaqScreen from './FaqScreen';
 import HeroGradientBackground from './HeroGradientBackground';
-import { ADVANTAGES_HEADING } from '../data/advantages';
+import { ADVANTAGES_HEADING_FULL } from '../data/advantages';
 import { ADVANTAGES_TRIGGER_ID } from '../data/layout';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -81,15 +82,44 @@ export default function AdvantagesScreen() {
     return () => ctx.revert();
   }, [simpleMode]);
 
+  // Two nested boxes, the same split Screen 2 uses. .advantages is the rise
+  // container: it carries the negative margin the climb is made of, the top
+  // corners that round off during it, the stacking order, and the 120px inset
+  // above the pin — and it stays in normal flow. .advantages-pin is the
+  // one-viewport box GSAP actually pins.
+  //
+  // Keeping them separate is what lets both offsets be true at once: the 120px
+  // is above the pinned box, so it is scrolled through during the rise and
+  // costs the pinned viewport nothing, leaving the heading to sit at exactly
+  // Screen 2's own pinned offset once the pin engages.
+  //
+  // The FAQ renders inside this section rather than as a sibling, so the two
+  // blocks share one backdrop instead of each mounting its own gradient.
   return (
-    <section className="advantages" id="why-yaas" ref={pinRef}>
-      <HeroGradientBackground />
-      <div className="section-heading-grid advantages-heading-grid">
-        <DropText as="h2" className="advantages-heading" text={ADVANTAGES_HEADING} />
+    <section className="advantages" id="why-yaas">
+      {/* One backdrop for the whole section — the advantages block, the gap
+          under it and the FAQ below all sit on this single gradient instead of
+          each rendering its own instance of it. It is one viewport tall and is
+          moved down by scroll/riseTransition.js's backdrop driver so it stays
+          in frame for as long as the section does; being absolute (not fixed,
+          not sticky) it stays inside this section's own overflow clip, so the
+          rounded dome still shapes it during the climb.
+          The static gradient underneath it is in advantages.css — the WebGL
+          canvas is not painted at every moment, and that fill is what keeps
+          the section from ever being transparent. */}
+      <div className="advantages-bg" aria-hidden="true">
+        <HeroGradientBackground />
       </div>
-      <div className="advantages-content">
-        <ArcCards ref={cardsRef} active={!simpleMode} />
+      <div className="advantages-pin" ref={pinRef}>
+        <div className="advantages-title-row">
+          <SectionHeading as="h2" className="advantages-title" text={ADVANTAGES_HEADING_FULL} />
+        </div>
+        <div className="advantages-content">
+          <ArcCards ref={cardsRef} active={!simpleMode} />
+        </div>
       </div>
+
+      <FaqScreen />
     </section>
   );
 }

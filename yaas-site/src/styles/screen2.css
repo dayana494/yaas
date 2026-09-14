@@ -8,14 +8,67 @@
 
 .screen2 {
   position: relative;
-  /* The gap between the end of the scenario cards and the start of
-     AdvantagesScreen — 150px, per spec. Padding here (not a margin on the
-     cards section itself) so it stays inside .screen2's own box and
-     .screen2-bg-fixed's white keeps covering it, instead of the margin
-     collapsing through .screen2's bottom edge and leaving that stretch bare
-     (would show raw body background there instead of white). */
-  padding-bottom: 150px;
+  /* Pulled up by exactly .intro-pin's own height so this section's top edge
+     sits at the scroll position where the intro's (now extended) pin ends.
+     That turns ordinary document flow into the transition itself: while the
+     intro is held still for its last stretch, this section slides up from
+     the bottom of the viewport to the top and covers it — the same rise the
+     reference does with a transform, except here nothing is transformed, so
+     the GSAP pins living inside this section keep measuring cleanly. Its own
+     pin then engages exactly where the rise lands. */
+  margin-top: -100vh;
+  margin-top: -100dvh;
+  /* Paints over .intro-pin, which is position:fixed while pinned. */
+  z-index: 2;
+  /* Rounds off the top corners for the duration of that climb, as one
+     scroll-synced interpolation rather than two states. --rise-radius is
+     written per frame by the shared driver in scroll/riseTransition.js (the
+     same one Screen 3 reuses, not a second copy): it starts at half this
+     section's own width — the two corner arcs then meet dead centre, so
+     the top edge is a true semicircular dome, not a pair of rounded corners —
+     and runs to exactly 0 at the frame the section finishes covering the
+     viewport. The fallback keeps the corners square if that property never
+     gets written (no JS / pre-hydration). overflow clips the section's own
+     background into that shape; the pinned elements inside are
+     position:fixed by the time they'd need to escape it, so this never
+     crops them. */
+  border-top-left-radius: var(--rise-radius, 0px);
+  border-top-right-radius: var(--rise-radius, 0px);
+  overflow: hidden;
+  /* Vertical breathing room the expanded scenario card leaves against its
+     container's top and bottom edges — read by both halves of this screen:
+     the arc gallery's expand target (.screen2-arc-target) and the card
+     stack's own cards (.scenario-card-iso). One declaration so the two can
+     never disagree about where the card lands. */
+  --iso-card-inset: 50px;
+  /* This section's own gap, top and bottom — 120px (was 150px).
+     The top 120px is real space above .screen2-arc: the gap that shows
+     between this section's own top edge and the headline while it climbs. It
+     sits *before* the arc section, so it is scrolled through before that pin
+     engages and the pinned composition itself is untouched — the headline,
+     subline and arc hold the exact positions they held without it. (The
+     SCREEN2_GAP_PX constant is a different thing entirely: scroll distance
+     added to the intro pin's own `end`, delaying when the rise starts. That
+     never produced a gap in the layout, which is why the headline still sat
+     54px under the rounded edge until this padding existed.)
+     The bottom 120px is the gap between the end of the scenario cards and the
+     start of Screen 3 — and, now that Screen 3 rises the same way this one
+     does, it doubles as the scroll room traversed before *that* rise begins.
+     Padding here (not a margin on the cards section itself) so it stays
+     inside .screen2's own box and .screen2-bg-fixed's white keeps covering
+     it, instead of the margin collapsing through .screen2's bottom edge and
+     leaving that stretch bare (would show raw body background there). */
+  padding-top: 120px;
+  padding-bottom: 120px;
   color: var(--ink-on-light);
+}
+
+/* Spec allows trimming this on short screens, where 50px top and bottom eats
+   a real share of the viewport — but never to zero. */
+@media (max-width: 768px) {
+  .screen2 {
+    --iso-card-inset: 20px;
+  }
 }
 
 /* White base + the same faint line-art overlay the flavor gallery uses on
@@ -47,157 +100,145 @@
   pointer-events: none;
 }
 
-/* ---------- Headline ----------
-   Figma node 196:17: three separately-positioned lines (not one wrapping
-   paragraph) inside .screen2-h2-grid below — see that rule and
-   ScenarioHeadline.jsx's own comment. */
-.screen2-headline {
+/* ---------- Arc gallery stage (Figma node 258:208) ----------
+   One pinned viewport holding the headline, the concave-arc scenario
+   gallery and the expand that ends it. Headline and subline hold still for
+   the whole pin (spec step 1) — they never scroll away under it; the centre
+   card simply grows over them on its way to filling the container.
+   --iso-card-inset lives on .screen2 itself (see the top of this file) so
+   the real card stack — a sibling section — resolves the same number. */
+.screen2-arc {
   position: relative;
-  padding: clamp(170px, 21vh, 260px) 0 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-/* r3f's <Canvas> wrapper carries its own inline position/width/height, so
-   the full-bleed breakout lives on a plain div we control instead of
-   fighting those inline styles — the canvas itself just stays at r3f's
-   default 100%/100%, filling this wrapper. Escapes .screen2-headline's own
-   max-width so the can positions (screen2Layout.js), computed against
-   full-viewport coordinates, line up the same way hero's own cans do. */
-.screen2-cans-wrap {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: 100vw;
-  height: 100%;
-  transform: translateX(-50%);
-  z-index: 1;
+/* Invisible geometry probe: carries the real .scenario-card-iso rule set, so
+   the expand measures the exact box the stack's own cards occupy instead of
+   re-deriving that width/inset formula in JS and drifting from it. */
+.screen2-arc-target {
+  visibility: hidden;
   pointer-events: none;
+  transform: translateX(-50%);
 }
 
-.screen2-cans-canvas {
-  pointer-events: none !important;
-}
-
-/* Reference frame is 1200px wide (same convention as .brand-teaser-grid) —
-   every line/subline below positions itself with calc(% - px) coordinates
-   lifted directly from that Figma export, so this just needs to *be* that
-   1200px box, centered, for the math to line up. Height is explicit
-   (position:absolute children don't contribute to it) — sized to clear the
-   subline's own worst-case wrapped height with room to spare. */
-.screen2-h2-grid {
+.screen2-arc-inner {
   position: relative;
-  z-index: 2;
-  /* Shared with .screen2-h2-lines/.screen2-subline below via calc() so both
-     the lines' own stacking and the subline's position under them scale
-     together with the same unified block-heading clamp() shape as the
-     site's other h2s (.slider-heading's own clamp(32px, 6.2vw, 88px))
-     instead of the fixed 64px this used to be locked to — capped at 68px
-     rather than the full 88px, though: each line here is `white-space:
-     nowrap` at a Figma-derived fixed `left` offset (not centered/wrapped
-     like the other blocks' headings), so the box it has to fit inside
-     without overflowing .screen2-h2-grid's own 1200px is fixed regardless
-     of font size. Measured directly — line 1 ("This isn't about hyping you
-     up.") is the tightest of the three and clips past 1200px above ~69px.
-     Same kind of deviation as .advantages-heading's own documented cap,
-     same reason: the unified scale's full ceiling doesn't fit this
-     particular layout. */
-  --h2-size: clamp(32px, 6.2vw, 68px);
-  max-width: 1200px;
-  min-height: 360px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: clamp(36px, 6vh, 76px) 0 clamp(28px, 5vh, 56px);
+}
+
+/* ---------- Headline ----------
+   Centred and wrapping (not the three separately-positioned lines the
+   earlier Figma frame used), two-tone: first sentence in ink, second in the
+   brand pink — the split node 258:208 shows, over the same verbatim copy
+   yaas-homepage.md already carries (GROUP_1 / GROUP_2, scenarios.js). 80px
+   is that frame's own size; below the site's mobile breakpoint it drops onto
+   the shared block-heading scale every other section here uses. */
+.screen2-headline {
+  width: 100%;
+  padding: 0 30px;
+}
+
+.screen2-h2 {
+  /* Everything here is a share of the Figma frame's own 1920 width, not a
+     pixel value pinned to one breakpoint: 80/1920 = 4.17vw, 1124/1920 =
+     58.5vw. Sized in flat px it only matched the mockup's proportions at
+     ~1440 and read oversized everywhere else — most visibly under OS display
+     scaling, where the CSS viewport is far narrower than the screen and the
+     same 80px took up much more of it than the mockup ever does. The caps
+     stop it growing past the mockup's own size on very wide screens. */
+  max-width: clamp(320px, 62vw, 1160px);
   margin: 0 auto;
-}
-
-/* Just the three lines' own containing block — deliberately excludes the
-   subline. Height covers line 3's own top plus its line-height, in the
-   same --h2-size-relative units the lines' own top offsets use below, so it
-   still clears them at any viewport width. */
-.screen2-h2-lines {
-  position: relative;
-  height: calc(4.3 * var(--h2-size));
-}
-
-.screen2-h2-line {
-  position: absolute;
-  left: 0;
-  margin: 0;
-  white-space: nowrap;
+  text-align: center;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: var(--h2-size);
+  font-size: clamp(30px, 4.17vw, 80px);
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
 }
 
-/* Top offsets: the original Figma export's own 44/114/184px, expressed as
-   ratios of the 64px size that export was drawn at (0.6875em/1.78125em/
-   2.875em) and now driven off --h2-size instead of that one fixed value, so
-   the three lines keep the same relative stacking/overlap-free spacing at
-   any size this clamp() actually resolves to. */
-.screen2-h2-line-1 {
-  left: calc(58.33% - 463px);
-  top: calc(0.6875 * var(--h2-size));
+/* Own line, as in the mockup: the ink sentence sits complete on line 1 and
+   the accent one takes the lines under it, rather than the two running
+   together and breaking mid-phrase wherever the measure happens to end. */
+.screen2-h2-ink {
+  display: block;
   color: var(--ink-on-light);
 }
 
-.screen2-h2-line-2 {
-  left: calc(70.83% - 520px);
-  top: calc(1.78125 * var(--h2-size));
+.screen2-h2-accent {
   color: #e53a6b;
 }
 
-.screen2-h2-line-3 {
-  left: calc(50% - 457px);
-  top: calc(2.875 * var(--h2-size));
-  color: #e53a6b;
+/* ---------- Concave arc ----------
+   Every card is anchored dead centre and placed purely by transform from
+   ScenarioArcGallery.jsx (translate + per-card perspective + rotateY), so
+   nothing here needs to know the arc's shape — this only sizes the card and
+   gives the stage a box to centre them in. Cards deliberately overflow that
+   box as they curve toward the viewer; .screen2-arc's own overflow:hidden is
+   what crops them at the viewport edges, exactly as the mockup shows. */
+.screen2-arc-stage {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+.screen2-arc-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* 382/1920 = 19.9vw — the centre card's own share of the Figma frame, so
+     the arc keeps the mockup's proportions at any width rather than only at
+     the one breakpoint a flat 382px happened to match. Capped at the
+     mockup's size, floored so the photo stays substantial on narrow screens.
+     Everything about the arc's spread scales off this one number
+     (ScenarioArcGallery.jsx), which is also what keeps the side cards from
+     running off a 375px screen. */
+  width: clamp(240px, 19.9vw, 382px);
+  aspect-ratio: 382 / 273;
+  border-radius: 20px;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Title/caption only exist on the card that expands, and only fade in over
+   the back half of that expand — so the finished card matches the stack's
+   own first card exactly at the hand-off. */
+.screen2-arc-card .scenario-card-copy {
+  opacity: 0;
 }
 
 .screen2-subline {
-  position: absolute;
-  left: calc(45.83% - 220px);
-  /* Same treatment as the lines' own top offsets above: originally a fixed
-     273px (== 4.27 * the old 64px size), now scaled off --h2-size so it
-     stays clear of line 3 regardless of viewport. */
-  top: calc(4.27 * var(--h2-size));
-  z-index: 2;
-  max-width: 40ch;
+  /* Same frame-relative treatment: 585/1920 = 30.5vw, 20/1920 = 1.04vw. The
+     floor is the site's own body size — below that the mockup's proportion
+     would simply be too small to read. */
+  max-width: clamp(320px, 30.5vw, 585px);
+  margin: 0 auto;
+  padding: 0 24px;
+  text-align: center;
   font-family: var(--font-beiruti);
   font-weight: 500;
-  /* Site-wide body-copy size: 16px desktop / 14px mobile (see the
-     max-width: 768px override below) — was its own one-off clamp. */
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--ink-on-light-soft);
+  font-size: clamp(16px, 1.04vw, 20px);
+  line-height: 1.4;
+  color: var(--ink-on-light);
 }
 
 @media (max-width: 768px) {
-  /* Simple stacked/centered fallback — same pattern every other
-     Figma-positioned block on this site falls back to below its own
-     desktop breakpoint (.brand-teaser-grid). */
-  .screen2-h2-grid {
-    min-height: 0;
-    padding: 0 30px;
-    text-align: center;
-  }
-
-  .screen2-h2-lines {
-    height: auto;
-  }
-
-  .screen2-h2-line {
-    position: static;
-    left: auto;
-    top: auto;
-    white-space: normal;
-    margin: 0 auto;
-    max-width: 420px;
+  .screen2-h2 {
     font-size: clamp(26px, 8vw, 44px);
   }
 
   .screen2-subline {
-    position: static;
-    left: auto;
-    top: auto;
-    margin: clamp(28px, 4vh, 44px) auto 0;
-    text-align: center;
     font-size: 14px;
   }
 }
@@ -292,14 +333,32 @@
 .scenario-cards-iso {
   position: relative;
   height: 100vh;
-  /* A bit more breathing room after the subheading, per feedback. The
-     matching gap *after* the card stack lives on .screen2's own
-     padding-bottom instead of a margin here — a margin on this element (the
-     one GSAP pins) collapses straight through .screen2's bottom edge since
-     nothing stops it, landing outside .screen2-bg-fixed's covered area and
-     showing bare (dark) body background for that stretch instead of white. */
-  margin-top: 50px;
+  /* Pulled up by exactly the arc stage's own height, so this section's top
+     reaches the viewport at the same scroll position the arc's pin releases
+     at. Without it the arc still has its own 100vh to scroll out of the way
+     first, and that whole viewport of scroll reads as the expanded card
+     sliding up and away while the stack slides in under it — instead of the
+     stack's first card simply taking over in place, which is the entire
+     point of matching their geometry. */
+  margin-top: -100vh;
+  margin-top: -100dvh;
+  /* Opaque for that same hand-off: both sections occupy the viewport for
+     the moment they cross, and this one paints later (later in the DOM,
+     both position:relative), so it hides the arc scrolling out behind it —
+     including in the margins around the card itself. */
+  background: #ffffff;
   overflow: hidden;
+}
+
+/* The flip side of that overlap: for the back half of the arc's pin this
+   section's top edge is already inside the viewport, creeping up over the
+   still-pinned arc (it covered the subline outright at 375px). It stays
+   hidden until the arc's own trigger reports it has finished — the moment
+   the two cards are identical, so revealing it then is invisible.
+   visibility, not display, so its layout slot (and both pins' measurements)
+   stay exactly as they are. */
+.screen2.is-arc-running .scenario-cards-iso {
+  visibility: hidden;
 }
 
 .scenario-cards-iso-stage {
@@ -308,10 +367,15 @@
   height: 100%;
 }
 
+/* top/bottom are the one change to this card's own geometry (spec step 4):
+   it fills the container's width as before but stops --iso-card-inset short
+   of its top and bottom edges instead of running the full height. The arc
+   stage's expand measures this exact box (via .screen2-arc-target), so both
+   halves stay in lockstep from one declaration. */
 .scenario-card-iso {
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: var(--iso-card-inset);
+  bottom: var(--iso-card-inset);
   left: 50%;
   width: min(1400px, calc(100% - 60px));
   border-radius: 20px;
