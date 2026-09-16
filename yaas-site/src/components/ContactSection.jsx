@@ -1,8 +1,20 @@
-import { useRef } from 'react';
+import { lazy, Suspense, useRef } from 'react';
 import SectionHeading from './SectionHeading';
 import HeroGradientBackground from './HeroGradientBackground';
-import ContactCansScene from '../three/ContactCansScene';
+import { useLazyOnVisible } from '../three/deferredLoad';
 import { CONTACT } from '../data/homepageCopy';
+
+// A dynamic import(), not the static one this replaced: three.js,
+// @react-three/fiber and ContactCanRig only enter the bundle through this
+// call, in their own chunk, and useLazyOnVisible below decides when that
+// chunk actually gets requested — see its comment in deferredLoad.js.
+// Rendered from BOTH this route's own page AND, embedded via
+// BrandTeaserScreen, deep inside the homepage: on /contacts the section is
+// visible immediately, so the fetch starts right on mount same as before; on
+// the homepage it sits well below the fold, so this is where the split
+// actually earns its keep — the chunk isn't requested until the user has
+// scrolled most of the way there.
+const ContactCansScene = lazy(() => import('../three/ContactCansScene'));
 
 // Screen 7 — Contact. Figma node 309:195: a rounded gradient panel inset from
 // the section's own edges, the heading centred on it at the site's shared block
@@ -20,9 +32,11 @@ import { CONTACT } from '../data/homepageCopy';
 // Advantages section.
 export default function ContactSection() {
   const panelRef = useRef(null);
+  const sectionRef = useRef(null);
+  const cansVisible = useLazyOnVisible(sectionRef);
 
   return (
-    <section className="contact" id="contact">
+    <section className="contact" id="contact" ref={sectionRef}>
       <div className="contact-frame">
         <div className="contact-panel" ref={panelRef}>
           <HeroGradientBackground />
@@ -59,7 +73,11 @@ export default function ContactSection() {
 
         {/* Over the whole section, not just the panel: in the mock both cans
             cross the panel's edge, and a WebGL canvas clips to its own box. */}
-        <ContactCansScene panelRef={panelRef} />
+        {cansVisible && (
+          <Suspense fallback={null}>
+            <ContactCansScene panelRef={panelRef} />
+          </Suspense>
+        )}
       </div>
     </section>
   );

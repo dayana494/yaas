@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import Scene from '../three/Scene';
+import Scene from '../three/LazyScene';
 import Background from '../components/Background';
 import HeroGradientBackground from '../components/HeroGradientBackground';
 import SliderScreen from '../components/SliderScreen';

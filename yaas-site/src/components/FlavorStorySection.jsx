@@ -1,10 +1,19 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Background from './Background';
 import DropText from './DropText';
-import FlavorStoryScene from '../three/FlavorStoryScene';
+import { useLazyOnVisible } from '../three/deferredLoad';
 import { RISE_UNITS } from '../scroll/riseTransition';
+
+// Dynamic import — three.js, @react-three/fiber and FlavorStoryCanRig only
+// enter the bundle through this call, in their own chunk, requested only
+// once useLazyOnVisible below says the canvas layer is actually about to be
+// on screen (see deferredLoad.js). This section sits at the top of the
+// flavor detail page, so in practice that fires almost immediately on
+// mount — the real saving is that FlavorDetailPage's own initial script no
+// longer has to parse three.js to render anything at all.
+const FlavorStoryScene = lazy(() => import('../three/FlavorStoryScene'));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -79,6 +88,8 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
   // can rig reads it every frame. See FlavorStoryCanRig for why the rotation
   // travels as a plain object rather than as a ref to the THREE.Group.
   const rotationRef = useRef({ ...START_ROTATION });
+  const canvasLayerRef = useRef(null);
+  const canVisible = useLazyOnVisible(canvasLayerRef);
 
   useFillWidth(yaasRef);
 
@@ -154,8 +165,12 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
           </div>
         </div>
 
-        <div className="flavor-story-canvas-layer" aria-hidden="true">
-          <FlavorStoryScene flavorId={flavor.id} rotation={rotationRef.current} spin={simpleMode} />
+        <div className="flavor-story-canvas-layer" aria-hidden="true" ref={canvasLayerRef}>
+          {canVisible && (
+            <Suspense fallback={null}>
+              <FlavorStoryScene flavorId={flavor.id} rotation={rotationRef.current} spin={simpleMode} />
+            </Suspense>
+          )}
         </div>
 
         <div className="flavor-hero-copy flavor-hero-copy-front" ref={heroFrontRef}>

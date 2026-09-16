@@ -1,7 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import Scene from '../three/Scene';
+import Scene from '../three/LazyScene';
 import Background from '../components/Background';
 import HeroGradientBackground from '../components/HeroGradientBackground';
 import HeroWordmark from '../components/HeroWordmark';
@@ -11,7 +11,12 @@ import AdvantagesScreen from '../components/AdvantagesScreen';
 import BrandTeaserScreen from '../components/BrandTeaserScreen';
 import Footer from '../components/Footer';
 import SliderScreen from '../components/SliderScreen';
-import ThumbnailShot from '../components/ThumbnailShot';
+// Lazy: the offline puppeteer thumbnail-capture tool (?shot=<flavorId>),
+// never used by a real visitor. It statically imports useCanGeometry /
+// useCanMaterials — the same three.js entry point Scene.jsx's own lazy
+// chunk uses — so importing it eagerly here would have pulled that whole
+// graph back into every normal page load regardless of LazyScene.
+const ThumbnailShot = lazy(() => import('../components/ThumbnailShot'));
 import { FLAVORS, DEFAULT_FLAVOR_INDEX } from '../data/flavors';
 import {
   attachRiseDriver,
@@ -512,7 +517,11 @@ export default function HomePage() {
   const backgroundFlavor = FLAVORS[activeFlavor];
 
   if (shotFlavor) {
-    return <ThumbnailShot flavor={shotFlavor} />;
+    return (
+      <Suspense fallback={null}>
+        <ThumbnailShot flavor={shotFlavor} />
+      </Suspense>
+    );
   }
 
   return (
