@@ -31,7 +31,7 @@ export const SCENARIOS = [
     caption: "When the night's just getting started and your battery isn't",
     flavor: 'strawberry',
     href: '/flavors/strawberry',
-    photo: asset('/photos/scenarios/party.jpg'),
+    photo: asset('/photos/scenarios/party.webp'),
   },
   {
     id: 'roadtrip',
@@ -39,7 +39,7 @@ export const SCENARIOS = [
     caption: "When the drive's long and the vibe's gotta stay maxed",
     flavor: 'lemon',
     href: '/flavors/lemon',
-    photo: asset('/photos/scenarios/road.jpg'),
+    photo: asset('/photos/scenarios/road.webp'),
   },
   {
     id: 'lecture',
@@ -47,7 +47,7 @@ export const SCENARIOS = [
     caption: "When the professor's on hour three and you're somehow still with it",
     flavor: 'apple',
     href: '/flavors/apple',
-    photo: asset('/photos/scenarios/univer.jpg'),
+    photo: asset('/photos/scenarios/univer.webp'),
   },
   {
     id: 'workout',
@@ -55,7 +55,7 @@ export const SCENARIOS = [
     caption: "When it's not your last set and you already thought you were done",
     flavor: 'orange',
     href: '/flavors/orange',
-    photo: asset('/photos/scenarios/sport.jpg'),
+    photo: asset('/photos/scenarios/sport.webp'),
   },
   {
     id: 'gaming',
@@ -63,6 +63,6 @@ export const SCENARIOS = [
     caption: 'When one more round decides everything',
     flavor: 'blueberry',
     href: '/flavors/blueberry',
-    photo: asset('/photos/scenarios/game.jpg'),
+    photo: asset('/photos/scenarios/game.webp'),
   },
 ];

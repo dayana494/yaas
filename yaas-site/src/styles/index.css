@@ -243,7 +243,7 @@ button {
   inset: 0;
   opacity: 0.1;
   mix-blend-mode: overlay;
-  background-image: url('/yaas/textures/bg-texture.jpg');
+  background-image: url('/yaas/textures/bg-texture.webp');
   background-size: cover;
   background-position: center;
 }

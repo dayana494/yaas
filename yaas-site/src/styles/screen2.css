@@ -96,7 +96,7 @@
   z-index: -1;
   opacity: 0.1;
   mix-blend-mode: overlay;
-  background: url('/yaas/textures/bg-texture.jpg') center / cover no-repeat;
+  background: url('/yaas/textures/bg-texture.webp') center / cover no-repeat;
   pointer-events: none;
 }
 
