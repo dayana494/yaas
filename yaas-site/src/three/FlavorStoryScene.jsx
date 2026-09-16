@@ -4,7 +4,7 @@ import Lighting from './Lighting';
 import FlavorStoryCanRig from './FlavorStoryCanRig';
 
 // Its own small canvas for the flavor detail page's story section — same
-// shape as Screen2Scene: transparent, shared Lighting rig, one Suspense
+// shape as ContactCansScene: transparent, shared Lighting rig, one Suspense
 // boundary. Independent of the homepage's Scene/CanRig entirely.
 export default function FlavorStoryScene({ flavorId, rotation, spin }) {
   return (

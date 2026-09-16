@@ -3,7 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { useCanGeometry } from './useCanGeometry';
-import { useCanMaterials } from './useCanMaterials';
+import { CAN_CAP_MATERIAL, useCanMaterials } from './useCanMaterials';
 import { getHeroCans, bezierPoint, lerp } from './heroLayout';
 import { FLAVORS } from '../data/flavors';
 import { arcTransform, wrappedDelta, nearestTarget, mod, FLAVOR_N, GALLERY_SLOT_DELTA } from './arcLayout';
@@ -601,11 +601,17 @@ const CanRig = forwardRef(function CanRig(
     <group>
       {FLAVORS.map((flavor, i) => (
         <group key={flavor.id} ref={groupRefSetters[i]}>
-          <mesh ref={meshRefSetters[i]} geometry={geometry} material={materials[i]} />
+          <mesh ref={meshRefSetters[i]} geometry={geometry} material={[materials[i], CAN_CAP_MATERIAL]} />
         </group>
       ))}
       {ghosts.map((g, gi) => (
-        <mesh key={g.key} ref={ghostRefSetters[gi]} geometry={geometry} material={materials[g.flavorIndex]} visible={false} />
+        <mesh
+          key={g.key}
+          ref={ghostRefSetters[gi]}
+          geometry={geometry}
+          material={[materials[g.flavorIndex], CAN_CAP_MATERIAL]}
+          visible={false}
+        />
       ))}
     </group>
   );

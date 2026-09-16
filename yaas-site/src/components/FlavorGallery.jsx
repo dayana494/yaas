@@ -3,6 +3,7 @@ import DropText from './DropText';
 import FlavorStripCard from './FlavorStripCard';
 import { FLAVORS } from '../data/flavors';
 import { GALLERY_HEADING } from '../data/flavorStories';
+import { asset } from '../data/assetUrl';
 
 // "Try the Other Flavors" — the block that climbs up over the story section
 // above it. The climb itself is the site's shared rise transition: this
@@ -64,7 +65,7 @@ export default function FlavorGallery({ activeFlavorId, simpleMode }) {
             disabled={atStart}
             aria-label="Previous flavors"
           >
-            <img src="/icons/arrow-left.svg" alt="" />
+            <img src={asset('/icons/arrow-left.svg')} alt="" />
           </button>
           <button
             type="button"
@@ -73,7 +74,7 @@ export default function FlavorGallery({ activeFlavorId, simpleMode }) {
             disabled={atEnd}
             aria-label="Next flavors"
           >
-            <img src="/icons/arrow-right.svg" alt="" />
+            <img src={asset('/icons/arrow-right.svg')} alt="" />
           </button>
         </div>
       </div>

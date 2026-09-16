@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { useCanGeometry } from './useCanGeometry';
-import { useCanMaterials } from './useCanMaterials';
+import { CAN_CAP_MATERIAL, useCanMaterials } from './useCanMaterials';
 import { FLAVORS } from '../data/flavors';
 import {
   CAN_HEIGHT_MAX_PX,
@@ -28,10 +28,10 @@ const flavorIndex = (id) => FLAVORS.findIndex((f) => f.id === id);
 //
 // Placement is measured, not baked: the mock's numbers are fractions of the
 // panel's own box (see contactLayout.js), so the rig reads the panel's live rect
-// against this canvas's rect and converts through the camera's own frustum —
-// the same approach Screen2CanRig uses, and for the same reason. A world
-// coordinate derived once from a 1920-wide frame would only be right at that
-// one width.
+// against this canvas's rect and converts through the camera's own frustum. A
+// world coordinate derived once from a 1920-wide frame would only be right at
+// that one width — "beside the panel" only means something in live screen
+// pixels, and this canvas is not a fixed-aspect pre-scaled stage.
 export default function ContactCanRig({ panelRef, canvasRef }) {
   const geometry = useCanGeometry();
   const materials = useCanMaterials();
@@ -117,7 +117,7 @@ export default function ContactCanRig({ panelRef, canvasRef }) {
     <group>
       {CONTACT_CANS.map((can, i) => (
         <group key={can.id} ref={groupRefSetters[i]}>
-          <mesh geometry={geometry} material={materials[flavorIndex(can.id)]} />
+          <mesh geometry={geometry} material={[materials[flavorIndex(can.id)], CAN_CAP_MATERIAL]} />
         </group>
       ))}
     </group>

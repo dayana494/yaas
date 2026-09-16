@@ -3,6 +3,7 @@ import { useCarouselDrag } from '../hooks/useCarouselDrag';
 import SectionHeading from './SectionHeading';
 import { FLAVORS, FLAVOR_COUNT } from '../data/flavors';
 import { SCREEN3_HEADING } from '../data/gallery';
+import { asset } from '../data/assetUrl';
 
 const TAP_THRESHOLD = 6;
 // Fraction of the stage's half-width that counts as "the center can" —
@@ -60,10 +61,10 @@ export default function SliderScreen({ sceneRef, activeFlavor, onPickFlavor, onE
       <div className="slider-stage" data-interactive {...handlers} />
 
       <button type="button" className="arrow arrow-left" data-interactive aria-label="Previous flavor" onClick={goPrev}>
-        <img src="/icons/arrow-left.svg" alt="" />
+        <img src={asset('/icons/arrow-left.svg')} alt="" />
       </button>
       <button type="button" className="arrow arrow-right" data-interactive aria-label="Next flavor" onClick={goNext}>
-        <img src="/icons/arrow-right.svg" alt="" />
+        <img src={asset('/icons/arrow-right.svg')} alt="" />
       </button>
 
       <div className="flavor-name" key={flavor.id}>

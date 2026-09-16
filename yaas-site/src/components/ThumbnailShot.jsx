@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import Lighting from '../three/Lighting';
 import { useCanGeometry } from '../three/useCanGeometry';
-import { useCanMaterials } from '../three/useCanMaterials';
+import { CAN_CAP_MATERIAL, useCanMaterials } from '../three/useCanMaterials';
 import { FLAVORS } from '../data/flavors';
 
 // A bare, single-can scene used only for offline PNG capture (the puppeteer
@@ -12,7 +12,7 @@ function ShotCan({ flavorId }) {
   const geometry = useCanGeometry();
   const materials = useCanMaterials();
   const index = Math.max(0, FLAVORS.findIndex((f) => f.id === flavorId));
-  return <mesh geometry={geometry} material={materials[index]} />;
+  return <mesh geometry={geometry} material={[materials[index], CAN_CAP_MATERIAL]} />;
 }
 
 export default function ThumbnailShot({ flavor }) {

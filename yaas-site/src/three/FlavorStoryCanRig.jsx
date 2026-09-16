@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useCanGeometry } from './useCanGeometry';
-import { useCanMaterials } from './useCanMaterials';
+import { CAN_CAP_MATERIAL, useCanMaterials } from './useCanMaterials';
 import { FLAVORS } from '../data/flavors';
 
 // The single can on a flavor detail page. Deliberately NOT the homepage's
@@ -74,7 +74,11 @@ export default function FlavorStoryCanRig({ flavorId, rotation, spin = false }) 
 
   return (
     <group ref={groupRef} scale={scale}>
-      <mesh geometry={geometry} material={materials[index]} position={[-offset.x, -offset.y, -offset.z]} />
+      <mesh
+        geometry={geometry}
+        material={[materials[index], CAN_CAP_MATERIAL]}
+        position={[-offset.x, -offset.y, -offset.z]}
+      />
     </group>
   );
 }
