@@ -12,6 +12,14 @@ const Scene = forwardRef(function Scene(props, ref) {
   return (
     <Canvas
       className="site-canvas"
+      // Renders on request only. Every motion this scene has is finite — the
+      // mount flight, the scroll-scrubbed entrance, the drag and its snap, the
+      // detail transitions, the cursor parallax — and each one asks for its own
+      // frames while it runs (see CanRig and renderOnDemand.js). Between them
+      // the cans are standing still and there is nothing to redraw; on "always"
+      // this canvas kept drawing them ~60 times a second regardless, which is
+      // what kept the page from ever reaching CPU idle.
+      frameloop="demand"
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       camera={HERO_CAMERA}

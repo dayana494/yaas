@@ -1,9 +1,11 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
+import gsap from 'gsap';
 import { useCanGeometry } from './useCanGeometry';
 import { CAN_CAP_MATERIAL, useCanMaterials } from './useCanMaterials';
 import { FLAVORS } from '../data/flavors';
+import { useCanvasOnScreen, useRenderHold } from './renderOnDemand';
 
 // The single can on a flavor detail page. Deliberately NOT the homepage's
 // CanRig: that one has grown a hero->gallery entrance-flight state machine
@@ -35,6 +37,8 @@ export default function FlavorStoryCanRig({ flavorId, rotation, spin = false }) 
   const materials = useCanMaterials();
   const groupRef = useRef(null);
   const { viewport } = useThree();
+  const { invalidate, keepAlive, holding } = useRenderHold();
+  const onScreen = useCanvasOnScreen();
 
   const index = useMemo(() => {
     const i = FLAVORS.findIndex((f) => f.id === flavorId);
@@ -57,6 +61,32 @@ export default function FlavorStoryCanRig({ flavorId, rotation, spin = false }) 
     [viewport.width, viewport.height, maxDimension]
   );
 
+  // Scroll-driven mode. `rotation` is mutated in place by a GSAP timeline
+  // owned by the section above this rig, so there is no tween here whose
+  // onUpdate could ask for a frame. Watching the object from the ticker gets
+  // the same result from this side of the boundary: three numbers compared per
+  // rAF tick, on a ticker ScrollTrigger is already running anyway, and a frame
+  // requested only on the ticks where the scroll actually moved the can.
+  useEffect(() => {
+    if (spin) return undefined;
+    const last = { x: NaN, y: NaN, z: NaN };
+    const watch = () => {
+      if (rotation.x === last.x && rotation.y === last.y && rotation.z === last.z) return;
+      last.x = rotation.x;
+      last.y = rotation.y;
+      last.z = rotation.z;
+      keepAlive();
+    };
+    gsap.ticker.add(watch);
+    return () => gsap.ticker.remove(watch);
+  }, [rotation, spin, keepAlive]);
+
+  // Scale is derived from the viewport, and the mesh offset from the geometry;
+  // neither goes through a tween, so redraw after any render that changed them.
+  useEffect(() => {
+    keepAlive();
+  });
+
   useFrame((_, delta) => {
     const group = groupRef.current;
     if (!group) return;
@@ -67,9 +97,15 @@ export default function FlavorStoryCanRig({ flavorId, rotation, spin = false }) 
       group.rotation.x = 0.12;
       group.rotation.y += delta * IDLE_SPIN_SPEED;
       group.rotation.z = 0;
+      // An endless spin has no end to invalidate up to, so it runs on exactly
+      // one condition instead: someone can see it. Off screen the loop simply
+      // stops being re-armed and the page goes quiet; useCanvasOnScreen asks
+      // for the frame that starts it again on the way back.
+      if (onScreen.current) invalidate();
       return;
     }
     group.rotation.set(rotation.x, rotation.y, rotation.z);
+    holding();
   });
 
   return (

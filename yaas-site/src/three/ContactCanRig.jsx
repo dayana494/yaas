@@ -1,10 +1,11 @@
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { useThree } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import gsap from 'gsap';
 import { useCanGeometry } from './useCanGeometry';
 import { CAN_CAP_MATERIAL, useCanMaterials } from './useCanMaterials';
 import { FLAVORS } from '../data/flavors';
+import { useRenderHold } from './renderOnDemand';
 import {
   CAN_HEIGHT_MAX_PX,
   CAN_HEIGHT_MIN_PX,
@@ -37,6 +38,16 @@ export default function ContactCanRig({ panelRef, canvasRef }) {
   const materials = useCanMaterials();
   const camera = useThree((s) => s.camera);
   const size = useThree((s) => s.size);
+  const { invalidate, keepAlive, holding } = useRenderHold();
+
+  // This rig poses the cans from an effect and lets GSAP tween them from there,
+  // so it never needed a frame callback before. Under frameloop="demand" it
+  // does: holding() is the only thing that can keep the render loop running
+  // across ticks, and without it the float renders every other frame. See
+  // renderOnDemand.js.
+  useFrame(() => {
+    holding();
+  });
   const groupRefs = useMemo(() => CONTACT_CANS.map(() => ({ current: null })), []);
   const groupRefSetters = useMemo(() => groupRefs.map((r) => (el) => (r.current = el)), [groupRefs]);
 
@@ -78,6 +89,7 @@ export default function ContactCanRig({ panelRef, canvasRef }) {
       : Math.max(CAN_HEIGHT_MIN_PX, Math.min(CAN_HEIGHT_MAX_PX, panelRect.height * heightRatio));
     const scale = pxToWorldY(heightPx) / naturalHeight;
 
+    const floats = [];
     const ctx = gsap.context(() => {
       CONTACT_CANS.forEach((can, i) => {
         const group = groupRefs[i].current;
@@ -99,19 +111,44 @@ export default function ContactCanRig({ panelRef, canvasRef }) {
         // never stalls at the turn. Staggered so the pair doesn't pulse
         // together. delay rather than a separate timeline — a yoyo repeat
         // keeps its phase from whenever it started.
-        gsap.to(group.position, {
-          y: worldY + pxToWorldY(FLOAT_AMPLITUDE_PX),
-          duration: FLOAT_DURATION,
-          ease: 'sine.inOut',
-          yoyo: true,
-          repeat: -1,
-          delay: i * FLOAT_STAGGER,
-        });
+        floats.push(
+          gsap.to(group.position, {
+            y: worldY + pxToWorldY(FLOAT_AMPLITUDE_PX),
+            duration: FLOAT_DURATION,
+            ease: 'sine.inOut',
+            yoyo: true,
+            repeat: -1,
+            delay: i * FLOAT_STAGGER,
+            onUpdate: keepAlive,
+          })
+        );
       });
     });
 
-    return () => ctx.revert();
-  }, [camera, size.width, size.height, naturalHeight, panelRef, canvasRef, groupRefs]);
+    // The cans have just been repositioned; draw that even if the float is
+    // about to be paused for being off screen.
+    invalidate();
+
+    // repeat: -1 means this float never ends, so it cannot invalidate its way
+    // to an idle page — nothing would ever stop asking for the next frame. It
+    // runs on whether anyone can see it instead. Pausing the tween holds its
+    // yoyo phase, so it resumes mid-float exactly where it left off rather
+    // than snapping; off screen there is nothing to snap for either way.
+    let observer;
+    if (typeof IntersectionObserver !== 'undefined') {
+      observer = new IntersectionObserver((entries) => {
+        const visible = entries.some((entry) => entry.isIntersecting);
+        floats.forEach((float) => (visible ? float.play() : float.pause()));
+        if (visible) invalidate();
+      });
+      observer.observe(canvas);
+    }
+
+    return () => {
+      observer?.disconnect();
+      ctx.revert();
+    };
+  }, [camera, size.width, size.height, naturalHeight, panelRef, canvasRef, groupRefs, invalidate, keepAlive]);
 
   return (
     <group>

@@ -15,6 +15,11 @@ export default function ContactCansScene({ panelRef }) {
     <Canvas
       ref={canvasRef}
       className="contact-cans-canvas"
+      // On request only. The float here never ends, so unlike the other two
+      // canvases this one is gated on visibility rather than on the animation
+      // finishing: ContactCanRig pauses the float and stops asking for frames
+      // whenever the section is scrolled off screen.
+      frameloop="demand"
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       camera={{ position: [0, 0, 3.6], fov: 30 }}

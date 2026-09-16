@@ -7,6 +7,7 @@ import { CAN_CAP_MATERIAL, useCanMaterials } from './useCanMaterials';
 import { getHeroCans, bezierPoint, lerp } from './heroLayout';
 import { FLAVORS } from '../data/flavors';
 import { arcTransform, wrappedDelta, nearestTarget, mod, FLAVOR_N, GALLERY_SLOT_DELTA } from './arcLayout';
+import { useRenderHold } from './renderOnDemand';
 
 // The two flavors with no hero-cluster counterpart — they slide in from
 // further out along the arc during the entrance, instead of flying in from
@@ -27,6 +28,12 @@ const DETAIL_ANCHOR = { desktop: { x: 0.365, y: -0.028 }, mobile: { x: 0, y: -0.
 const DETAIL_SCALE = { desktop: 1.55, mobile: 0.95 };
 const PARALLAX_AMOUNT = 0.16;
 const LERP_SPEED = 6;
+// How long to keep asking for frames after the last cursor move / drag input.
+// Both the parallax tilt and the gallery's focus dimming are exp(-LERP_SPEED*t)
+// lerps, so they approach their target without ever formally arriving: after
+// 0.8s they sit within e^-4.8 (~0.8%) of it, which on a 0.16rad tilt is well
+// under a tenth of a degree. See useRenderHold.
+const SETTLE_WINDOW = 0.8;
 const TRANSITION_DURATION = 1.1;
 const OFFSCREEN_PUSH = 3.2;
 // Extra repeat cycles of the 5 flavors shown further out in the arc, purely
@@ -61,6 +68,7 @@ const CanRig = forwardRef(function CanRig(
   ref
 ) {
   const { camera } = useThree();
+  const { invalidate, hold, keepAlive, holding } = useRenderHold();
   const geometry = useCanGeometry();
   const materials = useCanMaterials();
   const flavorIndexById = useMemo(() => Object.fromEntries(FLAVORS.map((f, i) => [f.id, i])), []);
@@ -160,6 +168,7 @@ const CanRig = forwardRef(function CanRig(
       group.rotation.set(0, can.start.rotY, can.start.rotZ);
       group.scale.setScalar(can.start.scale);
     });
+    invalidate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -194,10 +203,15 @@ const CanRig = forwardRef(function CanRig(
           group.rotation.y = lerp(start.rotY, end.rotY, proxy.t);
           group.rotation.z = lerp(start.rotZ, end.rotZ, proxy.t);
           group.scale.setScalar(lerp(start.scale, end.scale, proxy.t));
+          keepAlive();
         },
         onComplete: () => {
           doneCount += 1;
           if (doneCount === heroCans.length) flightDoneRef.current = true;
+          // flightDoneRef opens applyEntrancePose's first branch below, so the
+          // scene has new work to do on the very next frame even though the
+          // tween that was driving it has just stopped.
+          invalidate();
         },
       });
     });
@@ -220,10 +234,16 @@ const CanRig = forwardRef(function CanRig(
     const anchor = isMobile ? DETAIL_ANCHOR.mobile : DETAIL_ANCHOR.desktop;
     const target = ndcToWorldAtZ(camera, anchor.x, anchor.y, 0);
 
+    // onUpdate on the timeline rather than on each child tween: it fires once
+    // per rAF tick for as long as anything in the timeline is running, which is
+    // exactly the set of frames that need drawing. The children tween object
+    // properties directly and carry no onUpdate of their own.
     const tl = gsap.timeline({
+      onUpdate: keepAlive,
       onComplete: () => {
         transitioningRef.current = false;
         onEnterDetailComplete?.();
+        invalidate();
       },
     });
 
@@ -270,6 +290,7 @@ const CanRig = forwardRef(function CanRig(
     heroGroup.rotation.y %= Math.PI * 2;
 
     const tl = gsap.timeline({
+      onUpdate: keepAlive,
       onComplete: () => {
         transitioningRef.current = false;
         // Flip the mutable ref immediately so useFrame treats this as the
@@ -278,6 +299,10 @@ const CanRig = forwardRef(function CanRig(
         // through the detail-anchor branch and snap the can visibly).
         screenRef.current = 'slider';
         onExitDetailComplete?.();
+        // Hands over to the slider branch of useFrame, which poses every can
+        // from continuousIndex and lerps the focus dimming back in — motion
+        // that outlives the timeline that just finished.
+        hold(SETTLE_WINDOW);
       },
     });
 
@@ -353,6 +378,7 @@ const CanRig = forwardRef(function CanRig(
         } else {
           newGroup.rotation.y = y;
         }
+        keepAlive();
       },
     });
   }
@@ -434,6 +460,9 @@ const CanRig = forwardRef(function CanRig(
       if (screenRef.current !== 'slider') return;
       draggingRef.current = true;
       continuousIndex.current += deltaSlots;
+      // A hold rather than a bare invalidate: the focus dimming the slider
+      // branch lerps per frame keeps moving after the pointer stops.
+      hold(SETTLE_WINDOW);
     },
     endDrag(velocitySlotsPerSec = 0) {
       if (screenRef.current !== 'slider') return;
@@ -441,7 +470,16 @@ const CanRig = forwardRef(function CanRig(
       const projected = continuousIndex.current + THREE.MathUtils.clamp(velocitySlotsPerSec * 0.12, -1.2, 1.2);
       const target = Math.round(projected);
       const duration = THREE.MathUtils.clamp(0.4 + Math.min(Math.abs(velocitySlotsPerSec) * 0.05, 0.45), 0.4, 0.9);
-      gsap.to(continuousIndex, { current: target, duration, ease: 'power3.out', onComplete: settle });
+      gsap.to(continuousIndex, {
+        current: target,
+        duration,
+        ease: 'power3.out',
+        onUpdate: keepAlive,
+        onComplete: () => {
+          settle();
+          hold(SETTLE_WINDOW);
+        },
+      });
     },
     exitToSlider() {
       if (screenRef.current !== 'detail' || transitioningRef.current) return;
@@ -458,8 +496,12 @@ const CanRig = forwardRef(function CanRig(
     // in-between rotation it last had. Calling applyEntrancePose(1) here
     // directly, synchronously, guarantees that exact final frame always
     // happens regardless of frame timing.
+    // Scroll-scrubbed, so this runs on every scroll tick — invalidating here
+    // is what keeps the entrance drawing for as long as the user is actually
+    // scrolling through it, and not one frame longer.
     setEntranceProgress(t) {
       entranceProgressRef.current = t;
+      invalidate();
       if (t >= 1 && !entranceDoneRef.current) applyEntrancePose(1);
       entranceDoneRef.current = t >= 1;
     },
@@ -477,7 +519,13 @@ const CanRig = forwardRef(function CanRig(
       runFlavorSpin(activeFlavor);
     } else if (screen === 'slider' && flavorChanged && !draggingRef.current) {
       const target = nearestTarget(continuousIndex.current, activeFlavor);
-      gsap.to(continuousIndex, { current: target, duration: 0.6, ease: 'power3.out' });
+      gsap.to(continuousIndex, {
+        current: target,
+        duration: 0.6,
+        ease: 'power3.out',
+        onUpdate: keepAlive,
+        onComplete: () => hold(SETTLE_WINDOW),
+      });
     }
 
     prevScreen.current = screen;
@@ -506,10 +554,12 @@ const CanRig = forwardRef(function CanRig(
       if (event.pointerType && event.pointerType !== 'mouse') return;
       pointerTarget.current.x = (event.clientX / window.innerWidth) * 2 - 1;
       pointerTarget.current.y = (event.clientY / window.innerHeight) * 2 - 1;
+      hold(SETTLE_WINDOW);
     };
     const onPointerLeave = () => {
       pointerTarget.current.x = 0;
       pointerTarget.current.y = 0;
+      hold(SETTLE_WINDOW);
     };
 
     window.addEventListener('pointermove', onPointerMove, { passive: true });
@@ -518,7 +568,7 @@ const CanRig = forwardRef(function CanRig(
       window.removeEventListener('pointermove', onPointerMove);
       document.removeEventListener('pointerleave', onPointerLeave);
     };
-  }, []);
+  }, [hold]);
 
   // The same tilt the gallery and the detail card already apply, factored out
   // so the hero cluster can use it too: mostly a left/right turn on Y, with a
@@ -533,7 +583,7 @@ const CanRig = forwardRef(function CanRig(
     }
   }
 
-  useFrame((_, delta) => {
+  function tick(delta) {
     const lerpF = 1 - Math.exp(-LERP_SPEED * delta);
     pointerCurrent.current.x += (pointerTarget.current.x - pointerCurrent.current.x) * lerpF;
     pointerCurrent.current.y += (pointerTarget.current.y - pointerCurrent.current.y) * lerpF;
@@ -595,6 +645,24 @@ const CanRig = forwardRef(function CanRig(
         mesh.rotation.x = -pointerCurrent.current.y * PARALLAX_AMOUNT * 0.5;
       }
     }
+  }
+
+  // tick() above has three early returns; wrapping it keeps holding() on every
+  // path out of it. holding() is what re-arms the demand loop for the next
+  // frame while a settle window is still open — without it the loop draws once
+  // per hold() and stops, and the lerps freeze part-way.
+  useFrame((_, delta) => {
+    tick(delta);
+    holding();
+  });
+
+  // Anything that re-renders this rig may have changed what a frame should
+  // look like without going through a tween: a viewport crossing isMobile
+  // flips the whole arc layout, and screen/activeFlavor arrive as props. A
+  // short hold after every render covers all of them at the cost of a handful
+  // of frames, instead of enumerating them and missing one.
+  useEffect(() => {
+    hold(SETTLE_WINDOW);
   });
 
   return (
