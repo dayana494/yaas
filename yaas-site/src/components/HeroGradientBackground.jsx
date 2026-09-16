@@ -13,12 +13,29 @@ const GRADIENT_OVERRIDES = { ...gradientCfg, pts: points };
 // shader/animation logic itself lives untouched in createGradient(), this
 // just owns the mount/unmount lifecycle so the WebGL context and its
 // listeners get torn down when the hero screen unmounts.
+//
+// createGradient() reads the canvas's own clientWidth/clientHeight the
+// moment it runs (to size its framebuffers) — called straight from this
+// effect, that read landed immediately after React's own initial commit
+// inserted the canvas, forcing the browser to flush that whole commit's
+// layout synchronously right then instead of on its own schedule.
+// PageSpeed's "Forced reflow" audit caught it. A requestAnimationFrame
+// between mount and that first read lets the browser fold the flush into
+// its normal per-frame layout pass instead — this component renders on
+// every page (hero, footer, contacts) and nothing about it depends on
+// painting one frame earlier than that.
 export default function HeroGradientBackground() {
   const canvasRef = useRef(null);
 
   useEffect(() => {
-    const controller = createGradient(canvasRef.current, GRADIENT_OVERRIDES);
-    return () => controller.stop();
+    let controller;
+    const raf = requestAnimationFrame(() => {
+      controller = createGradient(canvasRef.current, GRADIENT_OVERRIDES);
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      controller?.stop();
+    };
   }, []);
 
   return (
