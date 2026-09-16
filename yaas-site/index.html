@@ -11,8 +11,8 @@
          downloading once the CSS has been parsed and something needs it, so it
          swaps in later than it has to; font-display: swap (styles/index.css)
          already means nothing is render-blocked on either of them. -->
-    <link rel="preload" href="/yaas/fonts/Soledago.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="preload" href="/yaas/fonts/Bounded-Medium.otf" as="font" type="font/otf" crossorigin />
+    <link rel="preload" href="%BASE_URL%fonts/Soledago.ttf" as="font" type="font/ttf" crossorigin />
+    <link rel="preload" href="%BASE_URL%fonts/Bounded-Medium.otf" as="font" type="font/otf" crossorigin />
   </head>
   <body>
     <div id="root"></div>
