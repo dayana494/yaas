@@ -3,6 +3,8 @@
 // the build uses them as the two sentences Figma node 258:208 colours
 // separately — GROUP_1 in ink, GROUP_2 in the brand pink, both wrapping
 // naturally inside one centred measure (see ScenarioArcGallery.jsx).
+import { asset } from './assetUrl';
+
 export const SCREEN2_HEADLINE_GROUP_1 = "This isn't about hyping you up.";
 export const SCREEN2_HEADLINE_GROUP_2 = "It's about staying locked in to your own thing.";
 
@@ -29,7 +31,7 @@ export const SCENARIOS = [
     caption: "When the night's just getting started and your battery isn't",
     flavor: 'strawberry',
     href: '/flavors/strawberry',
-    photo: '/photos/scenarios/party.jpg',
+    photo: asset('/photos/scenarios/party.jpg'),
   },
   {
     id: 'roadtrip',
@@ -37,7 +39,7 @@ export const SCENARIOS = [
     caption: "When the drive's long and the vibe's gotta stay maxed",
     flavor: 'lemon',
     href: '/flavors/lemon',
-    photo: '/photos/scenarios/road.jpg',
+    photo: asset('/photos/scenarios/road.jpg'),
   },
   {
     id: 'lecture',
@@ -45,7 +47,7 @@ export const SCENARIOS = [
     caption: "When the professor's on hour three and you're somehow still with it",
     flavor: 'apple',
     href: '/flavors/apple',
-    photo: '/photos/scenarios/univer.jpg',
+    photo: asset('/photos/scenarios/univer.jpg'),
   },
   {
     id: 'workout',
@@ -53,7 +55,7 @@ export const SCENARIOS = [
     caption: "When it's not your last set and you already thought you were done",
     flavor: 'orange',
     href: '/flavors/orange',
-    photo: '/photos/scenarios/sport.png',
+    photo: asset('/photos/scenarios/sport.jpg'),
   },
   {
     id: 'gaming',
@@ -61,6 +63,6 @@ export const SCENARIOS = [
     caption: 'When one more round decides everything',
     flavor: 'blueberry',
     href: '/flavors/blueberry',
-    photo: '/photos/scenarios/game.png',
+    photo: asset('/photos/scenarios/game.jpg'),
   },
 ];

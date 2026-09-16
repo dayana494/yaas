@@ -12,11 +12,13 @@
 // component iterates — it is not written around "two images used twice", so
 // dropping the real third and fourth photos in is a matter of replacing the
 // last two paths here (and their alt text) and nothing else.
+import { asset } from './assetUrl';
+
 export const ABOUT_PHOTOS = [
-  { src: '/images/about-brand-1.jpg', alt: 'Two hands holding out YAAS Blueberry and Orange cans' },
-  { src: '/images/about-brand-2.jpg', alt: 'Two hands holding out YAAS Blueberry and Orange cans' },
-  { src: '/images/about-brand-1.jpg', alt: '' },
-  { src: '/images/about-brand-2.jpg', alt: '' },
+  { src: asset('/images/about-brand-1.jpg'), alt: 'Two hands holding out YAAS Blueberry and Orange cans' },
+  { src: asset('/images/about-brand-2.jpg'), alt: 'Two hands holding out YAAS Blueberry and Orange cans' },
+  { src: asset('/images/about-brand-1.jpg'), alt: '' },
+  { src: asset('/images/about-brand-2.jpg'), alt: '' },
 ];
 
 // Where each card rests once the stack has assembled, back-most first — read

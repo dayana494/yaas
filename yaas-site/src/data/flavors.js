@@ -6,6 +6,8 @@
 // matching each can's own side in the hero cluster (heroLayout.js), so the
 // hero->gallery entrance flip never has to cross blueberry and orange past
 // each other.
+import { asset } from './assetUrl';
+
 export const FLAVORS = [
   {
     id: 'lemon',
@@ -14,8 +16,8 @@ export const FLAVORS = [
       "Fast reflexes, zero panic — she's already got it figured out while you're still thinking. A sharp, zesty flavor for people who think quick and stay cool doing it.",
     color: '#DFC821',
     colorDark: '#B99A00',
-    texture: '/textures/labels/lemon.jpg',
-    thumbnail: '/textures/thumbnails/lemon.png?v=2',
+    texture: asset('/textures/labels/lemon.jpg'),
+    thumbnail: asset('/textures/thumbnails/lemon.png?v=2'),
   },
   {
     id: 'blueberry',
@@ -24,8 +26,8 @@ export const FLAVORS = [
       "Quiet strength, zero flexing — she's got nothing to prove. A deep berry flavor for people who move at their own pace and still get where they're going.",
     color: '#0085C6',
     colorDark: '#00517A',
-    texture: '/textures/labels/blueberry.jpg',
-    thumbnail: '/textures/thumbnails/blueberry.png?v=2',
+    texture: asset('/textures/labels/blueberry.jpg'),
+    thumbnail: asset('/textures/thumbnails/blueberry.png?v=2'),
   },
   {
     id: 'strawberry',
@@ -34,8 +36,8 @@ export const FLAVORS = [
       "The unbothered queen of the scene — she's good no matter what's going on around her. A sweet-tart flavor for people who keep it together even when everything's on fire.",
     color: '#E53A6B',
     colorDark: '#A8194B',
-    texture: '/textures/labels/strawberry.jpg',
-    thumbnail: '/textures/thumbnails/strawberry.png?v=2',
+    texture: asset('/textures/labels/strawberry.jpg'),
+    thumbnail: asset('/textures/thumbnails/strawberry.png?v=2'),
   },
   {
     id: 'orange',
@@ -44,8 +46,8 @@ export const FLAVORS = [
       "Warm, bright confidence — she doesn't need to raise her voice to get noticed. A juicy citrus flavor that keeps the mood maxed out without ever forcing it.",
     color: '#DC6901',
     colorDark: '#B85A0D',
-    texture: '/textures/labels/orange.jpg',
-    thumbnail: '/textures/thumbnails/orange.png?v=2',
+    texture: asset('/textures/labels/orange.jpg'),
+    thumbnail: asset('/textures/thumbnails/orange.png?v=2'),
   },
   {
     id: 'apple',
@@ -54,8 +56,8 @@ export const FLAVORS = [
       "So confident there's nothing left to argue about. A crisp, tart flavor for people who stay calm even when the whole day is one long deadline.",
     color: '#82BF24',
     colorDark: '#0E6E45',
-    texture: '/textures/labels/apple.jpg',
-    thumbnail: '/textures/thumbnails/apple.png?v=2',
+    texture: asset('/textures/labels/apple.jpg'),
+    thumbnail: asset('/textures/thumbnails/apple.png?v=2'),
   },
 ];
 

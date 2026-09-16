@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ContactSection from './ContactSection';
 import { BRAND_TEASER } from '../data/homepageCopy';
+import { asset } from '../data/assetUrl';
 import {
   ABOUT_PHOTOS,
   CYCLE_DURATION,
@@ -332,7 +333,7 @@ export default function BrandTeaserScreen() {
           below share this one field instead of starting a second copy of it,
           so the join between the two has no seam. */}
       <div className="about-brand-bg" aria-hidden="true">
-        <img src="/images/about-brand-wordmark.svg" alt="" />
+        <img src={asset('/images/about-brand-wordmark.svg')} alt="" />
       </div>
 
       <div className="about-brand-pin" ref={pinRef}>
