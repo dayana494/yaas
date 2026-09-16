@@ -67,6 +67,7 @@ export function createGradient(cvs, overrides) {
   var stopped = false;
   var rafId = null;
   var observer = null;
+  var sizeObserver = null;
 
   if (!cvs) return { stop: function () {} };
 
@@ -204,30 +205,124 @@ export function createGradient(cvs, overrides) {
     if (r.width && r.height) {
       m.x = (e.clientX - r.left) / r.width;
       m.y = 1.0 - (e.clientY - r.top) / r.height;
+      // The cursor is the other input the output depends on, so a move is a
+      // reason to draw — the only one left, now that the loop no longer draws
+      // unprompted. Setting a flag rather than drawing here also coalesces a
+      // burst of pointer events down to one frame.
+      requestRender();
     }
   }
   if (cfg.mouseActive) window.addEventListener('mousemove', onMouseMove);
 
-  var isRunning = true;
+  // This canvas used to redraw as fast as the display allowed, forever, for as
+  // long as the page was open. The limits below cut that down to the frames
+  // that actually differ from the one already on screen. None of them changes
+  // what it looks like.
+  //
+  // The big one is that this shader is usually not animating at all. Its clock
+  // only advances by cfg.speed (see the t += line in f()), and the preset this
+  // site ships — dsgnmax.ru_19544_config.json — sets speed to 0. Everything
+  // time-based in the shader is driven off that clock, so with it frozen the
+  // output depends on exactly two things: the cursor and the canvas size.
+  // Between changes to those, the loop was reproducing a pixel-identical image
+  // ~60 times a second. So it now renders on demand and stops in between, and
+  // only keeps itself running frame after frame when the clock really moves.
+  var isAnimated = cfg.speed !== 0;
+  var needsRender = true;
+
+  // A ceiling for the animated case, not a target. This is a slow drifting
+  // backdrop; nothing in its motion is resolved by 60 samples a second and lost
+  // at 30. Halving the frame count does not halve its speed — see the t += line
+  // below, which now advances by elapsed time.
+  var MAX_FPS = 30;
+  var MIN_FRAME_MS = 1000 / MAX_FPS;
+  var lastFrameMs = 0;
+  var prevMs = 0;
+
+  var isVisible = typeof document === 'undefined' || !document.hidden;
+  var isOnScreen = true;
+  function isRunningNow() {
+    return isVisible && isOnScreen;
+  }
+  function resume() {
+    if (stopped || rafId != null) return;
+    // Re-baseline the clock so time spent paused is not handed to the animation
+    // in one step, which would make the gradient jump on the way back.
+    prevMs = 0;
+    rafId = requestAnimationFrame(f);
+  }
+  function pause() {
+    if (rafId != null) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+  function requestRender() {
+    needsRender = true;
+    if (isRunningNow()) resume();
+  }
+
+  // Backgrounded tab. The browser already throttles rAF hard here, but stopping
+  // outright makes it deterministic rather than up to the throttle, and leaves
+  // nothing running behind another window.
+  function onVisibilityChange() {
+    isVisible = !document.hidden;
+    if (isRunningNow()) resume();
+    else pause();
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', onVisibilityChange);
+  }
+
   if ('IntersectionObserver' in window) {
     observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          if (!isRunning) {
-            isRunning = true;
-            rafId = requestAnimationFrame(f);
-          }
-        } else {
-          isRunning = false;
-        }
+        isOnScreen = entry.isIntersecting;
+        if (isRunningNow()) resume();
+        else pause();
       });
     });
     observer.observe(cvs);
   }
 
-  function f() {
-    if (stopped || !isRunning || !gl) return;
-    t += 0.01 * cfg.speed;
+  // f() used to notice a size change by re-reading clientWidth every frame,
+  // which only works while it runs every frame. Now that it stops, the size has
+  // to announce itself.
+  if (typeof ResizeObserver !== 'undefined') {
+    sizeObserver = new ResizeObserver(function () {
+      requestRender();
+    });
+    sizeObserver.observe(cvs);
+    if (cvs.parentNode) sizeObserver.observe(cvs.parentNode);
+  } else {
+    window.addEventListener('resize', requestRender);
+  }
+
+  function f(nowMs) {
+    rafId = null;
+    if (stopped || !isRunningNow() || !gl) return;
+
+    // Nothing has changed since the last frame and the clock is not moving, so
+    // stop. requestRender() starts it up again once the cursor or the size
+    // gives it something new to draw.
+    if (!isAnimated && !needsRender) return;
+
+    if (isAnimated && nowMs - lastFrameMs < MIN_FRAME_MS - 0.5) {
+      rafId = requestAnimationFrame(f);
+      return;
+    }
+
+    // Advance by elapsed time rather than a fixed step per drawn frame. The old
+    // fixed step tied the drift speed to how often this happened to run, so a
+    // frame cap would have slowed it down (and a 120Hz display was already
+    // running it at double speed). Normalising to a 60fps step keeps the speed
+    // exactly what it has always been on a 60Hz screen, at any frame rate.
+    // Clamped so a long stall resumes smoothly instead of lurching.
+    var dtMs = prevMs ? Math.min(nowMs - prevMs, 4 * MIN_FRAME_MS) : 1000 / 60;
+    prevMs = nowMs;
+    lastFrameMs = nowMs;
+    needsRender = false;
+    t += 0.01 * cfg.speed * (dtMs / (1000 / 60));
     var w = cvs.clientWidth || cvs.parentNode.clientWidth,
       h = cvs.clientHeight || cvs.parentNode.clientHeight;
     if (cvs.width !== w || cvs.height !== h) {
@@ -372,7 +467,12 @@ export function createGradient(cvs, overrides) {
     stop: function () {
       stopped = true;
       if (rafId != null) cancelAnimationFrame(rafId);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      }
       if (cfg.mouseActive) window.removeEventListener('mousemove', onMouseMove);
+      if (sizeObserver) sizeObserver.disconnect();
+      else window.removeEventListener('resize', requestRender);
       if (observer) observer.disconnect();
       cvs.removeEventListener('webglcontextlost', onContextLost);
     },
