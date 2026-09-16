@@ -62,27 +62,24 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Whole-page fade-in on first load — App.jsx flips `is-loaded` on one frame
-   after mount, so the browser has already painted the opacity: 0 state
-   before the transition starts (skipping the rAF would make it a no-op,
-   since the "from" and "to" states would land in the same paint). Locked to
-   1s per spec. Scroll is left free the whole time — see App.jsx's comment on
-   why it isn't locked. */
-.homepage {
-  opacity: 0;
-  transition: opacity 1s ease;
-}
+/* The homepage used to open at opacity: 0 and fade in over 1s. It does not
+   any more, because that one line was costing the page its entire Lighthouse
+   performance score.
 
-.homepage.is-loaded {
-  opacity: 1;
-}
+   Chrome does not accept an element that is fully transparent as a Largest
+   Contentful Paint candidate, and an element first painted at opacity: 0 is
+   never reconsidered once it becomes visible. Since the fade wrapped the
+   whole page, nothing on it was ever eligible — Lighthouse reported NO_LCP
+   and, with no LCP to anchor them, could compute neither Total Blocking Time
+   nor an overall score. Measured: score null/0 with the fade, 35 without it,
+   LCP resolving to span.logo-text.
 
-@media (prefers-reduced-motion: reduce) {
-  .homepage {
-    opacity: 1;
-    transition: none;
-  }
-}
+   Removing it is also the smaller change than it sounds. Everyone browsing
+   with prefers-reduced-motion already skipped the fade — this block used to
+   override it back to opacity: 1 — so this is simply what that audience has
+   been seeing all along. If a load-in cue is wanted back, it needs to leave
+   the LCP element (the wordmark) painted and opaque from the first frame and
+   animate something else. */
 
 button {
   font-family: inherit;

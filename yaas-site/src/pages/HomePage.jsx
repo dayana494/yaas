@@ -79,21 +79,10 @@ export default function HomePage() {
   const [displayFlavor, setDisplayFlavor] = useState(DEFAULT_FLAVOR_INDEX);
   const [detailTextVisible, setDetailTextVisible] = useState(false);
   const [heroTextVisible, setHeroTextVisible] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  // No preloader — the page is visible straight away, just fading in over
-  // 1s (see .homepage/.homepage.is-loaded in styles/index.css).
-  // requestAnimationFrame (not an immediate setState) makes sure the browser
-  // has actually painted the opacity: 0 starting state before the
-  // transition to 1 kicks in. This used to also lock body scroll for that
-  // second, but toggling `overflow` removes/restores the scrollbar itself —
-  // a horizontal layout shift right as the lock lifted, which read as the
-  // page jerking sideways the moment the load-in finished. Scroll just
-  // stays free throughout; the fade alone is the "loading" cue.
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setLoaded(true));
-    return () => cancelAnimationFrame(raf);
-  }, []);
+  // No preloader and no fade-in: the page paints as soon as it can. The
+  // `loaded` flag and the rAF that flipped it existed only to drive the
+  // whole-page opacity transition, which had to go — see the note in
+  // styles/index.css for why it was costing the Lighthouse score.
 
   // Two sections further down the page — ScenarioCardsIsometric and
   // AdvantagesScreen — each pin themselves starting from a placeholder
@@ -527,7 +516,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className={`homepage ${loaded ? 'is-loaded' : ''}`}>
+    <div className="homepage">
       <section id="flavors" className="intro-wrap" ref={introWrapRef}>
         <div className="intro-pin" ref={introPinRef}>
           <HeroGradientBackground />
