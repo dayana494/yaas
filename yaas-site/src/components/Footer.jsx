@@ -6,6 +6,7 @@ import HeroGradientBackground from './HeroGradientBackground';
 import Logo from './Logo';
 import { FOOTER_TRIGGER_ID } from '../data/layout';
 import { RISE_UNITS } from '../scroll/riseTransition';
+import { asset } from '../data/assetUrl';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -87,10 +88,10 @@ function useWordmarkFit(ref) {
 // another page and not only from `/`.
 const FOOTER_LINKS = [
   { label: 'Flavors', href: '/flavors', isRoute: true },
-  { label: 'Why YAAS', href: '/#why-yaas' },
-  { label: 'About Us', href: '/#about' },
-  { label: 'FAQ', href: '/#faq' },
-  { label: 'Contacts', href: '/#contact' },
+  { label: 'Why YAAS', href: asset('/#why-yaas') },
+  { label: 'About Us', href: asset('/#about') },
+  { label: 'FAQ', href: asset('/#faq') },
+  { label: 'Contacts', href: asset('/#contact') },
 ];
 
 // Site-wide footer — Figma node 309:231: the wordmark filling the block, the
