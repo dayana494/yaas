@@ -169,6 +169,13 @@
   text-transform: uppercase;
 }
 
+/* The can's stand-in inside .detail-copy — see DetailScreen.jsx. Desktop
+   lays that screen out differently (the can sits beside the copy, not
+   above it), so it has no box there at all. */
+.detail-can-space {
+  display: none;
+}
+
 .detail-description {
   /* Site-wide body-copy: Bounded (--font-beiruti), 16px desktop / 14px
      mobile (see the max-width: 768px override below) — was its own
@@ -280,8 +287,8 @@
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
 }
 
-/* ---------- Mobile ---------- */
-@media (max-width: 768px) {
+/* ---------- Mobile and tablet ---------- */
+@media (max-width: 1023px) {
   .slider-heading {
     /* Figma 344:286: 56px on a 390-wide frame -> 14.36vw, capped before a
        tablet would take it past the desktop scale it hands off to. A NAME,
@@ -337,14 +344,23 @@
        the title at the top and the copy + CTA near the bottom, with the can
        between them. As one top-anchored stack the copy sat directly under the
        title and the can rendered straight over it.
-       The bottom padding used to reserve 23dvh for the flavor switcher. That
-       control is hidden at this width now (see .detail-switcher-wrap below),
-       so the copy gets that room back and the CTA can sit where the frame
-       actually puts it. */
+       The bottom padding used to reserve 23dvh for the flavor switcher.
+       That control is hidden at this width now (.detail-switcher-wrap
+       below).
+
+       7.53dvh top and bottom is 64px at 850 — the same distance from the
+       top of the screen that the gallery heading sits at, so the flavor
+       name here and "5 flavors. one energy." there start on the same line,
+       and the button ends as far from the bottom as the name is from the
+       top. space-between then divides what is left equally between the four
+       items, the can's stand-in included, so all three gaps are equal by
+       construction rather than by arithmetic that would need redoing every
+       time a description runs to another line. */
     inset: 0;
     display: flex;
     flex-direction: column;
-    padding: 4dvh 22px 9dvh;
+    justify-content: space-between;
+    padding: 7.53dvh 22px;
     max-width: none;
     text-align: center;
   }
@@ -352,18 +368,29 @@
   .detail-title {
     /* Figma 344:335: 48px on a 390-wide frame -> 12.31vw. */
     font-size: clamp(34px, 12.31vw, 56px);
+    /* The base rule carries a 20px bottom margin. space-between owns the
+       spacing here, and that margin was landing on top of the first gap only,
+       making it 77 against the other two at 57. */
+    margin: 0;
+  }
+
+  /* The can's own on-screen height: it is scaled to 0.656 world units in a
+     frustum 1.929 tall (three/CanRig.jsx), and that ratio is 34% of the
+     viewport at any height — so the stand-in tracks the can automatically
+     instead of being a pixel guess that only holds on one screen. */
+  .detail-can-space {
+    display: block;
+    flex: none;
+    height: 34dvh;
   }
 
   .detail-description {
-    /* margin-top: auto is what pushes this and the CTA under it down to the
-       bottom of .detail-copy's flex column, clear of the can above. Long-hand
-       rather than `margin: 0 auto`, which pinned the top back to 0 and left
-       both sitting directly under the title with the can rendering over them. */
-    margin: auto auto 0;
-    /* 12px, asked for explicitly. Deliberately below the site's --text-body-sm
-       of 14: this is the one piece of copy that has to share a screen with a
-       full-height can and a title, and it runs five lines. */
-    font-size: 12px;
+    /* No auto margin any more. That was what pushed this and the CTA to the
+       bottom of the column, clear of a can that had no box here; the
+       stand-in above gives the can one, so space-between places all four
+       items and an auto margin would only fight it. */
+    margin: 0 auto;
+    font-size: var(--text-body-sm);
   }
 
   .detail-switcher-wrap {
