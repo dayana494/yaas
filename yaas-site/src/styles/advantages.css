@@ -121,7 +121,12 @@
      percentage would resolve against the (much wider) containing block
      instead of the card's own width. clamp() pinned to roughly 8% of the
      card's own width at each breakpoint's own sizing instead. */
-  padding: clamp(20px, 7.2vw, 28px);
+  /* 25 of the mock's 303-wide card, i.e. 8.25% of it — and the card is
+     77.7vw, so 6.41vw. Still a clamp rather than a % because the card is
+     position: absolute on desktop, where a percentage would resolve against
+     the containing block instead of the card. The 28px cap is unchanged and
+     still reached well below 1024. */
+  padding: clamp(20px, 6.41vw, 28px);
   border-radius: 20px;
   background: #ffffff;
   box-shadow: 0 24px 48px rgba(20, 10, 20, 0.28);
@@ -132,7 +137,9 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(48px, 16vw, 90px);
+  /* 84 on the mock's 390 frame -> 21.5vw. Caps at the same 90 as before, so
+     desktop keeps the number it already had. */
+  font-size: clamp(48px, 21.5vw, 90px);
   line-height: 1.1;
   letter-spacing: -1.8px;
   color: var(--card-color, var(--ink-on-light));
@@ -205,7 +212,9 @@
      at typical desktop widths (≈420px at 1440px container) while
      shrinking gracefully on narrower ones instead of hitting that floor
      abruptly at 1024px. */
-  width: clamp(220px, 58vw, 420px);
+  /* 303 of Figma 370:2's 390-wide frame — 77.7vw. Desktop is untouched: both
+     the old 58vw and this clamp to the same 420 cap well before 1024. */
+  width: clamp(220px, 77.7vw, 420px);
   max-width: none;
   /* Height is set inline by ArcCards.jsx from this same resolved width
      (width's natural aspect-ratio height minus a flat trim) — a CSS
@@ -459,19 +468,34 @@
   letter-spacing: -0.01em;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
+  /* 18, down from the flat 20 the rule above sets. The question read large
+     against everything near it — its own answer is 14 and the card copy on
+     this same block is 14. Two points, which is the reduction asked for;
+     deliberately not --text-body's 16, since this is a control label rather
+     than running copy and 16 would put it level with nothing in particular. */
+  .advantages .faq-question-text {
+    font-size: 18px;
+  }
+
   .advantages .faq-heading-grid {
     padding: 0 20px clamp(32px, 6vh, 48px);
   }
 
-  /* The stage reserves the card's real height now that the trim above is
-     proportional. The base rule's 220px floor was shorter than the card it
-     holds (226px wide -> 234px tall at this width), which left the carousel
-     overhanging its own box. 60vw is that same width-derived height; the cap
-     matches the card's own 420px width cap. Mobile-scoped on purpose — the
-     base rule keeps desktop exactly as it is. */
+  /* The stage reserves the card's real height. The card is 77.7vw wide at a
+     ratio of 1.238 (Figma 370:2), so its height is 96.2vw, capped where the
+     width caps: 420 * 1.238 = 520. Mobile-scoped on purpose — the base rule
+     keeps desktop exactly as it is. */
   .advantages-arc-cards.is-arc-active {
-    height: clamp(285px, 64vw, 435px);
+    height: clamp(375px, 96.2vw, 520px);
+  }
+
+  /* 25 of the mock's 303-wide card — 8.25% of it, and the card is 77.7vw, so
+     6.41vw. The arc rule's own padding (1.92vw) is tuned for a 420px desktop
+     card and resolves to 19px here, which is cramped against a card this much
+     larger. Scoped rather than changed in place so desktop keeps its 27.6px. */
+  .advantages-arc-cards.is-arc-active .advantage-card {
+    padding: clamp(19px, 6.41vw, 28px);
   }
 }
 
@@ -488,6 +512,6 @@
    file and hero.css already use) and must not move. */
 @media (min-width: 769px) and (max-width: 1023px) {
   .advantages-arc-cards.is-arc-active {
-    height: 435px;
+    height: 520px;
   }
 }

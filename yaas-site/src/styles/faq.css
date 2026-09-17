@@ -45,10 +45,18 @@
   color: var(--ink);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   .faq-heading-grid {
     display: block;
     padding: 0 20px clamp(32px, 6vh, 48px);
+  }
+
+  /* Matches the embedded copy's own mobile size (advantages.css) — this
+     accordion renders inside .advantages on the homepage, and that rule
+     outranks this one there; this keeps the two from drifting if the FAQ is
+     ever used on its own. */
+  .faq-question-text {
+    font-size: 18px;
   }
 
   .faq-heading {
@@ -181,9 +189,9 @@
   transition: opacity 300ms ease 100ms;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   .faq-answer {
-    font-size: 14px;
+    font-size: var(--text-body-sm);
   }
 }
 

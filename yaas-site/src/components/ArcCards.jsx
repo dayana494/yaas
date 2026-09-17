@@ -40,6 +40,14 @@ const CARD_ASPECT_RATIO = 385 / 352;
 // file's mobile breakpoint, so 420 * this ratio is exactly the old 25.
 const CARD_HEIGHT_TRIM_RATIO = 25 / 420;
 
+// Below 1024 the card follows Figma 370:2 instead: 303 x 375 on its 390-wide
+// frame, so a height/width of 1.238 against desktop's 1.034. That is the
+// "noticeably taller, with real air between the title and the copy at the
+// bottom" the brief describes, and it is a different proportion rather than a
+// bigger version of the same one — hence a separate ratio rather than a scale.
+const CARD_ASPECT_RATIO_NARROW = 375 / 303;
+const NARROW_MAX_WIDTH = 1024;
+
 function cardStyleForDelta(delta, slotOffset) {
   const abs = Math.abs(delta);
   const x = delta * slotOffset;
@@ -114,9 +122,11 @@ const ArcCards = forwardRef(function ArcCards({ active }, ref) {
       // width-relative % would get re-resolved against the wrong axis if
       // reused inside a height calc(). Mobile/simple mode leaves the CSS
       // aspect-ratio alone (no side-peek carousel to size there).
-      const desktopHeight = activeRef.current
-        ? `${cardWidth * (CARD_ASPECT_RATIO - CARD_HEIGHT_TRIM_RATIO)}px`
-        : '';
+      const narrow = typeof window !== 'undefined' && window.innerWidth < NARROW_MAX_WIDTH;
+      const heightRatio = narrow
+        ? CARD_ASPECT_RATIO_NARROW
+        : CARD_ASPECT_RATIO - CARD_HEIGHT_TRIM_RATIO;
+      const desktopHeight = activeRef.current ? `${cardWidth * heightRatio}px` : '';
       cardRefs.current.forEach((el) => {
         if (el) el.style.height = desktopHeight;
       });
