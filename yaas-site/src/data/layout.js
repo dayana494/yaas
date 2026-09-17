@@ -67,3 +67,27 @@ export const ABOUT_SCROLL_UNITS = 4;
 // Brand + Contacts section sliding up off it — so it too is chained after a pin
 // and needs the same corrected start.
 export const FOOTER_TRIGGER_ID = 'footerPin';
+
+// How much scrolling the intro pin costs, as a multiplier on the unit counts
+// above.
+//
+// The units are viewport heights, so the pin holds the first screen in place
+// for ENTRANCE + INTERACTIVE + RISE of them — on a phone that is several
+// swipes of scrolling in which nothing leaves the screen, which is what made
+// the handover to Screen 2 feel like it had to be dragged through. Below 1024
+// the same choreography plays out over a shorter scroll instead: every stage
+// still happens, in the same order, just at less cost per stage.
+//
+// A multiplier rather than separate mobile unit counts, so the ratios between
+// the entrance, the interactive window and the rise stay exactly as they are
+// and only the total shortens.
+export const MOBILE_INTRO_SCALE = 0.6;
+
+// Viewport heights -> pixels, with that scale applied. Read live rather than
+// captured, so rotating a phone or crossing the breakpoint re-resolves it on
+// the next ScrollTrigger refresh.
+export function introUnitsPx(units) {
+  const narrow =
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches;
+  return units * window.innerHeight * (narrow ? MOBILE_INTRO_SCALE : 1);
+}

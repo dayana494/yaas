@@ -297,32 +297,34 @@
   }
 
   .arrow {
-    /* 44px touch-target minimum. */
-    width: 44px;
-    height: 44px;
-    /* Realigned to sit next to the can itself — .site-canvas (index.css)
-       moves from full-bleed to a bottom band at this same breakpoint (see
-       the mobile hero banner, hero.css), so the old 54%-of-viewport
-       vertical center (tuned for the full-bleed canvas) now sits well
-       above where the can actually renders. */
-    /* Figma 344:286 centres the arrows on the can, at 56% down — and now that
-       the canvas is full-bleed again (index.css) that is where the can really
-       is. The 79vh above was the band-era correction for a can stranded low;
-       with the band gone it would sit well below the can. */
-    top: 56dvh;
+    /* Up from 44. The touch target was already the minimum allowed rather than
+       a size chosen to be seen, and against a can this large it read as an
+       afterthought. */
+    width: 56px;
+    height: 56px;
+    /* Centred on the can, which now sits 4dvh higher than it did — see the
+       gallery's own yOffset in three/arcLayout.js and .flavor-name below, all
+       three moved together so the composition stays one piece. */
+    top: 52dvh;
   }
 
+  /* Out to the edges: 37vw leaves each arrow about 20px from its own side,
+     against roughly 68px before — 20 rather than flush so it lines up with the
+     gutter the heading above already sits in, and clears a rounded screen. */
   .arrow-left {
-    --ox: -25vw;
+    --ox: -37vw;
   }
 
   .arrow-right {
-    --ox: 25vw;
+    --ox: 37vw;
   }
 
   .flavor-name {
-    /* 91% down in Figma 344:286, i.e. 9% up from the bottom. */
-    bottom: 9dvh;
+    /* Was 9dvh, the frame's own 91%-down. Lifted with the gallery above it so
+       the space under the name matches the space between the heading and the
+       can: measured at 390x850 those were 46px and 113px, and moving the pair
+       up 4dvh (34px) brings both to about 80. */
+    bottom: 13dvh;
     /* 32px on the frame's 390 width -> 8.2vw. A flavor NAME, so it keeps its
        own scale rather than the shared block-heading size. */
     font-size: clamp(24px, 8.2vw, 38px);
@@ -334,14 +336,15 @@
     /* Full-height flex column rather than a top-anchored block: the frame puts
        the title at the top and the copy + CTA near the bottom, with the can
        between them. As one top-anchored stack the copy sat directly under the
-       title and the can rendered straight over it. The bottom padding is the
-       flavor switcher's own room — the frame doesn't draw that control, but it
-       is really there, so the CTA stops above it instead of at the frame's
-       own 91%. */
+       title and the can rendered straight over it.
+       The bottom padding used to reserve 23dvh for the flavor switcher. That
+       control is hidden at this width now (see .detail-switcher-wrap below),
+       so the copy gets that room back and the CTA can sit where the frame
+       actually puts it. */
     inset: 0;
     display: flex;
     flex-direction: column;
-    padding: 4dvh 22px 23dvh;
+    padding: 4dvh 22px 9dvh;
     max-width: none;
     text-align: center;
   }
@@ -357,6 +360,10 @@
        rather than `margin: 0 auto`, which pinned the top back to 0 and left
        both sitting directly under the title with the can rendering over them. */
     margin: auto auto 0;
+    /* 12px, asked for explicitly. Deliberately below the site's --text-body-sm
+       of 14: this is the one piece of copy that has to share a screen with a
+       full-height can and a title, and it runs five lines. */
+    font-size: 12px;
   }
 
   .detail-switcher-wrap {
@@ -366,6 +373,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+
+  /* Desktop-only control. Both the "Choose the flavor" label and the row of
+     other-flavor thumbs under it are hidden below 1024: on a phone the flavor
+     is changed from the gallery screen (swipe, or the arrows), and the pair
+     was taking a fifth of the screen to repeat an affordance that already
+     exists there. Hidden rather than removed from the DOM — the desktop layout
+     still renders and uses it. */
+  .detail-switcher-wrap {
+    display: none;
   }
 
   .choose-label {

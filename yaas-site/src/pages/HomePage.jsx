@@ -29,6 +29,7 @@ import {
 import { SCROLL_TO_STATE, scrollToSection } from '../scroll/sectionNav';
 import {
   ENTRANCE_UNITS,
+  introUnitsPx,
   INTERACTIVE_UNITS,
   SCREEN2_GAP_PX,
   SCREEN2_RISE_UNITS,
@@ -406,7 +407,7 @@ export default function HomePage() {
       trigger: introWrapRef.current,
       start: 'top top',
       end: () =>
-        `+=${(ENTRANCE_UNITS + INTERACTIVE_UNITS + SCREEN2_RISE_UNITS) * window.innerHeight + SCREEN2_GAP_PX}`,
+        `+=${introUnitsPx(ENTRANCE_UNITS + INTERACTIVE_UNITS + SCREEN2_RISE_UNITS) + SCREEN2_GAP_PX}`,
       pin,
       invalidateOnRefresh: true,
     });
@@ -445,7 +446,7 @@ export default function HomePage() {
     const entranceTrigger = ScrollTrigger.create({
       trigger: introWrapRef.current,
       start: 'top top',
-      end: () => `+=${ENTRANCE_UNITS * window.innerHeight}`,
+      end: () => `+=${introUnitsPx(ENTRANCE_UNITS)}`,
       scrub: true,
       invalidateOnRefresh: true,
       onUpdate: (self) => applyEntrance(self.progress),
@@ -505,7 +506,7 @@ export default function HomePage() {
     function easeToScreen2() {
       const pinStart = ScrollTrigger.getById(INTRO_TRIGGER_ID)?.start ?? 0;
       const y =
-        pinStart + (ENTRANCE_UNITS + INTERACTIVE_UNITS) * window.innerHeight + SCREEN2_GAP_PX;
+        pinStart + introUnitsPx(ENTRANCE_UNITS + INTERACTIVE_UNITS) + SCREEN2_GAP_PX;
       gsap.to(window, { duration: 0.7, ease: 'power2.inOut', scrollTo: { y } });
     }
 

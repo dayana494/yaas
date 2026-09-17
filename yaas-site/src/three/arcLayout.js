@@ -58,7 +58,14 @@ const MOBILE = {
   dipY: 0.02,
   fadeRange: 1.05,
   baseScale: 0.82,
-  yOffset: -0.116,
+  // The frame's own centre is 56% down, which is -0.116 here. Raised to bring
+  // the composition's two end gaps together: measured at 390x850, the space
+  // between the heading and the top of the can was 113px while the space under
+  // the flavor name was 46px. Moving the can up 34px (4% of the viewport, so
+  // 0.077 world units at this frustum) makes both about 80. The arrows and the
+  // flavor name move by the same 4dvh in layout.css so the three stay one
+  // composition rather than drifting apart.
+  yOffset: -0.039,
 };
 
 // Roughly 20px of screen space at typical viewport heights, in world units
