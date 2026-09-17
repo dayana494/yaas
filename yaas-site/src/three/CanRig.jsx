@@ -24,8 +24,18 @@ const FLIGHT_DURATION = 1.5;
 const posEase = gsap.parseEase('power2.inOut');
 
 const DETAIL_TILT_Z = THREE.MathUtils.degToRad(-13);
-const DETAIL_ANCHOR = { desktop: { x: 0.365, y: -0.028 }, mobile: { x: 0, y: -0.08 } };
-const DETAIL_SCALE = { desktop: 1.55, mobile: 0.95 };
+// Mobile values from Figma 344:335: the can's top sits ~23% down and it is
+// ~45% of the screen tall, so its centre lands at ~45.5% — just above the
+// midpoint, not below it as the old band-era value put it.
+const DETAIL_ANCHOR = { desktop: { x: 0.365, y: -0.028 }, mobile: { x: 0, y: 0.309 } };
+// Figma 344:335 puts this can at ~45% of the screen with its top ~23% down.
+// That frame does not draw the flavor switcher, which on the real screen owns
+// the bottom ~20% — and the real body copy runs five lines where the mock's
+// placeholder runs three. At 45% the can ran straight through both. 36%,
+// centred at 37%, is the largest that clears the title above and the copy
+// below on a 667-tall phone, and it keeps the mock's proportions on taller
+// ones.
+const DETAIL_SCALE = { desktop: 1.55, mobile: 0.656 };
 const PARALLAX_AMOUNT = 0.16;
 const LERP_SPEED = 6;
 // How long to keep asking for frames after the last cursor move / drag input.
@@ -549,6 +559,14 @@ const CanRig = forwardRef(function CanRig(
   useEffect(() => {
     const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     if (reduced) return undefined;
+    // Never attached on a touch device, rather than attached and then ignored
+    // per event. The handler below already drops non-mouse pointers, but a
+    // window-level pointermove still fires for every finger movement on a
+    // touchscreen — waking this listener on each one to do nothing. A device
+    // with no fine pointer has no cursor to follow, so there is nothing here
+    // for it to do at all.
+    const finePointer = window.matchMedia?.('(hover: hover) and (pointer: fine)')?.matches ?? true;
+    if (!finePointer) return undefined;
 
     const onPointerMove = (event) => {
       if (event.pointerType && event.pointerType !== 'mouse') return;

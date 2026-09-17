@@ -1,21 +1,7 @@
-@font-face {
-  font-family: 'Soledago';
-  src: url('/yaas/fonts/Soledago.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Replaces Beiruti site-wide — see --font-beiruti below. Name kept as
-   'Bounded' (not 'Beiruti') so it's obvious at a glance which family is
-   actually loaded when reading font stacks elsewhere in the CSS. */
-@font-face {
-  font-family: 'Bounded';
-  src: url('/yaas/fonts/Bounded-Medium.otf') format('opentype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
+/* The @font-face rules for Soledago and Bounded are in index.html, not here.
+   They need %BASE_URL% to resolve on both deploys, and that token is only
+   substituted in the HTML — see the comment next to them there. The stacks
+   below still name the families exactly as they always did. */
 
 :root {
   --font-display: 'Soledago', 'Arial Narrow', system-ui, -apple-system, sans-serif;
@@ -30,6 +16,22 @@
   --ink-soft: rgba(255, 255, 255, 0.85);
   --ink-on-light: #212121;
   --ink-on-light-soft: rgba(33, 33, 33, 0.72);
+
+  /* The one mobile size every block-level section heading on the site uses.
+     Figma 344:359 renders that heading at 40px on its own 390-wide frame, so
+     the middle term is 40/390 expressed as vw — the same px/frame-width
+     conversion .screen2-h2's desktop 4.17vw (80/1920) is built on, rather than
+     a lifted absolute pixel value.
+
+     The clamp's ends are what keep it sane off that one device: 40.0px at 390,
+     38.5px at 375, 44px at 428, and capped before a 768px tablet would take it
+     to 79px. Only ever read inside a (max-width: 768px) block — desktop keeps
+     its own clamp untouched.
+
+     Product/flavor NAMES deliberately do not use this: .slider-heading,
+     .flavor-name, .detail-title and .flavor-story-flavorname have their own
+     sizes from their own Figma frames. */
+  --block-heading-mobile: clamp(34px, 10.26vw, 46px);
   --paper: #fdfaf1;
   --bg-color: #f3d118;
   color-scheme: light;
@@ -175,15 +177,15 @@ button {
    correct for whatever aspect ratio the canvas's own on-screen box ends up
    with — same reasoning the contact block's own can rig relies on
    (no raw window.* reads to go stale). */
-@media (max-width: 768px) {
-  .site-canvas {
-    top: auto !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    height: 42vh !important;
-  }
-}
+/* The canvas stays full-bleed at every width now. It used to become a short
+   bottom band on mobile, to keep the cans clear of the hero copy above them —
+   but the same canvas also carries the flavor gallery and the detail view, and
+   Figma 344:286 puts the gallery's can across 34.7%-77.3% of the screen, which
+   a band starting at 48% simply cannot reach (it rendered small and stranded
+   low, with a large empty gap under the heading). Full-bleed gives all three
+   screens the whole viewport to compose in; the hero cans are kept clear of
+   the copy by their own world positions instead (three/heroLayout.js), which
+   is how desktop has always done it. */
 
 /* Slider/detail UI (labels, arrows, drag stage) only fades in once the
    entrance is mostly settled, so it isn't sitting there clickable/visible
@@ -243,7 +245,7 @@ button {
   inset: 0;
   opacity: 0.1;
   mix-blend-mode: overlay;
-  background-image: url('/yaas/textures/bg-texture.webp');
+  background-image: var(--asset-bg-texture);
   background-size: cover;
   background-position: center;
 }

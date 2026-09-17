@@ -54,7 +54,7 @@
   .faq-heading {
     max-width: none;
     text-align: center;
-    font-size: clamp(26px, 8vw, 44px);
+    font-size: var(--block-heading-mobile);
   }
 }
 

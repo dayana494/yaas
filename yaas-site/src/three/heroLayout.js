@@ -75,40 +75,46 @@ const DESKTOP_CANS = [
   },
 ];
 
-// Standing in a level row (kisadrink.ru's own mobile hero — three cans
-// side by side, upright, not the desktop cluster's tilted scatter) instead
-// of the old scattered-cluster pose (strawberry alone up top, blueberry/
-// orange lower — tuned back when this canvas was still full-bleed behind
-// the hero copy; now that .site-canvas is a short, wide bottom band
-// (index.css) the old pose's y values (up to 1.34) fall well outside that
-// band's own vertical frustum extent anyway). y=0, centered in the band;
-// x spread to use the wider aspect a short/wide canvas gives at this fixed
-// vertical FOV; only a light rotZ each (a resting few-degree lean, not the
-// original's dramatic multi-radian tilt) so they read as standing, not
-// toppling.
+// Re-poised against Figma 344:237 (390x850), replacing a row lifted from a
+// different reference (kisadrink.ru) that this frame does not resemble.
+//
+// What that frame shows, measured off its own render rather than off its node
+// boxes — those boxes are photo crop windows with empty margin in them, which
+// is why "82% of the frame width" appears in the brief while the visible can is
+// nearer 50%: a large upright centre can whose body spans about half the
+// screen's width and runs from ~51% down to just above the bottom edge, plus a
+// blueberry and an orange tilted +-15deg and cropped by the left and right
+// edges, both sitting a little lower than the centre one.
+//
+// Converted to this canvas's own frustum rather than copied as pixels. The
+// canvas is full-bleed, so at this fixed vertical FOV it is 1.929 world units
+// tall: a can of world height h covers h/1.929 of the screen. The frame's
+// centre can runs 51%-94% down, so 0.43 of the height; the two side cans sit a
+// little lower and are cropped by the left and right edges.
+//
 const MOBILE_CANS = [
   {
     id: 'strawberry',
     flavorIndex: flavorIndex('strawberry'),
-    end: { x: 0, y: 0, z: 0.2, rotY: 0.1, rotZ: 0.08, scale: 0.62 },
-    start: { x: 0, y: 1.6, z: -0.4, rotY: 0.1, rotZ: 0.08 + Math.PI * 3, scale: 0.2 },
-    control: { x: -0.1, y: 1, z: 0.9 },
+    end: { x: 0, y: -0.434, z: 0.2, rotY: 0.1, rotZ: 0.05, scale: 0.83 },
+    start: { x: 0, y: 1.7, z: -0.4, rotY: 0.1, rotZ: 0.05 + Math.PI * 3, scale: 0.22 },
+    control: { x: -0.1, y: 1.3, z: 0.9 },
     delay: 0,
   },
   {
     id: 'blueberry',
     flavorIndex: flavorIndex('blueberry'),
-    end: { x: -0.78, y: 0, z: 0, rotY: 0.18, rotZ: -0.1, scale: 0.62 },
-    start: { x: -0.78, y: -1.6, z: -0.5, rotY: 0.18, rotZ: -0.1 - Math.PI * 3, scale: 0.2 },
-    control: { x: -1, y: -1, z: 0.5 },
+    end: { x: -0.37, y: -0.52, z: 0, rotY: 0.18, rotZ: -0.262, scale: 0.78 },
+    start: { x: -1.6, y: -1.5, z: -0.5, rotY: 0.18, rotZ: -0.262 - Math.PI * 3, scale: 0.2 },
+    control: { x: -1.5, y: -1.1, z: 0.5 },
     delay: 0.12,
   },
   {
     id: 'orange',
     flavorIndex: flavorIndex('orange'),
-    end: { x: 0.78, y: 0, z: -0.1, rotY: -0.18, rotZ: 0.11, scale: 0.62 },
-    start: { x: 0.78, y: -1.6, z: -0.7, rotY: -0.18, rotZ: 0.11 + Math.PI * 3, scale: 0.2 },
-    control: { x: 1, y: -1, z: 0.3 },
+    end: { x: 0.37, y: -0.52, z: -0.1, rotY: -0.18, rotZ: 0.262, scale: 0.78 },
+    start: { x: 1.6, y: -1.5, z: -0.7, rotY: -0.18, rotZ: 0.262 + Math.PI * 3, scale: 0.2 },
+    control: { x: 1.5, y: -1.1, z: 0.3 },
     delay: 0.24,
   },
 ];

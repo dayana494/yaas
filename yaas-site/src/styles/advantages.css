@@ -82,7 +82,7 @@
   .advantages-heading {
     max-width: none;
     text-align: center;
-    font-size: clamp(26px, 8vw, 44px);
+    font-size: var(--block-heading-mobile);
   }
 }
 
@@ -422,7 +422,7 @@
   /* Matches .screen2-h2's own mobile override, same as the rule above matches
      its desktop one. */
   .advantages-title {
-    font-size: clamp(26px, 8vw, 44px);
+    font-size: var(--block-heading-mobile);
   }
 }
 
@@ -473,6 +473,33 @@
 
   /* Matches .screen2-h2's own mobile override, same as the headings above. */
   .advantages .faq-heading {
-    font-size: clamp(26px, 8vw, 44px);
+    font-size: var(--block-heading-mobile);
+  }
+
+  /* The stage reserves the card's real height now that the trim above is
+     proportional. The base rule's 220px floor was shorter than the card it
+     holds (226px wide -> 234px tall at this width), which left the carousel
+     overhanging its own box. 60vw is that same width-derived height; the cap
+     matches the card's own 420px width cap. Mobile-scoped on purpose — the
+     base rule keeps desktop exactly as it is. */
+  .advantages-arc-cards.is-arc-active {
+    height: clamp(285px, 64vw, 435px);
+  }
+}
+
+/* ---------- Tablet band (769-1023px) ---------- */
+/* The same stage-too-short problem the mobile block above fixes, in the one
+   band neither it nor the desktop rules cover. The base height is 34vw while
+   the card it holds is 58vw tall-ified to ~60vw, so the two only agree once
+   both hit their caps; in between, the stage is far shorter than its contents.
+   Across this whole band 58vw is already past the card width cap, so the card
+   is a flat 420 x 434.375 and the stage needs one flat number to match it.
+   Measured at 834px before this rule: a 283.7px stage holding cards that ran
+   from -18px to 500px, i.e. up into the heading and 159px out the bottom.
+   Deliberately stops at 1023px — 1024px up is desktop (the breakpoint this
+   file and hero.css already use) and must not move. */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .advantages-arc-cards.is-arc-active {
+    height: 435px;
   }
 }

@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import Scene from '../three/LazyScene';
 import Background from '../components/Background';
 import HeroGradientBackground from '../components/HeroGradientBackground';
@@ -37,7 +38,7 @@ import {
   FOOTER_TRIGGER_ID,
 } from '../data/layout';
 
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 const DetailScreen = lazy(() => import('../components/DetailScreen'));
 
@@ -461,6 +462,34 @@ export default function HomePage() {
       const rect = el.getBoundingClientRect();
       return rect.top <= 0 && rect.bottom >= window.innerHeight;
     }
+    // Scrolling DOWN out of the detail view used to have no handler at all: it
+    // fell through to native scroll, which then had to cross the rest of the
+    // interactive window before Screen 2's rise even began — the detail view is
+    // pinned and static for all of it, so it read as a dead zone of up to a
+    // full viewport plus SCREEN2_GAP_PX (measured from the pin geometry: the
+    // rise starts at ENTRANCE+INTERACTIVE units in, and detail is entered at
+    // ENTRANCE). This eases straight to that point instead, so the next thing
+    // the reader sees after letting go is Screen 2 climbing.
+    //
+    // The mirror of exitToSlider() for the upward direction, and reversible the
+    // same way: it lands while the intro is still pinned, so scrolling back up
+    // hits the existing detail -> slider branch below exactly as before.
+    //
+    // Mobile/tablet only, by request — both call sites are gated on isMobile.
+    // The dead zone is the same on desktop, but this is a scroll-feel change
+    // rather than a layout one and desktop is staying exactly as it was; there
+    // a downward wheel in the detail view keeps falling through to native
+    // scroll. The gate has to live on the branch conditions rather than in
+    // here: those branches preventDefault() before calling this, so a check at
+    // this level would swallow the event and leave desktop dead-stopped, which
+    // is worse than the fall-through it has today.
+    function easeToScreen2() {
+      const pinStart = ScrollTrigger.getById(INTRO_TRIGGER_ID)?.start ?? 0;
+      const y =
+        pinStart + (ENTRANCE_UNITS + INTERACTIVE_UNITS) * window.innerHeight + SCREEN2_GAP_PX;
+      gsap.to(window, { duration: 0.7, ease: 'power2.inOut', scrollTo: { y } });
+    }
+
     function onWheel(e) {
       if (!entranceDoneRef.current || !isPinned()) return;
       // While locked, freeze scroll entirely instead of just ignoring the
@@ -480,6 +509,10 @@ export default function HomePage() {
         e.preventDefault();
         lock();
         handleEnter();
+      } else if (isMobile && screen === 'detail' && e.deltaY > WHEEL_THRESHOLD) {
+        e.preventDefault();
+        lock();
+        easeToScreen2();
       } else if (screen === 'detail' && e.deltaY < -WHEEL_THRESHOLD) {
         e.preventDefault();
         lock();
@@ -498,6 +531,9 @@ export default function HomePage() {
       if (screen === 'slider' && dy < -SWIPE_THRESHOLD) {
         lock();
         handleEnter();
+      } else if (isMobile && screen === 'detail' && dy < -SWIPE_THRESHOLD) {
+        lock();
+        easeToScreen2();
       } else if (screen === 'detail' && dy > SWIPE_THRESHOLD) {
         lock();
         sceneRef.current?.exitToSlider();
@@ -512,7 +548,7 @@ export default function HomePage() {
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchend', onTouchEnd);
     };
-  }, [screen, handleEnter]);
+  }, [screen, handleEnter, isMobile]);
 
   const backgroundFlavor = FLAVORS[activeFlavor];
 

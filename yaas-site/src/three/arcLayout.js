@@ -44,6 +44,11 @@ const DESKTOP = {
   fadeRange: 2.5,
 };
 
+// Sized and placed from Figma 344:286 (390x800), now that the mobile canvas is
+// full-bleed rather than a bottom band. In that frame the centre can spans
+// 34.7%-77.3% of the screen, i.e. 42.6% of its height centred at 56% down.
+// At this fixed vertical FOV the full-height canvas is 1.929 world units tall,
+// so that height is baseScale below and that centre is yOffset.
 const MOBILE = {
   spacingX: 1.35,
   degPerSlot: 34,
@@ -52,10 +57,14 @@ const MOBILE = {
   minScale: 0.35,
   dipY: 0.02,
   fadeRange: 1.05,
+  baseScale: 0.82,
+  yOffset: -0.116,
 };
 
 // Roughly 20px of screen space at typical viewport heights, in world units
 // — nudges the whole arc down a touch relative to the heading above it.
+// Desktop only — mobile carries its own yOffset above, since its can sits much
+// lower in the frame relative to the heading than the desktop arc does.
 const ARC_Y_OFFSET = -0.045;
 
 // Which gallery arc slot (delta from the centered flavor) each hero-cluster
@@ -74,9 +83,9 @@ export function arcTransform(delta, isMobile) {
   const sign = Math.sign(delta);
   const x = delta * cfg.spacingX;
   const z = -abs * cfg.depthZ;
-  const y = -abs * abs * cfg.dipY + ARC_Y_OFFSET;
+  const y = -abs * abs * cfg.dipY + (cfg.yOffset ?? ARC_Y_OFFSET);
   const rotY = -sign * abs * cfg.degPerSlot * (Math.PI / 180);
-  const scale = Math.max(cfg.minScale, 1 - abs * cfg.scaleStep);
+  const scale = (cfg.baseScale ?? 1) * Math.max(cfg.minScale, 1 - abs * cfg.scaleStep);
   const visibility = Math.max(0, 1 - abs / cfg.fadeRange);
   return { x, y, z, rotY, scale, visibility };
 }

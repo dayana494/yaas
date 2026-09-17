@@ -96,8 +96,12 @@
    it alone on a line (space-between has nothing left to push against). On
    desktop nothing wraps and this changes nothing. */
 .hero-nav {
-  flex-wrap: wrap;
-  row-gap: 8px;
+  /* One row, always. Figma 344:237 fits all four pills across 390px with 12px
+     gaps and room to spare; the old wrap (and the comment explaining it) was
+     written against the earlier 14px/12px-padding pill, not this frame's
+     12px one. The retuned pill below is narrow enough that four of them plus
+     three gaps clear 375px, the narrowest common phone. */
+  flex-wrap: nowrap;
 }
 
 .hero-nav-right {
@@ -201,16 +205,72 @@
 }
 
 @media (max-width: 768px) {
+  /* ---------- Everything below is Figma 344:237, a 390x850 frame ----------
+     Positions are that frame's own numbers divided by its width or height and
+     re-applied as vw / dvh, never lifted as pixels — so a 667-tall phone and a
+     926-tall one both get the mockup's composition rather than the mockup
+     stretched or cropped. */
+
+  /* Nav row: pills start 10px in (10/390) and sit 22px down (22/850). */
+  .hero-nav {
+    top: 2.59dvh;
+    padding: 0 2.56vw;
+    gap: 2.6vw;
+    justify-content: flex-start;
+  }
+
+  .hero-nav-left {
+    gap: 2.6vw;
+  }
+
+  /* The fourth pill joins the same row instead of being pushed right by
+     margin-left: auto, which is what the frame shows — four evenly spaced
+     pills, not three-plus-one. */
+  .hero-nav-right {
+    margin-left: 0;
+  }
+
+  /* 12px type and a 30px-tall pill in the frame. The type, tracking, border and
+     fill match it; the height does not, and deliberately — min-height stays at
+     44px for the touch target this file already committed to. Padding is tuned
+     down from the frame's ~17px so all four still clear 375px. */
+  .hero-pill {
+    font-size: 12px;
+    letter-spacing: -0.24px;
+    padding: 8px 12px;
+    min-height: 44px;
+  }
+
+  /* Wordmark: 370 of 390 wide (so 10px either side), top 102 of 850. */
+  .hero-mobile-banner-logo-row {
+    top: 12dvh;
+    left: 2.56vw;
+    right: 2.56vw;
+  }
+
+  /* Copy block: subhead top 253.37/850, left 10/390, 323/390 wide; the CTA
+     follows at 346.37/850, which is the gap below. */
   .hero-copy {
     inset: auto;
-    top: 244px;
+    top: 29.8dvh;
     left: 0;
     right: 0;
     bottom: auto;
     justify-content: flex-start;
     align-items: flex-start;
-    gap: 16px;
-    padding: 0 24px;
+    gap: 3.6dvh;
+    padding: 0 2.56vw;
+  }
+
+  .hero-subhead {
+    max-width: 82.8vw;
+  }
+
+  /* 200 of 390 wide. A min-width keeps the label from wrapping on the
+     narrowest phones, where 51.3vw alone would be under 190px. */
+  .hero-cta {
+    width: 51.3vw;
+    min-width: 190px;
   }
 }
 

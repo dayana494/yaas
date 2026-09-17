@@ -13,6 +13,48 @@
          already means nothing is render-blocked on either of them. -->
     <link rel="preload" href="%BASE_URL%fonts/Soledago.ttf" as="font" type="font/ttf" crossorigin />
     <link rel="preload" href="%BASE_URL%fonts/Bounded-Medium.otf" as="font" type="font/otf" crossorigin />
+    <!-- The two @font-face rules live here rather than in styles/index.css, and
+         for the same reason the preloads above do: %BASE_URL% is substituted at
+         build time, so one source serves both the root deploy (Vercel) and the
+         sub-path one (GitHub Pages).
+
+         Vite does NOT rebase a root-absolute url() inside CSS, which is what
+         made this necessary — styles/index.css had '/yaas/fonts/...' hardcoded
+         to make the Pages build work, and that 404'd on every other origin
+         including the dev server, so the real faces silently never loaded and
+         everything fell back to Arial Narrow / Helvetica. A relative url()
+         would be rebased, but these files are in public/ and so have no path
+         to be relative to.
+
+         font-display: swap, as before: nothing is render-blocked on either. -->
+    <style>
+      @font-face {
+        font-family: 'Soledago';
+        src: url('%BASE_URL%fonts/Soledago.ttf') format('truetype');
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      /* Replaces Beiruti site-wide — see --font-beiruti in styles/index.css.
+         Name kept as 'Bounded' (not 'Beiruti') so it's obvious at a glance
+         which family is actually loaded when reading font stacks elsewhere. */
+      @font-face {
+        font-family: 'Bounded';
+        src: url('%BASE_URL%fonts/Bounded-Medium.otf') format('opentype');
+        font-weight: 500;
+        font-style: normal;
+        font-display: swap;
+      }
+      /* Same reasoning as the faces above, for the one image referenced from a
+         CSS url() rather than from JS: a custom property can carry a
+         base-resolved url() into any stylesheet, which %BASE_URL% cannot reach
+         on its own. Used by .background-texture (styles/index.css) and
+         .screen2-bg-texture (styles/screen2.css). Assets referenced from JS go
+         through data/assetUrl.js instead and were never affected. */
+      :root {
+        --asset-bg-texture: url('%BASE_URL%textures/bg-texture.webp');
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

@@ -63,7 +63,13 @@
 .slider-stage {
   position: absolute;
   inset: 0;
-  touch-action: none;
+  /* pan-y, not none. The carousel drag only ever reads horizontal movement
+     (useCarouselDrag.js works off clientX / dx alone), but `none` cancels the
+     browser's native touch scrolling outright for any gesture that starts on
+     this element — so a vertical swipe meant to scroll the page down past the
+     gallery was swallowed instead. pan-y hands vertical panning back to the
+     browser while horizontal drags still reach the pointer handlers. */
+  touch-action: pan-y;
   cursor: grab;
 }
 
@@ -176,11 +182,6 @@
   max-width: 38ch;
 }
 
-@media (max-width: 768px) {
-  .detail-description {
-    font-size: 14px;
-  }
-}
 
 .detail-cta {
   display: inline-flex;
@@ -282,7 +283,17 @@
 /* ---------- Mobile ---------- */
 @media (max-width: 768px) {
   .slider-heading {
-    font-size: clamp(26px, 8vw, 44px);
+    /* Figma 344:286: 56px on a 390-wide frame -> 14.36vw, capped before a
+       tablet would take it past the desktop scale it hands off to. A NAME,
+       not a block heading, so it keeps its own size rather than the site's
+       shared --block-heading-mobile. */
+    font-size: clamp(38px, 14.36vw, 64px);
+    /* The frame breaks this over two lines ("5 flavors." / "one energy"), and
+       at 14vw it has to — the base rule keeps it on one line for desktop,
+       where it fits. Left as nowrap it simply ran off the right edge. */
+    white-space: normal;
+    line-height: 1.05;
+    padding: 0 6.15vw;
   }
 
   .arrow {
@@ -294,7 +305,11 @@
        the mobile hero banner, hero.css), so the old 54%-of-viewport
        vertical center (tuned for the full-bleed canvas) now sits well
        above where the can actually renders. */
-    top: 79vh;
+    /* Figma 344:286 centres the arrows on the can, at 56% down — and now that
+       the canvas is full-bleed again (index.css) that is where the can really
+       is. The 79vh above was the band-era correction for a can stranded low;
+       with the band gone it would sit well below the can. */
+    top: 56dvh;
   }
 
   .arrow-left {
@@ -306,25 +321,42 @@
   }
 
   .flavor-name {
-    bottom: clamp(56px, 12vh, 90px);
-    font-size: clamp(20px, 6vw, 28px);
+    /* 91% down in Figma 344:286, i.e. 9% up from the bottom. */
+    bottom: 9dvh;
+    /* 32px on the frame's 390 width -> 8.2vw. A flavor NAME, so it keeps its
+       own scale rather than the shared block-heading size. */
+    font-size: clamp(24px, 8.2vw, 38px);
   }
 
   .detail-copy {
     left: 0;
     right: 0;
-    top: clamp(20px, 4vh, 36px);
+    /* Full-height flex column rather than a top-anchored block: the frame puts
+       the title at the top and the copy + CTA near the bottom, with the can
+       between them. As one top-anchored stack the copy sat directly under the
+       title and the can rendered straight over it. The bottom padding is the
+       flavor switcher's own room — the frame doesn't draw that control, but it
+       is really there, so the CTA stops above it instead of at the frame's
+       own 91%. */
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 4dvh 22px 23dvh;
     max-width: none;
-    padding: 0 22px;
     text-align: center;
   }
 
   .detail-title {
-    font-size: clamp(36px, 12vw, 56px);
+    /* Figma 344:335: 48px on a 390-wide frame -> 12.31vw. */
+    font-size: clamp(34px, 12.31vw, 56px);
   }
 
   .detail-description {
-    margin: 0 auto;
+    /* margin-top: auto is what pushes this and the CTA under it down to the
+       bottom of .detail-copy's flex column, clear of the can above. Long-hand
+       rather than `margin: 0 auto`, which pinned the top back to 0 and left
+       both sitting directly under the title with the can rendering over them. */
+    margin: auto auto 0;
   }
 
   .detail-switcher-wrap {

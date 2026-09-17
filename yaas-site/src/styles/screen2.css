@@ -96,7 +96,7 @@
   z-index: -1;
   opacity: 0.1;
   mix-blend-mode: overlay;
-  background: url('/yaas/textures/bg-texture.webp') center / cover no-repeat;
+  background: var(--asset-bg-texture) center / cover no-repeat;
   pointer-events: none;
 }
 
@@ -235,7 +235,7 @@
 
 @media (max-width: 768px) {
   .screen2-h2 {
-    font-size: clamp(26px, 8vw, 44px);
+    font-size: var(--block-heading-mobile);
   }
 
   .screen2-subline {
@@ -332,7 +332,13 @@
    way, only the card's own box and the transition differ. */
 .scenario-cards-iso {
   position: relative;
+  /* Paired, like every other full-viewport box in this codebase (the negative
+     margin two lines below, .flavor-story-wrap, .advantages-pin). On mobile a
+     bare 100vh is the viewport with the address bar *collapsed*, i.e. taller
+     than what is actually visible — so the pinned card was centred inside a box
+     taller than the screen and read as pushed toward the top. */
   height: 100vh;
+  height: 100dvh;
   /* Pulled up by exactly the arc stage's own height, so this section's top
      reaches the viewport at the same scroll position the arc's pin releases
      at. Without it the arc still has its own 100vh to scroll out of the way

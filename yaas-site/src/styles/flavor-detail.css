@@ -356,6 +356,13 @@
 }
 
 @media (max-width: 768px) {
+  /* Block-level section intro, so it takes the site-wide mobile heading size
+     (index.css) like every other one. Its desktop clamp bottoms out at 30px,
+     which read noticeably smaller than the rest of the page. */
+  .flavor-gallery-heading {
+    font-size: var(--block-heading-mobile);
+  }
+
   .flavor-gallery-track {
     --gallery-visible: 1;
   }

@@ -30,7 +30,15 @@ const ARC_DROP = 56;
 // Card's natural aspect ratio (see .advantage-card's mobile aspect-ratio in
 // advantages.css) minus a flat trim off the height — see measure() below.
 const CARD_ASPECT_RATIO = 385 / 352;
-const CARD_HEIGHT_TRIM = 25;
+// The card is its width's natural aspect ratio, minus a trim — the "20-30px
+// shorter" the design called for. Proportional, not the flat 25px it used to
+// be: a flat trim is 6% of a 420px desktop card but 11% of a 226px phone one,
+// so the phone card came out at a 0.98 height/width ratio against desktop's
+// 1.034 — visibly squatter, which is what this section of the brief is about.
+// The ratio is 25/420, i.e. calibrated so the desktop card is unchanged to the
+// pixel: its width is clamped at 420 for every viewport at or above this
+// file's mobile breakpoint, so 420 * this ratio is exactly the old 25.
+const CARD_HEIGHT_TRIM_RATIO = 25 / 420;
 
 function cardStyleForDelta(delta, slotOffset) {
   const abs = Math.abs(delta);
@@ -87,7 +95,17 @@ const ArcCards = forwardRef(function ArcCards({ active }, ref) {
 
     function measure() {
       const firstCard = cardRefs.current.find(Boolean);
-      const cardWidth = firstCard ? firstCard.getBoundingClientRect().width : 352;
+      // offsetWidth, not getBoundingClientRect().width: the latter reports the
+      // TRANSFORMED box, and applyProgress has usually already scaled these
+      // cards by the time a resize fires measure() again. Feeding that scaled
+      // width back in inflates both the slot spacing below and the height after
+      // it, compounding on each resize — a 428px-wide phone resized mid-arc
+      // resolved a 511px "width" for a card the CSS caps at 248px, and set a
+      // 529px height inside a 285px stage. offsetWidth is the layout width and
+      // ignores transforms, so it reads the clamp in advantages.css and nothing
+      // else. Desktop is unaffected: there the clamp pins the card to a flat
+      // 420 and the two properties already agreed.
+      const cardWidth = firstCard ? firstCard.offsetWidth : 352;
       slotOffsetRef.current = cardWidth + CARD_GAP_PX;
 
       // Desktop cards are sized by width alone in CSS (see advantages.css);
@@ -96,7 +114,9 @@ const ArcCards = forwardRef(function ArcCards({ active }, ref) {
       // width-relative % would get re-resolved against the wrong axis if
       // reused inside a height calc(). Mobile/simple mode leaves the CSS
       // aspect-ratio alone (no side-peek carousel to size there).
-      const desktopHeight = activeRef.current ? `${cardWidth * CARD_ASPECT_RATIO - CARD_HEIGHT_TRIM}px` : '';
+      const desktopHeight = activeRef.current
+        ? `${cardWidth * (CARD_ASPECT_RATIO - CARD_HEIGHT_TRIM_RATIO)}px`
+        : '';
       cardRefs.current.forEach((el) => {
         if (el) el.style.height = desktopHeight;
       });

@@ -148,6 +148,6 @@
 
   /* Matches every other block heading's own mobile override. */
   .contact-heading {
-    font-size: clamp(26px, 8vw, 44px);
+    font-size: var(--block-heading-mobile);
   }
 }

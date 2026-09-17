@@ -301,7 +301,7 @@
 @media (max-width: 768px) {
   .about-brand {
     /* Matches every other block heading's own mobile override. */
-    --about-heading-size: clamp(26px, 8vw, 44px);
+    --about-heading-size: var(--block-heading-mobile);
   }
 }
 
