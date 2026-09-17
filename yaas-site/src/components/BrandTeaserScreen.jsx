@@ -20,6 +20,35 @@ gsap.registerPlugin(ScrollTrigger);
 // scales — it dissolves where it stands.
 const HEADING_BLUR_PX = 26;
 
+// Clearance added beyond the exact edge, so a rotated card's corner does not
+// creep back in.
+const SCATTER_MARGIN_PX = 28;
+
+// Where a card starts its fly-in: its scatter direction, pushed out far enough
+// that none of it is in frame. See the call site for why the raw fractions are
+// not enough on a phone.
+function offCanvas(card, scatter, rotateDeg) {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const x = scatter.x * w;
+  const y = scatter.y * h;
+  // The card arrives rotated, and a rotated rectangle is wider and taller than
+  // its own box — at 26 degrees this one gains 76px of width, which is most of
+  // what was still showing when the clearance was computed off offsetWidth
+  // alone.
+  const rad = Math.abs((rotateDeg * Math.PI) / 180);
+  const cos = Math.abs(Math.cos(rad));
+  const sin = Math.abs(Math.sin(rad));
+  const halfW = (card.offsetWidth * cos + card.offsetHeight * sin) / 2;
+  const halfH = (card.offsetWidth * sin + card.offsetHeight * cos) / 2;
+  const needX = w / 2 + halfW + SCATTER_MARGIN_PX;
+  const needY = h / 2 + halfH + SCATTER_MARGIN_PX;
+  // Out on either axis is enough to be out of shot, so take whichever costs
+  // less — and never shrink the offset.
+  const k = Math.max(1, Math.min(needX / Math.abs(x || 1), needY / Math.abs(y || 1)));
+  return { x: x * k, y: y * k };
+}
+
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
   useEffect(() => {
@@ -215,8 +244,18 @@ export default function BrandTeaserScreen() {
         tl.fromTo(
           card,
           {
-            x: () => scatter.x * window.innerWidth,
-            y: () => scatter.y * window.innerHeight,
+            // The scatter offsets are fractions of the viewport, which is not
+            // the same as being off it: a card also has to clear its own half
+            // width or height. Measured at 390 with the card at full container
+            // width, two of the four started 84px inside the frame and sat
+            // there in shot through the whole heading phase.
+            //
+            // offCanvas scales the offset vector — direction untouched — by the
+            // least amount that puts the card outside on one axis, and never
+            // scales it down, so anything already clear (every card at desktop
+            // sizes) is left exactly as it was.
+            x: () => offCanvas(card, scatter, slot.rotate + scatter.rotate).x,
+            y: () => offCanvas(card, scatter, slot.rotate + scatter.rotate).y,
             rotate: slot.rotate + scatter.rotate,
             skewX: slot.skewX,
             scale: 1,

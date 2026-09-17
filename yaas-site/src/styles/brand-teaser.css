@@ -289,17 +289,25 @@
 
 @media (max-width: 899px) {
   .about-brand {
-    --about-card-w: clamp(150px, 46vw, 260px);
+    /* The full width of the stage's content box — its 20px side padding is the
+       container, and the photos fill it. Figma 372:48 has the stack running
+       past both frame edges, so a rotated card overhanging a little is the
+       mock's own look rather than a mistake. */
+    --about-card-w: calc(100vw - 40px);
   }
 
   .about-brand-stage {
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;
-    /* The two gaps around the photos are not equal in the mock, so they are
-       set on the deck itself rather than through one shared gap. */
+    /* Equal space above the first paragraph and below the last — the same
+       --block-gap every other block on the site uses at this width — and
+       space-between then divides what is left into two equal gaps, one either
+       side of the photos. So all four intervals come out of two rules rather
+       than four hand-set numbers that would need redoing whenever the copy
+       rewraps or the card grows. */
+    justify-content: space-between;
     gap: 0;
-    padding: clamp(24px, 4vh, 40px) 20px;
+    padding: var(--block-gap) 20px;
   }
 
   .about-brand-deck {
@@ -309,9 +317,9 @@
     flex: none;
     align-self: center;
     transform: none;
-    /* Figma 372:48, an 800-tall frame: 60px between the first paragraph and
-       the photos (7.5%) and 50px between the photos and the second (6.25%). */
-    margin: 7.5dvh 0 6.25dvh;
+    /* No margins of its own — space-between on the stage owns the two gaps
+       around it now, and a margin here would make them unequal again. */
+    margin: 0;
   }
 
   .about-brand-text-lead,
