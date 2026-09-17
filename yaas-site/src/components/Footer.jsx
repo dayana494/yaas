@@ -12,6 +12,7 @@ import {
   SECTION_CONTACT,
   SECTION_FAQ,
   SECTION_WHY_YAAS,
+  sectionHref,
 } from '../data/navLinks';
 import { useSectionNav } from '../scroll/sectionNav';
 
@@ -88,25 +89,22 @@ function useWordmarkFit(ref) {
   }, [ref]);
 }
 
-// Figma node 309:231's own row, in its own order. "Flavors" is the one real
-// route — a standalone page built from the homepage's own gallery and flavor
-// cards (see pages/FlavorsPage.jsx). The rest jump to their block on the
-// homepage, written as `/#id` rather than `#id` so they still resolve from
-// another page and not only from `/`.
-// Same targets as the header menu, from the same module — see data/navLinks.js
-// for how the two had drifted apart.
+// Figma node 309:231's own row, in its own order, pointing at the same targets
+// as the header menu and from the same module — see data/navLinks.js for how
+// the two had drifted apart.
 //
-// The hash entries were '/#why-yaas' and friends: an absolute path, so on the
-// sub-path deploy they walked off the deploy root entirely, and even at the
-// root they were a plain navigation that reloaded the page instead of
-// scrolling. Bare hashes now, handled by useSectionNav, which scrolls when
-// already on the homepage and routes there first when not.
+// "Flavors" is the one real route: a standalone page built from the homepage's
+// own gallery and flavor cards (pages/FlavorsPage.jsx). The rest are sections
+// of the homepage, and sectionHref resolves each against BASE_URL so the link
+// is a correct URL on its own — '/yaas/#faq' under GitHub Pages, where the
+// hand-written '/#faq' these used to carry walked off the deploy root.
+// useSectionNav then takes over an ordinary click for the smooth version.
 const FOOTER_LINKS = [
   { label: 'Flavors', href: FLAVORS_ROUTE, isRoute: true },
-  { label: 'Why YAAS', href: SECTION_WHY_YAAS },
-  { label: 'About Us', href: SECTION_ABOUT },
-  { label: 'FAQ', href: SECTION_FAQ },
-  { label: 'Contacts', href: SECTION_CONTACT },
+  { label: 'Why YAAS', href: sectionHref(SECTION_WHY_YAAS) },
+  { label: 'About Us', href: sectionHref(SECTION_ABOUT) },
+  { label: 'FAQ', href: sectionHref(SECTION_FAQ) },
+  { label: 'Contacts', href: sectionHref(SECTION_CONTACT) },
 ];
 
 // Site-wide footer — Figma node 309:231: the wordmark filling the block, the

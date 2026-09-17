@@ -1,7 +1,21 @@
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
-import { SECTION_FLAVORS } from '../data/navLinks';
+import { SECTION_ABOUT, SECTION_FLAVORS } from '../data/navLinks';
+
+// Sections whose document top is not where they visually begin, in viewports.
+//
+// Both are cases of this page's handover pattern, where a section is pulled up
+// by a viewport (margin-top: -100dvh) so the block above can travel across it
+// and uncover it. Aiming at their real top therefore lands a full screen early,
+// inside the previous block: measured at 1440, the element under the middle of
+// the screen at #about's own top is .faq-list, and only one viewport further
+// down does it become .about-brand-deck. #flavors is the same story for a
+// different reason — it is the second screen of the intro pin, not its start.
+const VIEWPORT_OFFSET = {
+  [SECTION_FLAVORS]: 1,
+  [SECTION_ABOUT]: 1,
+};
 
 // Smooth-scrolls the homepage to a section, and reports whether it could.
 //
@@ -17,9 +31,7 @@ export function scrollToSection(hash) {
   if (!el) return false;
   const box = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el;
   let y = box.getBoundingClientRect().top + window.scrollY;
-  // The gallery is the second screen of the intro pin, not its start, so its
-  // anchor is one viewport into that pin's own scroll window.
-  if (hash === SECTION_FLAVORS) y += window.innerHeight;
+  y += (VIEWPORT_OFFSET[hash] ?? 0) * window.innerHeight;
   gsap.to(window, { duration: 1, ease: 'power2.inOut', scrollTo: { y } });
   return true;
 }
@@ -43,8 +55,17 @@ export function useSectionNav() {
 
   return useCallback(
     (event) => {
-      const hash = event.currentTarget.getAttribute('href');
-      if (!hash?.startsWith('#')) return;
+      // The href is a real, base-resolved URL ('/yaas/#faq'), not a bare '#faq'
+      // — so opening it in a new tab, or landing on it with JS not yet running,
+      // still goes to the homepage and that section rather than bolting the
+      // hash onto whatever page the reader is on. Only the fragment matters
+      // here, so take it off the end.
+      const href = event.currentTarget.getAttribute('href') || '';
+      const at = href.indexOf('#');
+      if (at === -1) return;
+      const hash = href.slice(at);
+      // Let the browser handle anything the reader means to open elsewhere.
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
       event.preventDefault();
       if (pathname === '/') {
         scrollToSection(hash);

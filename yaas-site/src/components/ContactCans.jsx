@@ -38,9 +38,16 @@ const SRC = {
 // The captures' own pixel dimensions, so a can occupies its final box before
 // the image has loaded — width is derived from height rather than left to the
 // intrinsic ratio, which is not known until then.
+//
+// These are the capture's NATIVE crop, not a resampled version of it. The
+// first pass downscaled 1583px to 1100 before saving, and a can is drawn at up
+// to 543.5 CSS px tall — which on a 2x screen is 1087 device pixels, i.e. the
+// softened image shown at essentially 1:1, and it read as blurry. Straight off
+// the framebuffer with no resampling step at all, 1583 leaves 1.46x in hand
+// there instead.
 const NATURAL = {
-  orange: { w: 760, h: 1100 },
-  blueberry: { w: 759, h: 1100 },
+  orange: { w: 1093, h: 1583 },
+  blueberry: { w: 1092, h: 1583 },
 };
 
 // A capture frames the can's TILTED silhouette, which is taller than the

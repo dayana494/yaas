@@ -1,3 +1,5 @@
+import { asset } from './assetUrl';
+
 // One source of truth for where the header menu and the footer nav point.
 //
 // They used to carry their own copies, which is how they drifted apart: the
@@ -18,6 +20,17 @@ export const SECTION_WHY_YAAS = '#why-yaas';
 export const SECTION_ABOUT = '#about';
 export const SECTION_FAQ = '#faq';
 export const SECTION_CONTACT = '#contact';
+
+// The href to actually render for one of those. A bare '#faq' would be wrong
+// anywhere but the homepage — on /flavors it means "this page, fragment faq" —
+// and on the sub-path deploy a written-out '/#faq' walks off the deploy root
+// entirely. sectionHref('#faq') is '/#faq' at the root and '/yaas/#faq' under
+// GitHub Pages, so the link is correct as a plain URL: right in a new tab,
+// right before JS runs, right if JS never runs. The click handler still takes
+// over for the smooth in-app version.
+export function sectionHref(hash) {
+  return asset(`/${hash}`);
+}
 
 // The homepage's own flavor gallery. Not in either menu any more (Flavors goes
 // to the page instead) — the hero's "See the Flavors" CTA still scrolls to it.

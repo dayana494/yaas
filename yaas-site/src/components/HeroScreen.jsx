@@ -9,6 +9,7 @@ import {
   SECTION_CONTACT,
   SECTION_FAQ,
   SECTION_FLAVORS,
+  sectionHref,
 } from '../data/navLinks';
 import { scrollToSection, useSectionNav } from '../scroll/sectionNav';
 
@@ -69,10 +70,10 @@ function useHeroScale() {
 // page, eased to by useSectionNav — which also handles being clicked from
 // another page, where they previously did nothing at all.
 const NAV_LINKS_LEFT = [
-  { label: 'About us', href: SECTION_ABOUT },
-  { label: 'FAQ', href: SECTION_FAQ },
+  { label: 'About us', href: sectionHref(SECTION_ABOUT) },
+  { label: 'FAQ', href: sectionHref(SECTION_FAQ) },
 ];
-const NAV_LINK_RIGHT = { label: 'Contacts', href: SECTION_CONTACT };
+const NAV_LINK_RIGHT = { label: 'Contacts', href: sectionHref(SECTION_CONTACT) };
 
 // DOM layer for the hero's nav/headline/copy (the "front" stage — see
 // .hero-stage in hero.css for the fixed-canvas + scale-transform sizing).
