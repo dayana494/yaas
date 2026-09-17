@@ -220,7 +220,12 @@ export default function BrandTeaserScreen() {
             rotate: slot.rotate + scatter.rotate,
             skewX: slot.skewX,
             scale: 1,
-            opacity: 0,
+            // Fully opaque from the first frame, at every width. The photos
+            // used to fade up from 0 across the fly-in; they now travel in
+            // already visible, so the assembly reads as cards being dealt
+            // rather than materialising. Only the opacity changes — the
+            // scatter positions, the rotations and the timing are untouched.
+            opacity: 1,
             zIndex: i,
           },
           {

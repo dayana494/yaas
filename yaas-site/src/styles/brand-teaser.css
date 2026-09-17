@@ -22,6 +22,10 @@
      every width instead of only at 1920. Deliberately NOT a transform: scale()
      or a %/em off some container — the same trap the Screen 3 cards hit. */
   --about-heading-ratio: 1.875;
+  /* Taken off the second line's size only ("For Our People."), leaving the
+     first alone. Zero here so desktop keeps the mock's exact 1.875; the
+     responsive block sets it. */
+  --about-heading-line-2-trim: 0px;
 
   /* The photo card, 560 x 706.796 in the mock — 72.8% of that frame's height.
      Width is the constrained side: it has to clear the two text columns beside
@@ -164,7 +168,7 @@
 }
 
 .about-brand-heading-line-2 {
-  font-size: calc(var(--about-heading-size) * var(--about-heading-ratio));
+  font-size: calc(var(--about-heading-size) * var(--about-heading-ratio) - var(--about-heading-line-2-trim));
   color: #e53a6b;
 }
 
@@ -177,10 +181,26 @@
   inset: 0;
   z-index: 2;
   display: flex;
-  align-items: center;
+  /* The photo deck is position: absolute (see .about-brand-deck), so it is out
+     of this flex flow entirely and these two properties only ever govern the
+     two text columns.
+
+     flex-start rather than center is what top-aligns them with each other:
+     centred, each was individually centred in a full-height box, so the longer
+     one started higher than the shorter and their first lines never agreed.
+     They need a top to share, and the padding below is where that top sits —
+     42.3% down, which is where Figma 302:146 puts both first lines.
+
+     space-between is what the mock has horizontally: both columns are the same
+     width, so pushing each to its own edge already leaves the pair symmetric
+     about the middle of the screen — which is the "composition centred" the
+     brief asks for. Pulling them to the centre instead ran both of them across
+     the photos (measured: the left column ended at 691 against a deck starting
+     at 504). */
+  align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 0 50px;
+  padding: 42.3dvh 50px 0;
 }
 
 /* The site's own body scale (16px / 14px), same as .brand-teaser-text was and
@@ -194,13 +214,14 @@
   color: var(--ink-on-light);
 }
 
-/* The left paragraph is the one exception the spec carves out: the site's body
-   size plus 4px, nothing else about it changed. */
+/* Was the site's body size plus 4px — the one exception an earlier spec
+   carved out. Both side blocks read at the same size now, on tablet and
+   desktop alike, so this is --text-body like its opposite number. */
 .about-brand-text-lead {
   flex: none;
   width: 440px;
   max-width: 28vw;
-  font-size: 20px;
+  font-size: var(--text-body);
 }
 
 .about-brand-aside {
@@ -257,6 +278,15 @@
    Three stacked rows instead of three columns — the same rearrangement the
    reference site makes at its own breakpoint — with the stack shrunk enough
    that heading, copy, photos and CTA still fit one viewport. */
+/* Item 14: six points off the second heading line ("For Our People.") and
+   nothing else. Below 1024 rather than only on a phone — the pair reads the
+   same way at both, and desktop keeps the mock's exact 1.875 ratio. */
+@media (max-width: 1023px) {
+  .about-brand {
+    --about-heading-line-2-trim: 6px;
+  }
+}
+
 @media (max-width: 899px) {
   .about-brand {
     --about-card-w: clamp(150px, 46vw, 260px);
@@ -266,7 +296,9 @@
     flex-direction: column;
     align-items: stretch;
     justify-content: center;
-    gap: clamp(12px, 2.2vh, 20px);
+    /* The two gaps around the photos are not equal in the mock, so they are
+       set on the deck itself rather than through one shared gap. */
+    gap: 0;
     padding: clamp(24px, 4vh, 40px) 20px;
   }
 
@@ -277,6 +309,9 @@
     flex: none;
     align-self: center;
     transform: none;
+    /* Figma 372:48, an 800-tall frame: 60px between the first paragraph and
+       the photos (7.5%) and 50px between the photos and the second (6.25%). */
+    margin: 7.5dvh 0 6.25dvh;
   }
 
   .about-brand-text-lead,
@@ -285,12 +320,12 @@
     max-width: none;
   }
 
-  .about-brand-text {
-    font-size: 14px;
-  }
-
+  /* Figma 372:48 sets both paragraphs at the same size, and it is the site's
+     own body size — so both are --text-body here, where they used to be 14 and
+     18. Same call as item 17 makes for the side-by-side layout. */
+  .about-brand-text,
   .about-brand-text-lead {
-    font-size: 18px;
+    font-size: var(--text-body);
   }
 
   .about-brand-aside {
