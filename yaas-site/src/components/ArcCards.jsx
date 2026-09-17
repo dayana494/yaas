@@ -24,6 +24,13 @@ const HIDE_END = 1.5; // ...and hits exactly 0 by here.
 // Flat px gap kept between a card's edge and its neighbor's nearest edge, so
 // the 3 slots never overlap regardless of measured card width.
 const CARD_GAP_PX = 40;
+// Below 1024 the card is 77.7vw — four fifths of the screen — so the same 40px
+// gap puts each neighbour's near edge just past the viewport's own edge and
+// nothing of them is left to see. With no neighbours in frame the arc reads as
+// a flat slide of one card rather than the travel it is on desktop.
+// Figma 370:2 has them peeking ~38px in from each side with only about 4px of
+// clear space between card edges, which is what this restores.
+const CARD_GAP_PX_NARROW = 6;
 // How far below the centered card the resting left/right neighbors sit —
 // the "depth" of the circular arc they travel along.
 const ARC_DROP = 56;
@@ -114,7 +121,8 @@ const ArcCards = forwardRef(function ArcCards({ active }, ref) {
       // else. Desktop is unaffected: there the clamp pins the card to a flat
       // 420 and the two properties already agreed.
       const cardWidth = firstCard ? firstCard.offsetWidth : 352;
-      slotOffsetRef.current = cardWidth + CARD_GAP_PX;
+      const narrow = typeof window !== 'undefined' && window.innerWidth < NARROW_MAX_WIDTH;
+      slotOffsetRef.current = cardWidth + (narrow ? CARD_GAP_PX_NARROW : CARD_GAP_PX);
 
       // Desktop cards are sized by width alone in CSS (see advantages.css);
       // height there is this same width's natural aspect ratio minus a flat
@@ -122,7 +130,6 @@ const ArcCards = forwardRef(function ArcCards({ active }, ref) {
       // width-relative % would get re-resolved against the wrong axis if
       // reused inside a height calc(). Mobile/simple mode leaves the CSS
       // aspect-ratio alone (no side-peek carousel to size there).
-      const narrow = typeof window !== 'undefined' && window.innerWidth < NARROW_MAX_WIDTH;
       const heightRatio = narrow
         ? CARD_ASPECT_RATIO_NARROW
         : CARD_ASPECT_RATIO - CARD_HEIGHT_TRIM_RATIO;
