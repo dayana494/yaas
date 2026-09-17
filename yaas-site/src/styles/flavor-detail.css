@@ -355,10 +355,19 @@
   }
 }
 
-@media (max-width: 768px) {
-  /* Block-level section intro, so it takes the site-wide mobile heading size
-     (index.css) like every other one. Its desktop clamp bottoms out at 30px,
+@media (max-width: 1023px) {
+  /* A REAL override, unlike the redundant ones removed elsewhere in this pass:
+     this heading keeps a desktop size of its own (its clamp tops out at 68,
+     not the block scale's 80) and desktop is not being touched, so only the
+     responsive half is brought onto the shared scale. Without this it fell to
+     its clamp's 30px floor on a phone, well under every other block heading
+     on the site at that width. */
+  .flavor-gallery-heading {
+    font-size: var(--block-heading);
+  }
+}
 
+@media (max-width: 768px) {
   .flavor-gallery-track {
     --gallery-visible: 1;
   }
