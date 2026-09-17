@@ -92,6 +92,18 @@ const DESKTOP_CANS = [
 // centre can runs 51%-94% down, so 0.43 of the height; the two side cans sit a
 // little lower and are cropped by the left and right edges.
 //
+// How far the two side cans lean in toward Strawberry, in radians.
+//
+// 20deg, up from 15. Figma 344:237 is the reference, but its own numbers do
+// not settle this: the side cans there report a different aspect than the
+// centre one (0.684 against 0.608), so those boxes are either rotated frames
+// or differently-cropped fills, and an angle cannot be read back from them
+// either way. This is the design's call on the rendered result instead --
+// the previous 15 read as too upright against the mock.
+//
+// Mobile only. The desktop cluster has its own poses and is untouched.
+const MOBILE_SIDE_TILT = 0.349;
+
 const MOBILE_CANS = [
   {
     id: 'strawberry',
@@ -104,16 +116,16 @@ const MOBILE_CANS = [
   {
     id: 'blueberry',
     flavorIndex: flavorIndex('blueberry'),
-    end: { x: -0.37, y: -0.52, z: 0, rotY: 0.18, rotZ: -0.262, scale: 0.78 },
-    start: { x: -1.6, y: -1.5, z: -0.5, rotY: 0.18, rotZ: -0.262 - Math.PI * 3, scale: 0.2 },
+    end: { x: -0.37, y: -0.52, z: 0, rotY: 0.18, rotZ: -MOBILE_SIDE_TILT, scale: 0.78 },
+    start: { x: -1.6, y: -1.5, z: -0.5, rotY: 0.18, rotZ: -MOBILE_SIDE_TILT - Math.PI * 3, scale: 0.2 },
     control: { x: -1.5, y: -1.1, z: 0.5 },
     delay: 0.12,
   },
   {
     id: 'orange',
     flavorIndex: flavorIndex('orange'),
-    end: { x: 0.37, y: -0.52, z: -0.1, rotY: -0.18, rotZ: 0.262, scale: 0.78 },
-    start: { x: 1.6, y: -1.5, z: -0.7, rotY: -0.18, rotZ: 0.262 + Math.PI * 3, scale: 0.2 },
+    end: { x: 0.37, y: -0.52, z: -0.1, rotY: -0.18, rotZ: MOBILE_SIDE_TILT, scale: 0.78 },
+    start: { x: 1.6, y: -1.5, z: -0.7, rotY: -0.18, rotZ: MOBILE_SIDE_TILT + Math.PI * 3, scale: 0.2 },
     control: { x: 1.5, y: -1.1, z: 0.3 },
     delay: 0.24,
   },

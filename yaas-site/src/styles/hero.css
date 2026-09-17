@@ -207,49 +207,79 @@
    scaleX ratio; a block-level element would just report the row's own
    full width back, making that ratio a no-op and leaving the oversized
    text to overflow the row instead of being scaled down to fit it. */
+/* Sized to Figma 344:237's own wordmark box, which is 370 x 120.768 on that
+   390-wide frame — an aspect of 3.064.
+   The row is 94.87vw wide (the frame's 370 of 390), so the height that gives
+   that aspect is 94.87 / 3.064 = 30.97vw, and with line-height: 1 the height
+   IS the font-size. useFillWidth then stretches X to fill the row, landing at
+   about 1.365 — which is exactly the proportion Figma's own lettering has
+   against this font's natural 2.245, so the letterforms come out the mock's
+   shape rather than a guess.
+   It was 22vw, which rendered the wordmark 356 x 85.9: aspect 4.15 against the
+   mock's 3.06, i.e. markedly squatter, and the stretch overshot to 1.85 to
+   cover the width it left behind. */
 .logo-text.hero-mobile-banner-logo {
   display: inline-block;
-  font-size: clamp(64px, 22vw, 110px);
+  font-size: clamp(64px, 30.97vw, 320px);
   line-height: 1;
   letter-spacing: -0.01em;
   color: var(--ink);
   transform-origin: left center;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   /* ---------- Everything below is Figma 344:237, a 390x850 frame ----------
      Positions are that frame's own numbers divided by its width or height and
      re-applied as vw / dvh, never lifted as pixels — so a 667-tall phone and a
      926-tall one both get the mockup's composition rather than the mockup
-     stretched or cropped. */
+     stretched or cropped.
 
-  /* Nav row: pills start 10px in (10/390) and sit 22px down (22/850). */
+     Up to 1023, not 768. Above that the hero switches to its fixed 1200x650
+     contain-scaled stage (the min-width: 1024px block further up), so 769-1023
+     used to fall between the two and get neither: no phone composition and no
+     scaled stage, just the fluid base rules. Because every number here is a
+     proportion of the frame rather than a pixel, the same composition simply
+     resolves larger on a tablet instead of looking like a stretched phone. */
+
+  /* Nav row: pills start 10px in (10/390) and sit 22px down (22/850), spread
+     edge to edge across the container.
+
+     display: contents on the left group is what makes that possible: the row
+     was a two-item flex (a group of three, plus Contacts), so space-between
+     could only ever put a gap in one place. Dissolving the group makes all
+     four pills direct children of the row, and space-between then gives the
+     equal gaps the brief asks for, with the outer two flush to the padding. */
   .hero-nav {
     top: 2.59dvh;
     padding: 0 2.56vw;
-    gap: 2.6vw;
-    justify-content: flex-start;
+    gap: 0;
+    justify-content: space-between;
   }
 
   .hero-nav-left {
-    gap: 2.6vw;
+    display: contents;
   }
 
-  /* The fourth pill joins the same row instead of being pushed right by
-     margin-left: auto, which is what the frame shows — four evenly spaced
-     pills, not three-plus-one. */
   .hero-nav-right {
     margin-left: 0;
   }
 
-  /* 12px type and a 30px-tall pill in the frame. The type, tracking, border and
-     fill match it; the height does not, and deliberately — min-height stays at
-     44px for the touch target this file already committed to. Padding is tuned
-     down from the frame's ~17px so all four still clear 375px. */
+  /* The frame's pill is 12px type in a 30px-tall box. The type, tracking,
+     border and fill match it; the height does not, and deliberately —
+     min-height stays at 44px for the touch target this file already committed
+     to.
+
+     13 rather than the frame's 12 at the bottom, which is the "raise it a
+     point or two if the row can take it" the brief asks for, and 13 is as far
+     as it goes: measured on a 375-wide row, 13px leaves 8px between pills and
+     14px leaves 2px, which is no longer a gap. From there it grows to the
+     site's standard 16px pill (--text-body) and stops, so a tablet gets the
+     real thing rather than phone-sized type, and the handover to the desktop
+     rules at 1024 is seamless. */
   .hero-pill {
-    font-size: 12px;
+    font-size: clamp(13px, 3.33vw, 16px);
     letter-spacing: -0.24px;
-    padding: 8px 12px;
+    padding: 8px clamp(12px, 3.1vw, 20px);
     min-height: 44px;
   }
 
