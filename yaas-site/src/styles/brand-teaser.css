@@ -289,11 +289,10 @@
 
 @media (max-width: 899px) {
   .about-brand {
-    /* The full width of the stage's content box — its 20px side padding is the
-       container, and the photos fill it. Figma 372:48 has the stack running
-       past both frame edges, so a rotated card overhanging a little is the
-       mock's own look rather than a mistake. */
-    --about-card-w: calc(100vw - 40px);
+    /* Not used at this width — the deck is sized as a share of the stage
+       instead, see .about-brand-deck below. Left pointing at the container so
+       anything else reading it gets a sane number. */
+    --about-card-w: 100%;
   }
 
   .about-brand-stage {
@@ -320,6 +319,20 @@
     /* No margins of its own — space-between on the stage owns the two gaps
        around it now, and a margin here would make them unequal again. */
     margin: 0;
+    /* 84% so the whole STACK fits, not just one upright card.
+       The cards are rotated (6.58deg at the front) and skewed (2.37deg), and a
+       rotated rectangle is wider than its own box: worked out from this card's
+       aspect, the widest slot spans 1.19x its width, so 1/1.19 is what keeps
+       the outermost corner inside the container.
+       A percentage rather than the 100vw this was: vw counts the scrollbar
+       gutter, so on a 390 viewport it resolved 350 against a 335 container and
+       the card was over the edge before any rotation. % is the stage's own
+       content box, which is the thing it has to fit.
+       Height comes from the aspect directly here — --about-card-h is derived
+       from --about-card-w, and that cannot follow a percentage. */
+    width: 84%;
+    height: auto;
+    aspect-ratio: 0.7923;
   }
 
   .about-brand-text-lead,
