@@ -105,6 +105,12 @@ const DESKTOP_CANS = [
 // Mobile only. The desktop cluster has its own poses and is untouched.
 const MOBILE_SIDE_TILT = 0.349;
 
+// How far out from centre the two side cans sit, in world units. Widened from
+// 0.37 so the trio reads more spread out, as the mock does — the canvas is
+// only about 0.885 world units wide at a phone's aspect, so this is a little
+// under half of it either way and each side can still breaks the edge.
+const MOBILE_SIDE_SPREAD = 0.44;
+
 const MOBILE_CANS = [
   {
     id: 'strawberry',
@@ -117,7 +123,7 @@ const MOBILE_CANS = [
   {
     id: 'blueberry',
     flavorIndex: flavorIndex('blueberry'),
-    end: { x: -0.37, y: -0.52, z: 0, rotY: 0.18, rotZ: MOBILE_SIDE_TILT, scale: 0.78 },
+    end: { x: -MOBILE_SIDE_SPREAD, y: -0.52, z: 0, rotY: 0.18, rotZ: MOBILE_SIDE_TILT, scale: 0.78 },
     start: { x: -1.6, y: -1.5, z: -0.5, rotY: 0.18, rotZ: MOBILE_SIDE_TILT - Math.PI * 3, scale: 0.2 },
     control: { x: -1.5, y: -1.1, z: 0.5 },
     delay: 0.12,
@@ -125,7 +131,7 @@ const MOBILE_CANS = [
   {
     id: 'orange',
     flavorIndex: flavorIndex('orange'),
-    end: { x: 0.37, y: -0.52, z: -0.1, rotY: -0.18, rotZ: -MOBILE_SIDE_TILT, scale: 0.78 },
+    end: { x: MOBILE_SIDE_SPREAD, y: -0.52, z: -0.1, rotY: -0.18, rotZ: -MOBILE_SIDE_TILT, scale: 0.78 },
     start: { x: 1.6, y: -1.5, z: -0.7, rotY: -0.18, rotZ: -MOBILE_SIDE_TILT + Math.PI * 3, scale: 0.2 },
     control: { x: 1.5, y: -1.1, z: 0.3 },
     delay: 0.24,

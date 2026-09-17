@@ -207,20 +207,22 @@
    scaleX ratio; a block-level element would just report the row's own
    full width back, making that ratio a no-op and leaving the oversized
    text to overflow the row instead of being scaled down to fit it. */
-/* Sized to Figma 344:237's own wordmark box, which is 370 x 120.768 on that
-   390-wide frame — an aspect of 3.064.
-   The row is 94.87vw wide (the frame's 370 of 390), so the height that gives
-   that aspect is 94.87 / 3.064 = 30.97vw, and with line-height: 1 the height
-   IS the font-size. useFillWidth then stretches X to fill the row, landing at
-   about 1.365 — which is exactly the proportion Figma's own lettering has
-   against this font's natural 2.245, so the letterforms come out the mock's
-   shape rather than a guess.
-   It was 22vw, which rendered the wordmark 356 x 85.9: aspect 4.15 against the
-   mock's 3.06, i.e. markedly squatter, and the stretch overshot to 1.85 to
-   cover the width it left behind. */
+/* Sized so the LETTERS are the height Figma 344:237 draws them at — 120.768 on
+   its 390-wide frame, i.e. 30.97vw.
+   font-size is not that number. Measured on Soledago, "YAAS" inks 0.725 of its
+   font-size (the rest is the line box's ascent and descent, which this
+   wordmark has no use for), so a font-size of 30.97vw drew letters only
+   87.7px tall against the mock's 120.8 — a third short, which is what still
+   read as squat after the first pass fixed the box. Dividing through by that
+   0.725 gives 42.71vw.
+   The stretch that follows is then almost nothing: this font inks "YAAS" at an
+   aspect of 3.152 and the mock's wordmark is 3.064, so useFillWidth lands at
+   about 0.97 and the letterforms render essentially undistorted. That the two
+   aspects agree this closely is the sign the mock is this font at its natural
+   proportions, rather than a stretched version of it. */
 .logo-text.hero-mobile-banner-logo {
   display: inline-block;
-  font-size: clamp(64px, 30.97vw, 320px);
+  font-size: clamp(88px, 42.71vw, 460px);
   line-height: 1;
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -283,9 +285,16 @@
     min-height: 44px;
   }
 
-  /* Wordmark: 370 of 390 wide (so 10px either side), top 102 of 850. */
+  /* Wordmark: 370 of 390 wide (so 10px either side), letters starting 102 of
+     850 down — 12dvh.
+     The row is pulled up off that by 5.35vw because 12dvh has to land on the
+     TOP OF THE LETTERS, and the line box starts higher than they do: measured
+     on Soledago, the ink begins 12.52% of the font-size below the box top
+     (that is the line's own leading and ascent, which this wordmark does not
+     use). 12.52% of the 42.71vw font-size is 5.35vw. Without it the letters
+     sat that far below where the mock puts them. */
   .hero-mobile-banner-logo-row {
-    top: 12dvh;
+    top: calc(12dvh - 5.35vw);
     left: 2.56vw;
     right: 2.56vw;
   }
