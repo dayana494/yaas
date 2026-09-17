@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -16,22 +16,31 @@ gsap.registerPlugin(ScrollTrigger);
 // heading tag/className — the caller's own CSS still owns font, color, etc.
 const STAGGER_FROM_MAP = { left: 'start', right: 'end', center: 'center', random: 'random' };
 
+// Each segment also carries where it starts in the original string. That is
+// what lets ONE DropText render a heading whose second sentence is a different
+// colour: the caller gives a character offset and every piece from there on
+// takes the accent class. Splitting the heading across two DropTexts instead —
+// which is what Screen 2 used to do — makes them two independent reveals over
+// two inline-blocks, so the line breaks fall wherever that pair of boxes
+// happens to wrap rather than wherever the sentence does.
 function splitText(text, splitBy) {
+  let offset = 0;
+  const withOffset = (value, separator) => {
+    const start = offset;
+    offset += value.length + separator.length;
+    return { value, separator, start };
+  };
   if (splitBy === 'lines') {
     const lines = text.split('\n');
-    return lines.map((line, i) => ({ value: line, separator: i < lines.length - 1 ? '\n' : '' }));
+    return lines.map((line, i) => withOffset(line, i < lines.length - 1 ? '\n' : ''));
   }
   if (splitBy === 'words') {
     const matches = text.match(/\S+\s*/g) ?? [text];
-    return matches.map((word) => ({
-      value: word.trimEnd(),
-      separator: word.endsWith(' ') ? ' ' : '',
-    }));
+    return matches.map((word) => withOffset(word.trimEnd(), word.endsWith(' ') ? ' ' : ''));
   }
-  return Array.from(text).map((character) => ({
-    value: character === ' ' ? ' ' : character,
-    separator: '',
-  }));
+  return Array.from(text).map((character) =>
+    withOffset(character === ' ' ? ' ' : character, '')
+  );
 }
 
 function useReducedMotion() {
@@ -53,6 +62,11 @@ const DropText = forwardRef(function DropText(
     as: Tag = 'span',
     className = '',
     splitBy = 'words',
+    // Character offset from which pieces take `accentClassName`. Null means
+    // the whole string is one colour, which is every caller but Screen 2's
+    // headline.
+    accentFrom = null,
+    accentClassName = '',
     staggerFrom = 'random',
     xOffset = 0,
     yOffset = -80,
@@ -177,15 +191,29 @@ const DropText = forwardRef(function DropText(
   return (
     <Tag ref={containerRef} className={className}>
       {segments.map((segment, i) => (
-        <span
-          key={i}
-          data-drop-piece
-          className={splitBy === 'lines' ? 'drop-text-piece drop-text-piece-block' : 'drop-text-piece'}
-          style={initialPieceStyle}
-        >
-          {segment.value}
+        // The separator sits OUTSIDE the animated span on purpose. A piece is
+        // display: inline-block, and white-space processing drops a trailing
+        // space at the end of one — so with the space inside, every heading on
+        // the site rendered its words run together ("Thisisn'tabouthyping"),
+        // visible only where a line happened to wrap. Between two inline-blocks
+        // the same space renders normally. It is whitespace, so nothing is lost
+        // by it not being part of the reveal.
+        <Fragment key={i}>
+          <span
+            data-drop-piece
+            className={[
+              'drop-text-piece',
+              splitBy === 'lines' ? 'drop-text-piece-block' : '',
+              accentFrom != null && segment.start >= accentFrom ? accentClassName : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            style={initialPieceStyle}
+          >
+            {segment.value}
+          </span>
           {segment.separator}
-        </span>
+        </Fragment>
       ))}
     </Tag>
   );

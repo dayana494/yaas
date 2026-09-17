@@ -5,8 +5,16 @@
 // naturally inside one centred measure (see ScenarioArcGallery.jsx).
 import { asset } from './assetUrl';
 
-export const SCREEN2_HEADLINE_GROUP_1 = "This isn't about hyping you up.";
-export const SCREEN2_HEADLINE_GROUP_2 = "It's about staying locked in to your own thing.";
+// One string, not two. Figma node 258:208 colours the second sentence in the
+// brand pink, and that is done inside the single reveal now (accentFrom, see
+// DropText) rather than by rendering two headings side by side — two boxes
+// wrap where the boxes end, not where the sentence does.
+export const SCREEN2_HEADLINE =
+  "This isn't about hyping you up. It's about staying locked in to your own thing.";
+
+// Where the pink half begins. Derived rather than written as a number so it
+// cannot drift out of step if the copy is ever edited.
+export const SCREEN2_HEADLINE_ACCENT_AT = SCREEN2_HEADLINE.indexOf("It's about");
 
 // Screen 2's arc gallery (Figma node 258:208) — left-to-right order of the
 // looping strip, with the party shot dead centre: that's the photo the

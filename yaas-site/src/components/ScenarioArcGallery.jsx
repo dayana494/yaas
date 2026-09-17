@@ -6,8 +6,8 @@ import {
   SCENARIOS,
   SCREEN2_ARC_ORDER,
   SCREEN2_ARC_STOP_ID,
-  SCREEN2_HEADLINE_GROUP_1,
-  SCREEN2_HEADLINE_GROUP_2,
+  SCREEN2_HEADLINE,
+  SCREEN2_HEADLINE_ACCENT_AT,
   SCREEN2_SUBLINE,
 } from '../data/scenarios';
 import { SCREEN2_ARC_TRIGGER_ID } from '../data/layout';
@@ -388,14 +388,22 @@ export default function ScenarioArcGallery() {
 
       <div className="screen2-arc-inner">
         <div className="screen2-headline" ref={headlineRef}>
-          {/* Two headings rather than one, because this one is two-tone: each
-              group keeps its own span class, and those classes are what carry
-              the ink/accent colours and the ink group's own line break. Both
-              reveals take a plain string, so a single instance could not have
-              preserved the split. */}
+          {/* One heading, not two. It is still two-tone: the whole sentence
+              goes through a single reveal, and accentFrom marks the character
+              where the pink half starts so those pieces take the accent class
+              (see DropText).
+              As two headings it was two independent reveals inside two
+              inline-blocks, so the line breaks fell wherever that pair of boxes
+              happened to wrap rather than where the sentence does — the seam
+              this fixes. */}
           <h2 className="screen2-h2">
-            <SectionHeading as="span" className="screen2-h2-ink" text={SCREEN2_HEADLINE_GROUP_1} />{' '}
-            <SectionHeading as="span" className="screen2-h2-accent" text={SCREEN2_HEADLINE_GROUP_2} />
+            <SectionHeading
+              as="span"
+              className="screen2-h2-ink"
+              text={SCREEN2_HEADLINE}
+              accentFrom={SCREEN2_HEADLINE_ACCENT_AT}
+              accentClassName="screen2-h2-accent"
+            />
           </h2>
         </div>
 
