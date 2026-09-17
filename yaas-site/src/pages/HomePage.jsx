@@ -1,4 +1,5 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
@@ -25,6 +26,7 @@ import {
   createRiseDriver,
   createViewportBackdropDriver,
 } from '../scroll/riseTransition';
+import { SCROLL_TO_STATE, scrollToSection } from '../scroll/sectionNav';
 import {
   ENTRANCE_UNITS,
   INTERACTIVE_UNITS,
@@ -79,6 +81,12 @@ export default function HomePage() {
   // re-render (this can fire every frame while scrubbing).
   const entranceDoneRef = useRef(false);
   const isMobile = useIsMobile();
+
+  // Set by a section link clicked on another page (see scroll/sectionNav.js).
+  // Held in a ref rather than read from location inside the effect below so
+  // that consuming it cannot re-run that whole correction pass.
+  const { state: routerState } = useLocation();
+  const pendingScrollRef = useRef(routerState?.[SCROLL_TO_STATE] ?? null);
 
   const [screen, setScreen] = useState('slider');
   const [activeFlavor, setActiveFlavor] = useState(DEFAULT_FLAVOR_INDEX);
@@ -253,6 +261,17 @@ export default function HomePage() {
       }
 
       ScrollTrigger.refresh();
+
+      // A section link clicked from another page lands here. It has to wait for
+      // exactly this moment: every pinned section's scroll window was just
+      // recomputed above, and a scroll fired any earlier aims at a document
+      // that is about to change height under it. Consumed once — the flag is
+      // cleared so the resize re-run below doesn't yank the reader back.
+      if (pendingScrollRef.current) {
+        const hash = pendingScrollRef.current;
+        pendingScrollRef.current = null;
+        scrollToSection(hash);
+      }
     };
 
     raf = requestAnimationFrame(correctPinStarts);
@@ -553,9 +572,16 @@ export default function HomePage() {
   const backgroundFlavor = FLAVORS[activeFlavor];
 
   if (shotFlavor) {
+    // ?rotY / ?rotZ (radians) pose the capture — used to shoot the contact
+    // block's two cans at the exact angles its 3D rig used to render them at.
+    const shotParams = new URLSearchParams(window.location.search);
     return (
       <Suspense fallback={null}>
-        <ThumbnailShot flavor={shotFlavor} />
+        <ThumbnailShot
+          flavor={shotFlavor}
+          rotY={Number(shotParams.get('rotY')) || 0}
+          rotZ={Number(shotParams.get('rotZ')) || 0}
+        />
       </Suspense>
     );
   }

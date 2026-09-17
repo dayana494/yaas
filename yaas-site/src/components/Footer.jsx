@@ -6,7 +6,14 @@ import HeroGradientBackground from './HeroGradientBackground';
 import Logo from './Logo';
 import { FOOTER_TRIGGER_ID } from '../data/layout';
 import { RISE_UNITS } from '../scroll/riseTransition';
-import { asset } from '../data/assetUrl';
+import {
+  FLAVORS_ROUTE,
+  SECTION_ABOUT,
+  SECTION_CONTACT,
+  SECTION_FAQ,
+  SECTION_WHY_YAAS,
+} from '../data/navLinks';
+import { useSectionNav } from '../scroll/sectionNav';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -86,12 +93,20 @@ function useWordmarkFit(ref) {
 // cards (see pages/FlavorsPage.jsx). The rest jump to their block on the
 // homepage, written as `/#id` rather than `#id` so they still resolve from
 // another page and not only from `/`.
+// Same targets as the header menu, from the same module — see data/navLinks.js
+// for how the two had drifted apart.
+//
+// The hash entries were '/#why-yaas' and friends: an absolute path, so on the
+// sub-path deploy they walked off the deploy root entirely, and even at the
+// root they were a plain navigation that reloaded the page instead of
+// scrolling. Bare hashes now, handled by useSectionNav, which scrolls when
+// already on the homepage and routes there first when not.
 const FOOTER_LINKS = [
-  { label: 'Flavors', href: '/flavors', isRoute: true },
-  { label: 'Why YAAS', href: asset('/#why-yaas') },
-  { label: 'About Us', href: asset('/#about') },
-  { label: 'FAQ', href: asset('/#faq') },
-  { label: 'Contacts', href: asset('/#contact') },
+  { label: 'Flavors', href: FLAVORS_ROUTE, isRoute: true },
+  { label: 'Why YAAS', href: SECTION_WHY_YAAS },
+  { label: 'About Us', href: SECTION_ABOUT },
+  { label: 'FAQ', href: SECTION_FAQ },
+  { label: 'Contacts', href: SECTION_CONTACT },
 ];
 
 // Site-wide footer — Figma node 309:231: the wordmark filling the block, the
@@ -107,6 +122,7 @@ export default function Footer({ reveal = false }) {
   const year = new Date().getFullYear();
   const logoRef = useRef(null);
   const footerRef = useRef(null);
+  const handleNavClick = useSectionNav();
   useWordmarkFit(logoRef);
 
   useEffect(() => {
@@ -144,7 +160,12 @@ export default function Footer({ reveal = false }) {
                 {link.label}
               </Link>
             ) : (
-              <a key={link.label} className="hero-pill site-footer-pill" href={link.href}>
+              <a
+                key={link.label}
+                className="hero-pill site-footer-pill"
+                href={link.href}
+                onClick={handleNavClick}
+              >
                 {link.label}
               </a>
             )

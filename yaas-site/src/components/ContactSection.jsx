@@ -1,30 +1,25 @@
-import { lazy, Suspense, useRef } from 'react';
+import { useRef } from 'react';
 import SectionHeading from './SectionHeading';
 import HeroGradientBackground from './HeroGradientBackground';
-import { useLazyOnVisible } from '../three/deferredLoad';
+import ContactCans from './ContactCans';
 import { CONTACT } from '../data/homepageCopy';
 
-// A dynamic import(), not the static one this replaced: three.js,
-// @react-three/fiber and ContactCanRig only enter the bundle through this
-// call, in their own chunk, and useLazyOnVisible below decides when that
-// chunk actually gets requested — see its comment in deferredLoad.js.
-// Rendered from BOTH this route's own page AND, embedded via
-// BrandTeaserScreen, deep inside the homepage: on /contacts the section is
-// visible immediately, so the fetch starts right on mount same as before; on
-// the homepage it sits well below the fold, so this is where the split
-// actually earns its keep — the chunk isn't requested until the user has
-// scrolled most of the way there.
-const ContactCansScene = lazy(() => import('../three/ContactCansScene'));
+// The cans used to be a third WebGL canvas here, lazily imported so three.js
+// and @react-three/fiber only arrived once the section neared the viewport.
+// They are flat renders of the same model now (ContactCans.jsx), so there is
+// no chunk to defer and nothing to gate on visibility — two images the browser
+// lazy-loads by itself.
 
 // Screen 7 — Contact. Figma node 309:195: a rounded gradient panel inset from
 // the section's own edges, the heading centred on it at the site's shared block
 // scale, two outline pills below it, and an Orange can and a Blueberry can
 // tilted +-15deg overlapping the panel's corners.
 //
-// The cans are the site's existing 3D model with its existing label materials
-// (three/ContactCanRig.jsx), not flat renders — the same can.glb the hero
-// cluster, the gallery and Screen 2 all use. They float on an endless sine
-// yoyo.
+// The cans are flat renders OF that same model (ContactCans.jsx), captured
+// through the app's own ?shot= route at the exact poses the 3D rig used to
+// draw them at — same can.glb, same label materials, same endless sine yoyo,
+// one fewer WebGL context on the page. The hero, the gallery and Screen 2
+// still run the live model.
 //
 // Rendered inside the About the Brand section (BrandTeaserScreen.jsx) rather
 // than as a sibling of it, so the two share one background layer and the join
@@ -32,11 +27,8 @@ const ContactCansScene = lazy(() => import('../three/ContactCansScene'));
 // Advantages section.
 export default function ContactSection() {
   const panelRef = useRef(null);
-  const sectionRef = useRef(null);
-  const cansVisible = useLazyOnVisible(sectionRef);
-
   return (
-    <section className="contact" id="contact" ref={sectionRef}>
+    <section className="contact" id="contact">
       <div className="contact-frame">
         <div className="contact-panel" ref={panelRef}>
           <HeroGradientBackground />
@@ -71,13 +63,10 @@ export default function ContactSection() {
           </div>
         </div>
 
-        {/* Over the whole section, not just the panel: in the mock both cans
-            cross the panel's edge, and a WebGL canvas clips to its own box. */}
-        {cansVisible && (
-          <Suspense fallback={null}>
-            <ContactCansScene panelRef={panelRef} />
-          </Suspense>
-        )}
+        {/* Outside the panel, not inside it: in the mock both cans cross the
+            panel's edge, and the panel clips (overflow: hidden, for its own
+            rounded corners). */}
+        <ContactCans panelRef={panelRef} />
       </div>
     </section>
   );

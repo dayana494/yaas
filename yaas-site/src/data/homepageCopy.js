@@ -24,8 +24,9 @@ export const BRAND_TEASER = {
     "YAAS was made by people who were done with energy drinks that hit you with a sugar bomb and taste like a chemistry set.",
     "We're about clean ingredients, real flavor, and energy that actually works for you, not against you. No posturing, no cutting corners — just a charge you can trust.",
   ],
-  cta: 'Read Our Story →',
-  ctaHref: '/about',
+  // 'Read Our Story' and its '/about' target are gone: that page does not
+  // exist and is not planned, so the button linked nowhere. See
+  // BrandTeaserScreen.jsx.
 };
 
 export const CONTACT = {

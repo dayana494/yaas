@@ -101,28 +101,35 @@
    cross the panel's edge in the mock — the left one above its top, the right
    one below its bottom — and a WebGL canvas clips to its own box. Purely
    decorative, so it never takes a pointer event. */
-.contact-cans-canvas {
-  /* Every one of these needs !important: react-three-fiber writes
-     position/width/height as inline styles on the canvas, and an inline
-     height: 100% beats any stylesheet `bottom`. Left as-is the box stopped at
-     the panel's own bottom edge and cut the right-hand can in half (measured:
-     canvas 1425x561 inside an 801-tall section).
+/* Was a WebGL canvas, now a plain layer holding two <img> (ContactCans.jsx).
+   None of the !important flags that rule needed survive: those existed only to
+   beat react-three-fiber's own inline position/width/height/pointer-events on
+   the canvas element, and there is no canvas any more.
 
-     It has to reach past the section's own 120px padding on both sides because
-     in the mock the left can crosses the panel's top edge and the right one
-     crosses its bottom, and a WebGL canvas clips to its own box. */
-  position: absolute !important;
-  left: 0 !important;
-  top: -120px !important;
-  width: 100% !important;
-  height: calc(100% + 240px) !important;
+   Same box as before — the full section plus its 120px padding on both sides,
+   since the left can crosses the panel's top edge and the right one crosses
+   its bottom. Overflow stays visible so neither is clipped, unlike the canvas
+   which had to be grown to contain them. */
+.contact-cans {
+  position: absolute;
+  left: 0;
+  top: -120px;
+  width: 100%;
+  height: calc(100% + 240px);
   z-index: 2;
-  /* !important for the same reason as the box above: react-three-fiber sets
-     pointer-events: auto inline on the canvas, and since this layer is stretched
-     over the whole section it sat on top of the Email/Telegram buttons and ate
-     every click and hover on them (measured: elementFromPoint over each pill
-     returned the canvas). It is decoration — it should never take an event. */
-  pointer-events: none !important;
+  overflow: visible;
+  /* Decoration, and it lies across the Email/Telegram pills — it must never
+     take a pointer event. The canvas before it did, and ate every click and
+     hover on them until this was forced off. */
+  pointer-events: none;
+}
+
+.contact-can {
+  position: absolute;
+  /* left/top/width/height and the centring offsets are written per can from
+     the panel's measured box — see ContactCans.jsx. */
+  display: block;
+  will-change: transform;
 }
 
 @media (max-width: 899px) {

@@ -361,11 +361,13 @@ export default function BrandTeaserScreen() {
             ))}
           </div>
 
+          {/* No "Read Our Story" CTA any more, at any width: there is no
+              separate About the Brand page for it to open, and none is
+              planned, so it pointed at a route that does not exist. Removed
+              rather than hidden — a link to nowhere is not worth keeping
+              around. This block is the whole of that story now. */}
           <div className="about-brand-aside" ref={asideRef}>
             <p className="about-brand-text">{BRAND_TEASER.copyParagraphs[1]}</p>
-            <a className="brand-teaser-cta" href={BRAND_TEASER.ctaHref}>
-              {BRAND_TEASER.cta}
-            </a>
           </div>
         </div>
       </div>

@@ -1,42 +1,25 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import { HERO } from '../data/homepageCopy';
+import {
+  FLAVORS_ROUTE,
+  SECTION_ABOUT,
+  SECTION_CONTACT,
+  SECTION_FAQ,
+  SECTION_FLAVORS,
+} from '../data/navLinks';
+import { scrollToSection, useSectionNav } from '../scroll/sectionNav';
 
 gsap.registerPlugin(ScrollToPlugin);
 
-// Every in-page jump on this screen — eased instead of an instant native
-// jump. Anything already pinned by GSAP is wrapped in a pin-spacer by then,
-// and it's the spacer that holds the section's real document slot (the
-// section itself is position:fixed while pinned, so its own rect reports
-// where it's stuck on screen instead), so the scroll target is read off
-// whichever of the two is actually in normal flow.
-//
-// #flavors (the merged hero+gallery section) is the one special case: its
-// own top is scrollY 0, so jumping straight there would be a no-op. The real
-// destination is one viewport further down, exactly where the hero->gallery
-// entrance ScrollTrigger's own `end` sits — i.e. past the entrance, with the
-// gallery cans already settled.
-function scrollToSection(hash) {
-  const el = document.querySelector(hash);
-  if (!el) return false;
-  const box = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el;
-  let y = box.getBoundingClientRect().top + window.scrollY;
-  if (hash === '#flavors') y += window.innerHeight;
-  gsap.to(window, { duration: 1, ease: 'power2.inOut', scrollTo: { y } });
-  return true;
-}
-
-function handleNavClick(event) {
-  const hash = event.currentTarget.getAttribute('href');
-  if (!hash?.startsWith('#')) return;
-  // Only take over once the target actually exists on this page; otherwise
-  // the plain anchor keeps working.
-  if (scrollToSection(hash)) event.preventDefault();
-}
+// scrollToSection now lives in scroll/sectionNav.js, shared with the footer:
+// the two surfaces had their own copies and had drifted apart. The eased-jump
+// and pin-spacer reasoning that used to be written out here is in that file.
 
 function handleFlavorsCtaClick(event) {
-  if (scrollToSection('#flavors')) event.preventDefault();
+  if (scrollToSection(SECTION_FLAVORS)) event.preventDefault();
 }
 
 // Matches the Figma frame exactly (node 47:21, Frame 40: 1200x650) so every
@@ -78,14 +61,18 @@ function useHeroScale() {
 }
 
 // Figma node 270:174: three pills together at the left, one on its own at
-// the right edge. Each points at a real section of this page, so the click
-// handler above can ease the scroll to it.
+// the right edge.
+//
+// Flavors is a route, not an anchor: the gallery has its own page, and the
+// footer has always linked there while this menu scrolled to the homepage's
+// copy of it instead. Both go to the page now. The rest are sections of this
+// page, eased to by useSectionNav — which also handles being clicked from
+// another page, where they previously did nothing at all.
 const NAV_LINKS_LEFT = [
-  { label: 'Flavors', href: '#flavors' },
-  { label: 'About us', href: '#about' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'About us', href: SECTION_ABOUT },
+  { label: 'FAQ', href: SECTION_FAQ },
 ];
-const NAV_LINK_RIGHT = { label: 'Contacts', href: '#contact' };
+const NAV_LINK_RIGHT = { label: 'Contacts', href: SECTION_CONTACT };
 
 // DOM layer for the hero's nav/headline/copy (the "front" stage — see
 // .hero-stage in hero.css for the fixed-canvas + scale-transform sizing).
@@ -99,12 +86,16 @@ const NAV_LINK_RIGHT = { label: 'Contacts', href: '#contact' };
 // can animation instead of after it.
 export default function HeroScreen({ textVisible }) {
   useHeroScale();
+  const handleNavClick = useSectionNav();
 
   return (
     <div className="hero-screen">
       <div className="hero-stage hero-stage-front">
         <nav className="hero-nav">
           <div className="hero-nav-left">
+            <Link className="hero-pill" to={FLAVORS_ROUTE} data-interactive>
+              Flavors
+            </Link>
             {NAV_LINKS_LEFT.map((link) => (
               <a key={link.label} className="hero-pill" href={link.href} data-interactive onClick={handleNavClick}>
                 {link.label}
