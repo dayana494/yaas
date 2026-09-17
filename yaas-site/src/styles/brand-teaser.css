@@ -15,7 +15,7 @@
      .advantages-title and .advantages .faq-heading all carry these same
      numbers. Figma's own 80px for "Not For Everyone." at a 1920 frame is the
      top of this clamp, so the two agree exactly at the mock's own width. */
-  --about-heading-size: clamp(30px, 4.17vw, 80px);
+  --about-heading-size: var(--block-heading);
   /* "For Our People." is 150px against that 80px in the mock. Keeping the
      ratio rather than the pixel value is what makes it survive autoscale: the
      second line is always 1.875x the first, so the pair looks like the mock at
@@ -295,13 +295,6 @@
 
   .about-brand-aside {
     gap: clamp(14px, 2.4vh, 22px);
-  }
-}
-
-@media (max-width: 768px) {
-  .about-brand {
-    /* Matches every other block heading's own mobile override. */
-    --about-heading-size: var(--block-heading-mobile);
   }
 }
 

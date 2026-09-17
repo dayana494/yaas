@@ -54,7 +54,6 @@
   .faq-heading {
     max-width: none;
     text-align: center;
-    font-size: var(--block-heading-mobile);
   }
 }
 

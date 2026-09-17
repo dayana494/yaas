@@ -82,7 +82,6 @@
   .advantages-heading {
     max-width: none;
     text-align: center;
-    font-size: var(--block-heading-mobile);
   }
 }
 
@@ -394,7 +393,7 @@
   text-align: center;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(30px, 4.17vw, 80px);
+  font-size: var(--block-heading);
   line-height: 1.1;
   letter-spacing: -0.025em;
   text-wrap: balance;
@@ -418,12 +417,6 @@
     padding-left: 20px;
     padding-right: 20px;
   }
-
-  /* Matches .screen2-h2's own mobile override, same as the rule above matches
-     its desktop one. */
-  .advantages-title {
-    font-size: var(--block-heading-mobile);
-  }
 }
 
 /* ---------- FAQ, nested inside this section ----------
@@ -436,7 +429,7 @@
    insets exactly. */
 .advantages .faq {
   overflow: visible;
-  padding: 120px 0 var(--advantages-inset);
+  padding: var(--block-gap) 0 var(--advantages-inset);
   background: none;
 }
 
@@ -452,7 +445,7 @@
   max-width: clamp(320px, 62vw, 1160px);
   margin: 0 auto;
   text-align: center;
-  font-size: clamp(30px, 4.17vw, 80px);
+  font-size: var(--block-heading);
   letter-spacing: -0.025em;
   text-wrap: balance;
 }
@@ -469,11 +462,6 @@
 @media (max-width: 768px) {
   .advantages .faq-heading-grid {
     padding: 0 20px clamp(32px, 6vh, 48px);
-  }
-
-  /* Matches .screen2-h2's own mobile override, same as the headings above. */
-  .advantages .faq-heading {
-    font-size: var(--block-heading-mobile);
   }
 
   /* The stage reserves the card's real height now that the trim above is

@@ -58,8 +58,8 @@
      inside .screen2's own box and .screen2-bg-fixed's white keeps covering
      it, instead of the margin collapsing through .screen2's bottom edge and
      leaving that stretch bare (would show raw body background there). */
-  padding-top: 120px;
-  padding-bottom: 120px;
+  padding-top: var(--block-gap);
+  padding-bottom: var(--block-gap);
   color: var(--ink-on-light);
 }
 
@@ -159,7 +159,7 @@
   text-align: center;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(30px, 4.17vw, 80px);
+  font-size: var(--block-heading);
   line-height: 1.1;
   letter-spacing: -0.025em;
   text-wrap: balance;
@@ -234,9 +234,6 @@
 }
 
 @media (max-width: 768px) {
-  .screen2-h2 {
-    font-size: var(--block-heading-mobile);
-  }
 
   .screen2-subline {
     font-size: 14px;

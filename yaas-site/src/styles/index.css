@@ -17,24 +17,52 @@
   --ink-on-light: #212121;
   --ink-on-light-soft: rgba(33, 33, 33, 0.72);
 
-  /* The one mobile size every block-level section heading on the site uses.
-     Figma 344:359 renders that heading at 40px on its own 390-wide frame, so
-     the middle term is 40/390 expressed as vw — the same px/frame-width
-     conversion .screen2-h2's desktop 4.17vw (80/1920) is built on, rather than
-     a lifted absolute pixel value.
+  /* ---------- One spacing and type scale, read by every block ----------
+     Blocks used to carry their own numbers — the same 120px written out in
+     four files, and a heading clamp repeated verbatim in four more — which is
+     how they drifted apart in the first place. These are the whole system;
+     a block that needs a size reaches for one of these rather than inventing
+     its own, and the responsive step happens here, once, instead of in every
+     file's own media query. */
 
-     The clamp's ends are what keep it sane off that one device: 40.0px at 390,
-     38.5px at 375, 44px at 428, and capped before a 768px tablet would take it
-     to 79px. Only ever read inside a (max-width: 768px) block — desktop keeps
-     its own clamp untouched.
+  /* Vertical rhythm between blocks. 120 is what the desktop design has always
+     used; below 1024 the same 120 eats most of a phone screen before any
+     content appears, so the gap steps down with the viewport. */
+  --block-gap: 120px;
+
+  /* Block-level section headings: .screen2-h2, .advantages-title,
+     .faq-heading, .contact-heading, the About heading.
+
+     Both terms are the same px/frame-width conversion, not lifted pixels —
+     80/1920 for the desktop frame, 40/390 for Figma's 390-wide mobile one
+     (344:359). The responsive cap lands at 44px, which is what the desktop
+     formula itself resolves to just past the 1024 handover (4.17vw of 1023 =
+     42.6), so the two meet at the breakpoint instead of stepping.
 
      Product/flavor NAMES deliberately do not use this: .slider-heading,
      .flavor-name, .detail-title and .flavor-story-flavorname have their own
      sizes from their own Figma frames. */
-  --block-heading-mobile: clamp(34px, 10.26vw, 46px);
+  --block-heading: clamp(30px, 4.17vw, 80px);
+
+  /* Body copy. The site has exactly two sizes and they are not viewport
+     -scaled: 16 for normal running text, 14 for the smaller supporting kind
+     (captions, footer legal, card descriptions). */
+  --text-body: 16px;
+  --text-body-sm: 14px;
+
   --paper: #fdfaf1;
   --bg-color: #f3d118;
   color-scheme: light;
+}
+
+/* The responsive half of the scale above. 1024 is the site's desktop
+   threshold — the width hero.css and advantages.css already treat as desktop
+   — so everything below it is phone and tablet, and steps together. */
+@media (max-width: 1023px) {
+  :root {
+    --block-gap: 80px;
+    --block-heading: clamp(34px, 10.26vw, 44px);
+  }
 }
 
 * {

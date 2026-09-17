@@ -12,7 +12,7 @@
   z-index: 1;
   /* The site's standard 120px between blocks, top and bottom — the same inset
      .advantages uses between its cards, the FAQ and its own edges. */
-  padding: 120px 0;
+  padding: var(--block-gap) 0;
 }
 
 /* Non-clipping wrapper shared by the panel and the can canvas: the cans have to
@@ -58,7 +58,7 @@
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(30px, 4.17vw, 80px);
+  font-size: var(--block-heading);
   line-height: 1.1;
   letter-spacing: -0.025em;
   color: var(--ink);
@@ -106,16 +106,18 @@
    beat react-three-fiber's own inline position/width/height/pointer-events on
    the canvas element, and there is no canvas any more.
 
-   Same box as before — the full section plus its 120px padding on both sides,
-   since the left can crosses the panel's top edge and the right one crosses
-   its bottom. Overflow stays visible so neither is clipped, unlike the canvas
-   which had to be grown to contain them. */
+   Same box as before — the full section plus its own vertical padding on both
+   sides, since the left can crosses the panel's top edge and the right one
+   crosses its bottom. Written off --block-gap rather than a repeated 120 so it
+   still lines up once that steps down below 1024. Overflow stays visible so
+   neither can is clipped, unlike the canvas which had to be grown to contain
+   them. */
 .contact-cans {
   position: absolute;
   left: 0;
-  top: -120px;
+  top: calc(-1 * var(--block-gap));
   width: 100%;
-  height: calc(100% + 240px);
+  height: calc(100% + 2 * var(--block-gap));
   z-index: 2;
   overflow: visible;
   /* Decoration, and it lies across the Email/Telegram pills — it must never
@@ -133,10 +135,6 @@
 }
 
 @media (max-width: 899px) {
-  .contact {
-    padding: 120px 0;
-  }
-
   .contact-frame {
     padding: 0 20px;
   }
@@ -151,10 +149,5 @@
 
   .contact-content {
     width: 78%;
-  }
-
-  /* Matches every other block heading's own mobile override. */
-  .contact-heading {
-    font-size: var(--block-heading-mobile);
   }
 }
