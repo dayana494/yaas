@@ -198,6 +198,15 @@ export default function ScenarioArcGallery() {
         // this reads the arc card's true CSS size, not a rotated bounding box.
         const sample = cards[0];
         const root = pinRef.current;
+        // Both go null the moment React detaches this component's refs, and
+        // both callers can still fire after that: a ResizeObserver delivers
+        // asynchronously, and ScrollTrigger.refresh() walks every live trigger
+        // — including this one, in the window before the cleanup below kills
+        // it. Leaving the homepage through a <Link> hit exactly that: the
+        // flavor page's own refresh() on mount ran measure() against detached
+        // refs, threw on sample.offsetWidth, and took the whole app down to a
+        // blank screen. Nothing to measure yet (or any more) is not an error.
+        if (!sample || !root) return;
         const stageOff = offsetWithin(stage, root);
         const targetOff = offsetWithin(target, root);
         // Both boxes are centred on their container's own 50% line (the
