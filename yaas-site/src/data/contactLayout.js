@@ -45,11 +45,19 @@ export const CAN_HEIGHT_MIN_PX = 190;
 // pair shrinks and moves out to hug the panel's outer edges instead, framing
 // the text rather than covering it — the same call Screen 2's own cans make at
 // their narrow breakpoint.
-export const NARROW_MAX_WIDTH = 900;
-export const CAN_HEIGHT_RATIO_NARROW = 0.32;
+export const NARROW_MAX_WIDTH = 1024;
+// Figma 374:64: both cans sit side by side low on the panel, close together,
+// and FULLY inside it — not one at each opposite corner as the desktop mock has
+// them, and not cropped by its lower edge. Read off the frame's own render
+// rather than its placeholder boxes, which carry transparent padding and made
+// the can look nearly twice this size.
+//   orange    centre -> (0.668, 0.785) of the panel
+//   blueberry centre -> (0.327, 0.785)
+// and about 30% of the panel tall.
+export const CAN_HEIGHT_RATIO_NARROW = 0.3;
 export const CONTACT_CANS_NARROW = [
-  { x: 0.03, y: 0.16 },
-  { x: 0.97, y: 0.84 },
+  { x: 0.668, y: 0.785 },
+  { x: 0.327, y: 0.785 },
 ];
 
 // Straight at the camera, so the label reads flat like the mock's render.

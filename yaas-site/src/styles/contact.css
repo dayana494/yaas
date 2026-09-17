@@ -134,20 +134,87 @@
   will-change: transform;
 }
 
-@media (max-width: 899px) {
+/* ---------- Mobile and tablet: Figma 374:64, a 390x800 frame ----------
+   Every number below is that frame's own, as a share of whatever it is
+   measured against — the panel of the frame, the content of the panel — so the
+   composition resolves the same on any phone rather than only on a 390. */
+@media (max-width: 1023px) {
   .contact-frame {
-    padding: 0 20px;
+    /* Panel inset 10 of 390. */
+    padding: 0 2.56vw;
   }
 
   .contact-panel {
-    /* Squarer than the mock's 2.36:1 — at phone widths that ratio is a letterbox
-       with no room for a four-line heading. */
-    aspect-ratio: 3 / 4;
-    max-height: 620px;
+    /* 370 x 760 in the frame: nearly the whole screen, and portrait, where the
+       desktop panel is a 2.36:1 letterbox. The old 3/4 with a 620px ceiling was
+       a guess made before this frame existed. */
+    aspect-ratio: 370 / 760;
+    /* The frame is the screen, and its panel is 760 of 800 — so the panel has
+       to fit the viewport, not just the width. At 390 the width alone would
+       make it 730 tall, which with the block's own 80px above and below comes
+       to 890 in an 850 screen: the composition ends up cropped and reads
+       cramped. Capping the WIDTH by the height available is what keeps the
+       mock's proportion while fitting; the panel then centres in what is left.
+       max-height cannot do this on its own — the width would stay at 100% and
+       the aspect would simply break. */
+    max-width: calc((100dvh - 2 * var(--block-gap)) * 370 / 760);
+    max-height: none;
+    margin: 0 auto;
     border-radius: 20px;
+    /* Content sits at the top of the panel and centred across it. flex-start
+       on the main axis left it hard against the panel's left edge, so the
+       heading's own centre fell left of the panel's. */
+    align-items: flex-start;
+    justify-content: center;
+    /* The heading starts 80 below the panel's top, and the panel is 370 x 760 —
+       but a percentage padding resolves against WIDTH, not height, on both
+       axes. So this is that same 80 expressed against the width it will
+       actually be measured by: 80/370. Written as padding on the panel rather
+       than the content so there is one such conversion, not two. */
+    padding-top: 21.6%;
   }
 
   .contact-content {
-    width: 78%;
+    /* Wider than the frame's own 324/370, because this panel is narrower than
+       the frame's: capping its height to fit the viewport takes it to 336, and
+       at 87.6% of that the heading wrapped to six lines against the mock's
+       five. 95% puts the same words back on the same lines. */
+    width: 95%;
+  }
+
+  .contact-actions {
+    /* Stacked, not side by side — 200-wide pills at 360 and 406, so a 10px gap,
+       with 40 between the heading and the first. That 40 is again a share of
+       height written against width: 40/324 of this box. */
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    gap: 10px;
+    margin-top: 12.3%;
+  }
+
+  .contact-pill {
+    /* 200 of the panel's 370, i.e. 200 of this box's own 324. The pill's type,
+       height and border stay .hero-pill's, so it matches every other button on
+       the site rather than taking this frame's literal 16px. */
+    width: 61.7%;
+    justify-content: center;
+  }
+
+  .contact-cans {
+    /* The cans run past the panel's sides and bottom in the frame, and are
+       cropped by it. Without this that overflow reaches the document and the
+       page scrolls sideways. */
+    overflow: hidden;
+  }
+
+  /* The cans and the pills share the bottom half of the panel here, where on
+     desktop the cans sit in corners the content never reaches — so for the
+     first time the stacking order matters. The frame puts the cans behind:
+     its Telegram pill reads clearly over a can that overlaps it by 26px.
+     Raised above .contact-cans' own 2 rather than lowering the cans, which
+     would put them behind the panel's gradient and out of sight entirely. */
+  .contact-content {
+    z-index: 3;
   }
 }

@@ -102,6 +102,11 @@ export default function ContactCans({ panelRef }) {
           top: panelTop + panelRect.height * pose.y,
           width: height * (natural.w / natural.h),
           height,
+          // No rotation at either width: the tilt is already in the capture,
+          // and it is already the one both frames want — each can's top leaning
+          // AWAY from the centre, its base toward it. blueberry was shot at
+          // +15deg (top to the left) and sits on the left; orange at -15deg
+          // (top to the right) and sits on the right.
           // The fractions name each can's CENTRE, so the box is pulled back by
           // half itself. As GSAP percentages rather than a translate() of our
           // own, so the float's own y below composes with them instead of
