@@ -12,6 +12,18 @@
   display: block;
 }
 
+/* The same wrap below 1024, painting a still of the shader instead of running
+   it — see HeroGradientBackground.jsx. The url is set inline there so it can
+   resolve against BASE_URL; everything about how it fills the box is here.
+   `cover` on a square source means it fills any block's aspect, from the
+   footer's full screen to the contact panel's wide strip, without starving
+   either dimension. */
+.hero-gradient-wrap.is-static {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 .hero-screen {
   position: absolute;
   inset: 0;
