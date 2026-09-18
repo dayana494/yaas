@@ -125,6 +125,13 @@ export default function Footer({ reveal = false }) {
 
   useEffect(() => {
     if (!reveal) return undefined;
+    // No pinned rise below 1024. The block is sized by its content there rather
+    // than held for a viewport while the section above travels off it, so there
+    // is nothing for this trigger to drive — and leaving it in would reserve a
+    // viewport of scroll for a handover that no longer happens. Read live
+    // rather than through a hook so this matches the media query in footer.css
+    // that drops the negative margin with it.
+    if (window.matchMedia('(max-width: 1023px)').matches) return undefined;
     const ctx = gsap.context(() => {
       // 'top top' is a placeholder, corrected once from HomePage after mount —
       // same chained-after-a-pin situation as every other pin on this page.

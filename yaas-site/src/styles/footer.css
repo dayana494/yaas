@@ -113,23 +113,67 @@
   color: var(--ink);
 }
 
-@media (max-width: 899px) {
+/* ---------- Mobile and tablet: Figma 374:97, a 390x402 frame ----------
+   Its own frame is 402 tall against the 800 the other mobile frames use — this
+   block is sized by what is in it, not by the screen. Positions below are that
+   frame's numbers as shares of its width, since the height is the outcome
+   rather than the input. */
+@media (max-width: 1023px) {
+  .site-footer {
+    /* By content. The full-viewport height every other block on the site has
+       leaves this one mostly empty on a phone. */
+    height: auto;
+    /* Wordmark 40 from the top of the frame, credit 30 clear of its bottom. */
+    padding: 10.26vw 0 7.7vw;
+  }
+
+  /* No rise into place at this width. The block above no longer underlaps this
+     one by a viewport and is no longer pinned over it (see Footer.jsx, which
+     skips the trigger entirely), so the negative margin that made that handover
+     work would simply pull the footer up over the section above it. */
+  .site-footer.is-reveal {
+    margin-top: 0;
+  }
+
   .site-footer-inner {
-    padding: 0 20px;
+    /* 10 of 390. */
+    padding: 0 2.56vw;
   }
 
   .site-footer-logo-row {
-    margin: 0 -20px;
+    /* The wordmark is inset the same 10 as everything else here, so unlike the
+       desktop rule it is not pulled back out of the padding. */
+    margin: 0;
   }
 
   .site-footer-nav {
-    gap: 8px;
+    /* Two rows in the frame — Flavors / Why YAAS / About us, then FAQ /
+       Contacts — which is what wrap plus these widths produces on their own.
+       10px between pills both ways, and the row starts 40 below the wordmark. */
+    justify-content: flex-start;
+    gap: 10px;
+    margin-top: 10.3vw;
   }
 
   .site-footer-bottom {
+    /* Hairline 30 above the copyright, the two lines stacked and left-aligned
+       where desktop has them at opposite ends of one row. */
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
-    font-size: 14px;
+    gap: 15px;
+    margin-top: 7.7vw;
+    padding-top: 7.7vw;
+    font-size: var(--text-body-sm);
+  }
+}
+
+/* The corner rounding that plays as the section above travels off is part of
+   that pinned handover, and there is no handover here — see the .is-reveal rule
+   above. Zeroed rather than unhooked from the driver, which still runs and is
+   harmless: it only writes a custom property nothing reads at this width. */
+@media (max-width: 1023px) {
+  .about-brand {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
   }
 }
