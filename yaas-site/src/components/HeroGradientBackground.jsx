@@ -31,9 +31,12 @@ const GRADIENT_OVERRIDES = { ...gradientCfg, pts: points };
 // contacts, the footer and the flavors page — and each one is its own WebGL
 // context running its own shader at 60fps. That is five contexts and five
 // render loops on a phone, for a background that is slow-moving colour and
-// reads as a flat field at that size anyway. The still is a frame of the very
-// same shader, captured through the app itself, so nothing about it is
-// redrawn or re-approximated; it is 21KB and costs one image decode.
+// reads as a flat field at that size anyway.
+//
+// The still is the design's own gradient.jpg, re-encoded to WebP: 1920x980 and
+// 23KB against the source's 326, at a quality where the two are visually the
+// same image (measured across the full frame, mean difference under 1 of 255
+// per channel, worst pixel 6). One image decode in place of a shader.
 //
 // A media query alone could hide the canvas, but it would still be created,
 // compiled and animated behind the hidden element — the point is not to start

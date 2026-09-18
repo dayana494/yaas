@@ -104,7 +104,7 @@
 .flavor-card-cta {
   margin-top: 6px;
   font-family: var(--font-beiruti);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
   color: var(--ink-on-light);
   text-decoration: none;
@@ -136,7 +136,7 @@
 
 .flavor-detail-eyebrow {
   font-family: var(--font-beiruti);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -171,7 +171,7 @@
 
 .flavor-detail-back {
   font-family: var(--font-beiruti);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 15px;
   color: var(--ink);
   text-decoration: none;

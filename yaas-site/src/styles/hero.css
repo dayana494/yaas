@@ -12,12 +12,11 @@
   display: block;
 }
 
-/* The same wrap below 1024, painting a still of the shader instead of running
-   it — see HeroGradientBackground.jsx. The url is set inline there so it can
-   resolve against BASE_URL; everything about how it fills the box is here.
-   `cover` on a square source means it fills any block's aspect, from the
-   footer's full screen to the contact panel's wide strip, without starving
-   either dimension. */
+/* The same wrap below 1024, painting a still gradient instead of running the
+   shader — see HeroGradientBackground.jsx. The url is set inline there so it
+   can resolve against BASE_URL; everything about how it fills the box is here.
+   `cover` keeps it filling any block's aspect, from the footer's full screen to
+   the contact panel's tall portrait, cropping rather than distorting. */
 .hero-gradient-wrap.is-static {
   background-position: center;
   background-repeat: no-repeat;
@@ -335,7 +334,7 @@
 .hero-subhead {
   margin: 0;
   font-family: var(--font-beiruti);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   line-height: 1.5;
   color: var(--ink);
