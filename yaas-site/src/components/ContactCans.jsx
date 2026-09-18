@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import gsap from 'gsap';
 import { asset } from '../data/assetUrl';
 import {
+  CAN_TILT_SCALE_NARROW,
   CAN_HEIGHT_MAX_PX,
   CAN_HEIGHT_MIN_PX,
   CAN_HEIGHT_RATIO,
@@ -102,11 +103,16 @@ export default function ContactCans({ panelRef }) {
           top: panelTop + panelRect.height * pose.y,
           width: height * (natural.w / natural.h),
           height,
-          // No rotation at either width: the tilt is already in the capture,
-          // and it is already the one both frames want — each can's top leaning
-          // AWAY from the centre, its base toward it. blueberry was shot at
-          // +15deg (top to the left) and sits on the left; orange at -15deg
-          // (top to the right) and sits on the right.
+          // The tilt's DIRECTION is already in the capture and already right
+          // at both widths — each can's top leaning away from the centre, its
+          // base toward it. blueberry was shot at +15deg (top to the left) and
+          // sits on the left; orange at -15deg on the right.
+          //
+          // Only the amount differs: the narrow frame is gentler, so half of it
+          // is taken back off. A CSS rotation of the SAME sign as the pose
+          // subtracts from what the image shows, because three.js rotZ is
+          // counter-clockwise on screen and a CSS rotation is clockwise.
+          rotation: narrow ? (can.rotZ * 180 * CAN_TILT_SCALE_NARROW) / Math.PI : 0,
           // The fractions name each can's CENTRE, so the box is pulled back by
           // half itself. As GSAP percentages rather than a translate() of our
           // own, so the float's own y below composes with them instead of

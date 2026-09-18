@@ -51,14 +51,32 @@ export const NARROW_MAX_WIDTH = 1024;
 // them, and not cropped by its lower edge. Read off the frame's own render
 // rather than its placeholder boxes, which carry transparent padding and made
 // the can look nearly twice this size.
-//   orange    centre -> (0.668, 0.785) of the panel
-//   blueberry centre -> (0.327, 0.785)
+//   orange    centre -> (0.668, 0.825) of the panel
+//   blueberry centre -> (0.327, 0.825)
 // and about 30% of the panel tall.
+//
+// 0.825 rather than 0.785 so the cans clear the pills rather than starting
+// level with them. Two things have to be paid for beyond the half-height: the
+// gentler tilt makes the rotated box TALLER, not shorter (a 7.5deg turn of the
+// 15deg capture spans more than the capture at rest), and the float lifts each
+// can 16px at the top of its travel. Measured against both: the lower pill ends
+// at 0.629, the can's top reaches 0.635 at its highest, and its base sits at
+// 0.992, still inside the panel.
 export const CAN_HEIGHT_RATIO_NARROW = 0.3;
 export const CONTACT_CANS_NARROW = [
-  { x: 0.668, y: 0.785 },
-  { x: 0.327, y: 0.785 },
+  { x: 0.668, y: 0.825 },
+  { x: 0.327, y: 0.825 },
 ];
+
+// How much of the capture's baked-in tilt to keep at narrow widths.
+//
+// The captures are posed at 15 degrees, which is the desktop mock's angle.
+// Figma 374:64 is gentler: its can placeholders are 265.22 x 421.86, an aspect
+// of 0.629, and solving that against this can's own upright aspect of 0.542
+// gives 7.5 degrees. Halving is a CSS rotation of the same sign as the pose,
+// which subtracts from it — the label's yaw is untouched, since rotZ is a plain
+// 2D spin in the image plane.
+export const CAN_TILT_SCALE_NARROW = 0.5;
 
 // Straight at the camera, so the label reads flat like the mock's render.
 export const CAN_Z = 0;
