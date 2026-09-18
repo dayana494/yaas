@@ -222,6 +222,32 @@ const CanRig = forwardRef(function CanRig(
 
     onEntranceStart?.();
 
+    // Reloading part-way down the page restores the scroll position, so the
+    // hero is already gone — but this flight is mount-triggered and knows
+    // nothing about scroll, so the three cans used to come sweeping in from
+    // off-screen over whatever section the reader actually landed on.
+    //
+    // Past the top of the page there is no hero to fly into: the cans are put
+    // straight into the cluster pose the flight would have ended at, and
+    // flightDoneRef is set so applyEntrancePose takes over from there on the
+    // next frame with whatever entrance progress the restored scroll implies.
+    // A threshold rather than exactly 0 because a few pixels of restored
+    // scroll still counts as the top.
+    if (window.scrollY > 4) {
+      heroCans.forEach((can) => {
+        const group = groupRefs[can.flavorIndex].current;
+        if (!group) return;
+        const { end } = can;
+        group.position.set(end.x, end.y, end.z);
+        group.rotation.set(0, end.rotY, end.rotZ);
+        group.scale.setScalar(end.scale);
+        group.visible = true;
+      });
+      flightDoneRef.current = true;
+      invalidate();
+      return undefined;
+    }
+
     const flightPos = { x: 0, y: 0, z: 0 };
     let doneCount = 0;
     heroCans.forEach((can) => {
@@ -462,8 +488,15 @@ const CanRig = forwardRef(function CanRig(
         group.scale.setScalar(lerp(tween.start.scale, tween.end.scale, eased));
         group.visible = true;
         if (material) {
+          // The dimming belongs to the gallery, where it marks which can is
+          // in focus. In the hero cluster there is no focus to mark and all
+          // three cans are equals — but the delta this reads is their GALLERY
+          // slot offset, which is already +-1 for blueberry and orange while
+          // they are still in the cluster, so both sat dimmed on the first
+          // screen. Fading it in with the entrance means full colour at rest
+          // and the gallery's own focus by the time the gallery is there.
           const focus = 1 - Math.min(1, Math.abs(delta));
-          material.color.copy(DIM).lerp(WHITE, focus);
+          material.color.copy(DIM).lerp(WHITE, lerp(1, focus, clamped));
         }
       });
     }
@@ -484,7 +517,9 @@ const CanRig = forwardRef(function CanRig(
       // actually starts pulling them in from off-arc.
       group.visible = clamped > 0;
       if (material) {
-        material.color.copy(DIM).lerp(WHITE, 1 - Math.min(1, Math.abs(delta)));
+        // Same as above. These two are invisible at rest anyway, but they fade
+        // in over the same window and would otherwise arrive pre-dimmed.
+        material.color.copy(DIM).lerp(WHITE, lerp(1, 1 - Math.min(1, Math.abs(delta)), clamped));
       }
     });
 
