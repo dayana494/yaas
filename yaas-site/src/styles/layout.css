@@ -27,6 +27,22 @@
   opacity: 1;
 }
 
+/* The glow belongs to the gallery, under its centre can — but the hero and the
+   gallery share one pinned section, and `screen` is already 'slider' while the
+   hero is still on screen, so it was lit from the first frame.
+   On desktop that goes unnoticed: the giant wordmark paints over it. Below
+   1024 the wordmark sits at the top and the glow shows through the open middle
+   of the hero, which is what this is about.
+   Tied to --h2g, the hero->gallery entrance's own progress, and with the same
+   curve the gallery's UI layer uses (index.css) — so it arrives exactly when
+   the gallery does instead of being on before it. Scoped, since desktop is
+   already right by accident and should not start fading. */
+@media (max-width: 1023px) {
+  .center-glow.is-visible {
+    opacity: clamp(0, calc((var(--h2g, 0) - 0.7) * 3.3333), 1);
+  }
+}
+
 /* ---------- Screen 1: slider ---------- */
 .slider-screen {
   position: absolute;
