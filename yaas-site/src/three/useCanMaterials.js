@@ -1,13 +1,10 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useTexture } from '@react-three/drei';
-import { FLAVORS } from '../data/flavors';
+import { FLAVORS, DEFAULT_FLAVOR_INDEX } from '../data/flavors';
 
 const TEXTURE_URLS = FLAVORS.map((f) => f.texture);
 
-// Preloads every label texture up front (per the perf brief) so switching
-// flavors never causes a decode/upload stall, then builds one memoized
-// MeshStandardMaterial per flavor, shared by every mesh that needs it.
 // The lid and base. One instance shared by every can on the site — it is the
 // same bare aluminium on all of them, and it carries no map, which is the point:
 // it is what the caps get instead of the label (see the material groups in
@@ -27,24 +24,85 @@ export const CAN_CAP_MATERIAL = new THREE.MeshStandardMaterial({
   roughness: 0.26,
 });
 
-export function useCanMaterials() {
-  const textures = useTexture(TEXTURE_URLS);
-
-  return useMemo(
-    () =>
-      FLAVORS.map((flavor, i) => {
-        const texture = textures[i];
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = 4;
-        texture.needsUpdate = true;
-        return new THREE.MeshStandardMaterial({
-          map: texture,
-          metalness: 0.35,
-          roughness: 0.4,
-        });
-      }),
-    [textures]
-  );
+function configureTexture(texture) {
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  texture.needsUpdate = true;
+  return texture;
 }
 
-useTexture.preload(TEXTURE_URLS);
+const textureLoader = new THREE.TextureLoader();
+const idle = typeof requestIdleCallback === 'function' ? requestIdleCallback : (cb) => setTimeout(cb, 1);
+const cancelIdle = typeof cancelIdleCallback === 'function' ? cancelIdleCallback : clearTimeout;
+
+// Loads only the on-screen (DEFAULT_FLAVOR_INDEX) flavor's label texture up
+// front — via useTexture, so it still suspends the can mesh until that one
+// decode/upload finishes, same as before, just for one texture instead of
+// five — and defers the other four to idle time after the page has settled,
+// one at a time, so they never bunch into a single long main-thread task the
+// way loading all five synchronously used to (measured as one ~1.5s task on
+// load in PageSpeed's trace, the single biggest contributor to this page's
+// Total Blocking Time).
+//
+// Material OBJECT IDENTITY is kept stable across this whole process on
+// purpose: CanRig.jsx holds onto `materials[i]` across frames and mutates
+// `.color` on it directly for the hover/settle tint (see its own
+// `.color.copy()`/`.color.lerp()` calls). So a deferred texture is applied by
+// mutating that SAME material's `.map` in place once it arrives, never by
+// swapping in a new material object — swapping would silently detach every
+// reference CanRig already took. Until its real texture lands, a non-default
+// flavor's can renders as a flat fill in the flavor's own brand color
+// (already in FLAVORS) rather than blank/white, so the placeholder reads as
+// "still loading", not "broken".
+export function useCanMaterials() {
+  const defaultTexture = useTexture(TEXTURE_URLS[DEFAULT_FLAVOR_INDEX]);
+
+  const materials = useMemo(
+    () =>
+      FLAVORS.map((flavor, i) =>
+        i === DEFAULT_FLAVOR_INDEX
+          ? new THREE.MeshStandardMaterial({
+              map: configureTexture(defaultTexture),
+              metalness: 0.35,
+              roughness: 0.4,
+            })
+          : new THREE.MeshStandardMaterial({ color: flavor.color, metalness: 0.35, roughness: 0.4 })
+      ),
+    // defaultTexture is a stable, drei-cached object for the life of this
+    // component — this only ever needs to build the five materials once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    let handle;
+    const pending = FLAVORS.map((_, i) => i).filter((i) => i !== DEFAULT_FLAVOR_INDEX);
+
+    function loadNext() {
+      if (cancelled) return;
+      const i = pending.shift();
+      if (i === undefined) return;
+      textureLoader.load(TEXTURE_URLS[i], (texture) => {
+        if (cancelled) return;
+        materials[i].map = configureTexture(texture);
+        materials[i].color.set('#ffffff');
+        materials[i].needsUpdate = true;
+        handle = idle(loadNext);
+      });
+    }
+    handle = idle(loadNext);
+
+    return () => {
+      cancelled = true;
+      cancelIdle(handle);
+    };
+  }, [materials]);
+
+  return materials;
+}
+
+// Only the default (on-screen) flavor is preloaded eagerly now — see the
+// hook above for why the other four are deferred instead of all five
+// loading through this at once.
+useTexture.preload(TEXTURE_URLS[DEFAULT_FLAVOR_INDEX]);
