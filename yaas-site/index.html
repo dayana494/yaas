@@ -66,10 +66,57 @@
       :root {
         --asset-bg-texture: url('%BASE_URL%textures/bg-texture.webp');
       }
+      /* Hides the static LCP shell below at exactly the breakpoint
+         HeroWordmark.jsx's own useMediaQuery('(max-width: 768px)') switches
+         from this mobile banner treatment to the desktop giant wordmark —
+         see the shell's own comment by #lcp-shell in <body>. */
+      @media (min-width: 769px) {
+        #lcp-shell {
+          display: none;
+        }
+      }
     </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- A static snapshot of the mobile hero's own LCP element (see
+           HeroWordmark.jsx / Logo.jsx), painted before any JS has run.
+
+           This app renders entirely client-side — nothing appears until the
+           JS bundle downloads, parses and mounts React — and PageSpeed
+           traced essentially all of the "YAAS" wordmark's LCP time to that
+           wait, not to loading anything: Time to First Byte 0ms, ~2.3s of
+           pure render delay. The CSS above is already render-blocking (it
+           has to be, to style anything at all), so by the time the browser
+           gets here it's ready to paint this immediately, without waiting
+           for a single script.
+
+           This isn't hydration: ReactDOM.createRoot(root).render(...)
+           (main.jsx) unconditionally replaces #root's entire contents on
+           mount rather than reconciling against what's already there, so
+           this markup is simply discarded, whole, the moment React takes
+           over — never diffed, never left behind. It only has to be right
+           for the one paint before that happens, which is also why it can
+           skip useFillWidth's own scaleX fit (three/HeroWordmark.jsx): that
+           runs a frame after mount even in the real component, so the very
+           first frame there is exactly this same unscaled state today.
+
+           Classes match HeroWordmark.jsx/Logo.jsx exactly (.intro-pin,
+           .hero-mobile-banner-logo-row, .logo-text) so this is styled by
+           the same rules already loaded above, not a hand-tuned copy that
+           can drift from them. Hidden above 768px by the rule beside it,
+           matching the JS breakpoint that switches to the desktop wordmark
+           instead — a desktop visitor never sees this. -->
+      <!-- LCP-SHELL:START (see vite.config.js's staticRoutes — this exact
+           block is stripped back out for every route but "/", since it's
+           only ever a real match for the homepage's own mobile hero). -->
+      <div id="lcp-shell" class="intro-pin">
+        <div class="hero-mobile-banner-logo-row" aria-hidden="true">
+          <span class="logo-text hero-mobile-banner-logo" aria-label="YAAS">YAAS</span>
+        </div>
+      </div>
+      <!-- LCP-SHELL:END -->
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
