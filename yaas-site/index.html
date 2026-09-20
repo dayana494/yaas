@@ -11,8 +11,8 @@
          downloading once the CSS has been parsed and something needs it, so it
          swaps in later than it has to; font-display: swap (styles/index.css)
          already means nothing is render-blocked on either of them. -->
-    <link rel="preload" href="%BASE_URL%fonts/Soledago.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="preload" href="%BASE_URL%fonts/Bounded-Medium.otf" as="font" type="font/otf" crossorigin />
+    <link rel="preload" href="%BASE_URL%fonts/Soledago.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="%BASE_URL%fonts/Bounded-Medium.woff2" as="font" type="font/woff2" crossorigin />
     <!-- The two @font-face rules live here rather than in styles/index.css, and
          for the same reason the preloads above do: %BASE_URL% is substituted at
          build time, so one source serves both the root deploy (Vercel) and the
@@ -30,7 +30,15 @@
     <style>
       @font-face {
         font-family: 'Soledago';
-        src: url('%BASE_URL%fonts/Soledago.ttf') format('truetype');
+        /* WOFF2 first (28.8 KiB, brotli-compressed) — same outlines as the
+           original TTF (114.8 KiB), just repackaged; the .ttf stays in
+           public/fonts/ purely as a format fallback for the handful of
+           browsers that don't support WOFF2 (none of this project's actual
+           targets), never fetched otherwise since the browser picks the
+           first src it can use. */
+        src:
+          url('%BASE_URL%fonts/Soledago.woff2') format('woff2'),
+          url('%BASE_URL%fonts/Soledago.ttf') format('truetype');
         font-weight: 400;
         font-style: normal;
         font-display: swap;
@@ -40,7 +48,11 @@
          which family is actually loaded when reading font stacks elsewhere. */
       @font-face {
         font-family: 'Bounded';
-        src: url('%BASE_URL%fonts/Bounded-Medium.otf') format('opentype');
+        /* WOFF2 first (78.8 KiB vs the original .otf's 151 KiB) — same
+           fallback reasoning as Soledago above. */
+        src:
+          url('%BASE_URL%fonts/Bounded-Medium.woff2') format('woff2'),
+          url('%BASE_URL%fonts/Bounded-Medium.otf') format('opentype');
         font-weight: 500;
         font-style: normal;
         font-display: swap;
