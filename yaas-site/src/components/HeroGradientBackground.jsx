@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { createGradient } from '../gradient/createGradient';
-import { useLazyOnVisible } from '../three/deferredLoad';
 import gradientPreset from '../gradient/dsgnmax.ru_19544_config.json';
 import { asset } from '../data/assetUrl';
 
@@ -62,29 +61,12 @@ function useStaticGradient() {
   return isStatic;
 }
 
-// `lazy`: skip creating this instance's WebGL context (shader compile,
-// program link, framebuffers) until its own wrapper is about to enter the
-// viewport, instead of at mount. Only meaningful for a usage that starts
-// off-screen — the hero/gallery instance is on screen from the first frame
-// and has no off-screen state to gate on, so it keeps the old eager
-// behaviour (lazy defaults to false).
-//
-// Without this, every instance on the page — hero, advantages/FAQ,
-// contacts, footer — starts its own context at once on mount, all
-// competing for the main thread and GPU with the hero's own setup at the
-// exact moment that matters most for load performance, even though most
-// of them are nowhere near the viewport yet.
-export default function HeroGradientBackground({ lazy = false }) {
+export default function HeroGradientBackground() {
   const canvasRef = useRef(null);
-  const wrapRef = useRef(null);
   const isStatic = useStaticGradient();
-  // Always observed (cheap — one IntersectionObserver) so the hook can stay
-  // unconditional; only `lazy` instances actually wait on its result below.
-  const isVisible = useLazyOnVisible(wrapRef);
-  const shouldMount = !lazy || isVisible;
 
   useEffect(() => {
-    if (isStatic || !shouldMount) return undefined;
+    if (isStatic) return undefined;
     let controller;
     const raf = requestAnimationFrame(() => {
       controller = createGradient(canvasRef.current, GRADIENT_OVERRIDES);
@@ -93,12 +75,11 @@ export default function HeroGradientBackground({ lazy = false }) {
       cancelAnimationFrame(raf);
       controller?.stop();
     };
-  }, [isStatic, shouldMount]);
+  }, [isStatic]);
 
   if (isStatic) {
     return (
       <div
-        ref={wrapRef}
         className="hero-gradient-wrap is-static"
         aria-hidden="true"
         style={{ backgroundImage: `url(${STILL_URL})` }}
@@ -107,8 +88,8 @@ export default function HeroGradientBackground({ lazy = false }) {
   }
 
   return (
-    <div ref={wrapRef} className="hero-gradient-wrap" aria-hidden="true">
-      {shouldMount && <canvas ref={canvasRef} className="hero-gradient-canvas" />}
+    <div className="hero-gradient-wrap" aria-hidden="true">
+      <canvas ref={canvasRef} className="hero-gradient-canvas" />
     </div>
   );
 }
