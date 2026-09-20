@@ -32,7 +32,7 @@ const FIT_FRACTION = 0.62;
 // exists from the first render removes the ordering problem entirely: the can
 // picks up whatever rotation the scroll has already reached on its first
 // rendered frame, however late it arrives.
-export default function FlavorStoryCanRig({ flavorId, rotation, spin = false }) {
+export default function FlavorStoryCanRig({ flavorId, rotation, spin = false, baseline = null }) {
   const geometry = useCanGeometry();
   const materials = useCanMaterials();
   const groupRef = useRef(null);
@@ -49,17 +49,40 @@ export default function FlavorStoryCanRig({ flavorId, rotation, spin = false }) 
   // can's middle. Rotating the group around that origin would swing the can
   // through an arc instead of tumbling in place, so the mesh is offset back
   // by its own bounding-box center and the group spins around true center.
-  const { offset, maxDimension } = useMemo(() => {
+  const { offset, maxDimension, height } = useMemo(() => {
     const box = geometry.boundingBox ?? new THREE.Box3().setFromBufferAttribute(geometry.attributes.position);
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    return { offset: center, maxDimension: Math.max(size.x, size.y, size.z) || 1 };
+    return {
+      offset: center,
+      maxDimension: Math.max(size.x, size.y, size.z) || 1,
+      height: size.y || 1,
+    };
   }, [geometry]);
 
   const scale = useMemo(
     () => (Math.min(viewport.width, viewport.height) * FIT_FRACTION) / maxDimension,
     [viewport.width, viewport.height, maxDimension]
   );
+
+  // How far below centre the can sits on the first screen, where it is stood
+  // on the flavor name's baseline rather than floating in the middle.
+  //
+  // `baseline` arrives as a fraction of the screen measured off the rendered
+  // name (see FlavorStorySection), which is the only thing the DOM and this
+  // canvas have in common — the name lives in a scaled CSS stage, the can in
+  // world units. World y runs +height/2 at the top of the frame to -height/2
+  // at the bottom, so that fraction converts straight across, and half the
+  // can's own height puts its foot rather than its middle on the line. Null
+  // (one frame, before the measurement lands) means no drop.
+  //
+  // It is only the FIRST screen's placement: rotation.drop runs 1 -> 0 as the
+  // hero scrolls away, lifting the can back to centre for the text screens,
+  // which are composed around a centred can.
+  const drop = useMemo(() => {
+    if (baseline == null) return 0;
+    return viewport.height * (0.5 - baseline) + (height * scale) / 2;
+  }, [baseline, viewport.height, height, scale]);
 
   // Scroll-driven mode. `rotation` is mutated in place by a GSAP timeline
   // owned by the section above this rig, so there is no tween here whose
@@ -97,6 +120,10 @@ export default function FlavorStoryCanRig({ flavorId, rotation, spin = false }) 
       group.rotation.x = 0.12;
       group.rotation.y += delta * IDLE_SPIN_SPEED;
       group.rotation.z = 0;
+      // Centred: simple mode stacks the hero copy in flow rather than
+      // composing a screen around the can, so there is no baseline to stand
+      // it on.
+      group.position.y = 0;
       // An endless spin has no end to invalidate up to, so it runs on exactly
       // one condition instead: someone can see it. Off screen the loop simply
       // stops being re-armed and the page goes quiet; useCanvasOnScreen asks
@@ -105,6 +132,10 @@ export default function FlavorStoryCanRig({ flavorId, rotation, spin = false }) 
       return;
     }
     group.rotation.set(rotation.x, rotation.y, rotation.z);
+    // rotation.drop is 1 on the first screen and eases to 0 as the hero
+    // scrolls away, so the can stands on the flavor name to begin with and is
+    // back on the centre line by the time the text screens arrive.
+    group.position.y = drop * (rotation.drop ?? 0);
     holding();
   });
 

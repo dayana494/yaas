@@ -6,7 +6,7 @@ import FlavorStoryCanRig from './FlavorStoryCanRig';
 // Its own small canvas for the flavor detail page's story section — same
 // shape as ContactCansScene: transparent, shared Lighting rig, one Suspense
 // boundary. Independent of the homepage's Scene/CanRig entirely.
-export default function FlavorStoryScene({ flavorId, rotation, spin }) {
+export default function FlavorStoryScene({ flavorId, rotation, spin, baseline }) {
   return (
     <Canvas
       className="flavor-story-canvas"
@@ -21,7 +21,7 @@ export default function FlavorStoryScene({ flavorId, rotation, spin }) {
     >
       <Lighting />
       <Suspense fallback={null}>
-        <FlavorStoryCanRig flavorId={flavorId} rotation={rotation} spin={spin} />
+        <FlavorStoryCanRig flavorId={flavorId} rotation={rotation} spin={spin} baseline={baseline} />
       </Suspense>
     </Canvas>
   );

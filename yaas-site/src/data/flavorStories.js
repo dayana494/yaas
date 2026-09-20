@@ -6,7 +6,7 @@
 
 // Same can, same spec across the whole line — so it's a constant here rather
 // than repeated per flavor, and the fallback story can use it too.
-export const DEFAULT_BADGES = '0g sugar · 5 cal · 11.2 FL OZ';
+export const DEFAULT_BADGES = '0g sugar · 5 cal · 330 ml';
 
 export const FLAVOR_STORIES = {
   strawberry: {
@@ -14,11 +14,39 @@ export const FLAVOR_STORIES = {
     heroBadges: DEFAULT_BADGES,
     heroLine:
       'Sweet-tart and unbothered — the flavor that keeps its cool no matter how loud the room gets. Calm in a can, charged underneath.',
+    // Four screens, matching Figma 389-2 one for one — including the two that
+    // carry only half a block: the third is a caption with no headline over
+    // it, the fourth a headline with no caption under it. An earlier version
+    // of this list paired a kicker with a line on all four and carried a
+    // fifth idea ("SHE'S THE VIBE, NOT THE HYPE" / "No shouting, no
+    // spiraling…") that the design doesn't have a screen for; the mock's own
+    // sequence replaces it.
+    //
+    // `layout` picks the screen's composition (see .flavor-rotation-block's
+    // modifiers in styles/flavor-detail.css), each lifted from that mock:
+    //   center  — headline centered up top, caption centered low
+    //   split   — headline top-left, caption bottom-right
+    //   caption — caption alone, left, on the vertical centre line
+    //   finale  — headline alone, wide and centered; the can stops on it
     rotationBlocks: [
-      { kicker: 'STILL NOT RATTLED', line: "Chaos speed-runs around her. She doesn't blink." },
-      { kicker: 'ZERO SUGAR. ZERO PANIC.', line: "Sweet-tart hit, ice-cold nerves — that's the whole personality." },
-      { kicker: "SHE'S THE VIBE, NOT THE HYPE", line: 'No shouting, no spiraling. Just locked in, however loud the room gets.' },
-      { kicker: 'GRAB ONE, KEEP YOUR COOL', line: '0g sugar · 5 cal · 11.2 FL OZ — same calm, every single can.' },
+      {
+        layout: 'center',
+        kicker: 'STILL NOT RATTLED',
+        line: "Chaos speed-runs around her. She doesn't blink.",
+      },
+      {
+        layout: 'split',
+        kicker: 'ZERO SUGAR. ZERO PANIC.',
+        line: "Sweet-tart hit, ice-cold nerves — that's the whole personality.",
+      },
+      {
+        layout: 'caption',
+        line: '0g sugar · 5 cal · 330 ml — same calm, every single can.',
+      },
+      {
+        layout: 'finale',
+        kicker: 'GRAB ONE, KEEP YOUR COOL',
+      },
     ],
   },
 };
@@ -33,7 +61,9 @@ export function getFlavorStory(flavor) {
     heroKicker: flavor.title,
     heroBadges: DEFAULT_BADGES,
     heroLine: flavor.description,
-    rotationBlocks: [{ kicker: flavor.title, line: flavor.description }],
+    rotationBlocks: [
+      { layout: 'center', kicker: flavor.title, line: flavor.description },
+    ],
   };
 }
 

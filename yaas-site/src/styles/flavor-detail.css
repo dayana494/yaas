@@ -1,4 +1,21 @@
-/* ---------- /flavors/:slug — the per-flavor detail page ---------- */
+/* ---------- /flavors/:slug — the per-flavor detail page ----------
+
+   Composition is Figma node 389-2, a 1920x6620 frame whose content band runs
+   x=50..1870 (1820 wide) across screens 980 tall. It is NOT reproduced in
+   those pixels. Every screen here is laid out on the homepage hero's own fixed
+   1200x650 stage (hooks/useHeroScale, .hero-stage in hero.css), so:
+
+     - the wordmark and the menu are the hero's, at the hero's size;
+     - the flavor's own copy takes the grid slot the hero's subhead/CTA row
+       occupies, against the same side gutter rather than a second one;
+     - the mock's numbers arrive mapped, not copied — its content band
+       [50..1870] onto the stage's [0..1200] (k = 1200/1820 = 0.6593) and its
+       980-tall screen onto the stage's 650 (k = 0.6633).
+
+   That mapping is why the type sizes below are what they are: the mock's
+   217.555px headline is 217.555 x 0.6593 = 143px of stage, its 30px caption
+   20px of stage. Because the stage is scale()d as one unit, those hold their
+   proportion against the can at every window size instead of drifting.  */
 
 .flavor-detail-page {
   background: #0b0a09;
@@ -20,15 +37,28 @@
   position: relative;
   height: 100%;
   overflow: hidden;
-  /* .background-layer takes its opacity from --h2g, the homepage's own
-     hero->gallery entrance progress. Nothing scrubs that here, so it is
-     pinned on rather than left to the property's fallback. */
-  --h2g: 1;
 }
 
-/* The can's canvas sits *between* the two copy layers on purpose: the giant
-   wordmark is behind it, the flavor name and product line in front, so the
-   can passes over its own headline as it turns. */
+/* .background-layer derives its opacity from --h2g, the homepage's own
+   hero->gallery entrance progress. Nothing scrubs that here. It is set on the
+   layer itself rather than by declaring --h2g on the section, because the hero
+   stages inside this section read that same variable for their own fade — and
+   a --h2g of 1 there means "fully faded out", which blanked the wordmark and
+   the menu outright. */
+.flavor-story-sticky > .background-layer {
+  opacity: 1;
+}
+
+/* Stacking inside the sticky box, back to front: flavor color, wordmark, can,
+   menu + flavor copy, scroll-driven text. The can deliberately passes between
+   the wordmark and the copy, as the mock draws it. */
+.flavor-hero-wordmark-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
 .flavor-story-canvas-layer {
   position: absolute;
   inset: 0;
@@ -36,162 +66,93 @@
   pointer-events: none;
 }
 
-.flavor-hero-copy {
+.flavor-hero-copy-layer {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  color: var(--ink);
-  pointer-events: none;
-  padding: clamp(24px, 6vh, 72px) clamp(16px, 4vw, 56px);
-}
-
-.flavor-hero-copy-back {
-  z-index: 1;
-  justify-content: center;
-}
-
-.flavor-hero-copy-front {
   z-index: 3;
-  justify-content: flex-end;
 }
 
-/* Its own unpadded row so the scaleX fit in FlavorStorySection measures the
-   width the wordmark should actually span, not the copy layer's padding box. */
-.flavor-story-yaas-row {
-  width: 100%;
-  text-align: center;
+/* Behind the can, not over it — the reference this is modelled on paints its
+   jar at z-index 50 over headlines that carry no z-index at all, so the copy
+   passes underneath the product rather than across its face. Shares the
+   wordmark's layer, which it never overlaps in time: that has faded out a
+   full viewport of scroll before the first block arrives. */
+.flavor-rotation-blocks {
+  z-index: 1;
+  pointer-events: none;
+  /* .hero-stage fades and blurs itself off --h2g for the homepage's entrance.
+     These layers are driven by the scroll timeline instead, so the inherited
+     treatment is reset rather than left to depend on that variable being
+     absent. */
+  opacity: 1;
+  filter: none;
 }
 
-.flavor-story-yaas {
-  /* inline-block, not block: the scaleX fit divides the row's width by the
-     wordmark's own natural width, and a block-level heading already measures
-     the full row — which makes the ratio 1 and the fit a no-op. */
-  display: inline-block;
+/* ---------- Screen 1: the flavor hero ----------
+   Mock: "wild strawberry" at x=50 y=817, the product line right-aligned to
+   x=1870 y=837 — a single row against both gutters, low in the screen. On the
+   stage that row lands at y=542, which is the slot .hero-copy-row already
+   holds on the homepage (top: 549px), so the two pages' first screens read as
+   the same composition with different copy in it. */
+.flavor-hero-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.flavor-hero-name {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(96px, 17vw, 260px);
-  line-height: 0.82;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  transform-origin: 50% 50%;
-}
-
-.flavor-story-flavorname {
-  margin: 0 0 14px;
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(28px, 5vw, 64px);
-  line-height: 1;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .flavor-hero-badges {
-  margin: 0 0 14px;
+  margin: 0;
   font-family: var(--font-beiruti);
   font-weight: 500;
-  font-size: clamp(12px, 1.2vw, 15px);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.flavor-hero-line {
-  margin: 0;
-  max-width: 46ch;
-  font-family: var(--font-beiruti);
-  font-size: clamp(14px, 1.5vw, 18px);
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
-/* All four blocks share one grid cell so they crossfade in the same place
-   rather than sliding through different ones. */
-.flavor-rotation-blocks {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  display: grid;
-  place-items: end center;
-  padding: clamp(24px, 6vh, 72px) clamp(16px, 4vw, 56px) clamp(36px, 9vh, 96px);
-  pointer-events: none;
-}
-
-.flavor-rotation-block {
-  grid-area: 1 / 1;
-  width: 100%;
-  max-width: 780px;
-  text-align: center;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  text-align: right;
   color: var(--ink);
 }
 
+/* ---------- Screens 2-5: the scroll-driven text ----------
+   All four blocks share one stage, stacked in the same box so they crossfade
+   in place; each one's own modifier below places its headline and caption the
+   way that screen does in the mock. */
+.flavor-rotation-block {
+  position: absolute;
+  inset: 0;
+  color: var(--ink);
+}
+
+.flavor-rotation-kicker,
+.flavor-rotation-line {
+  position: absolute;
+  margin: 0;
+}
+
 .flavor-rotation-kicker {
-  margin: 0 0 10px;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(26px, 4.4vw, 56px);
-  line-height: 1.02;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-align: center;
 }
 
 .flavor-rotation-line {
-  margin: 0 auto;
-  max-width: 44ch;
   font-family: var(--font-beiruti);
-  font-size: clamp(14px, 1.5vw, 18px);
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
-/* ---------- Section A, simple mode ---------- */
-
-/* Below the tablet breakpoint, or under prefers-reduced-motion, there is no
-   pin and no scrub (see FlavorDetailPage) — everything that was stacked into
-   one viewport unstacks into ordinary flow, and the can just turns on its own
-   axis. Only the layout changes here; the copy and the colors are the same. */
-.flavor-story-wrap.is-simple {
-  height: auto;
-}
-
-.flavor-story-wrap.is-simple .flavor-story-sticky {
-  height: auto;
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-  padding: clamp(56px, 11vh, 112px) clamp(16px, 5vw, 48px) clamp(48px, 10vh, 96px);
-}
-
-.flavor-story-wrap.is-simple .flavor-hero-copy {
-  position: relative;
-  inset: auto;
-  justify-content: flex-start;
-  padding: 0;
-}
-
-.flavor-story-wrap.is-simple .flavor-hero-copy-front {
-  margin-top: clamp(18px, 4vh, 36px);
-}
-
-.flavor-story-wrap.is-simple .flavor-story-canvas-layer {
-  position: relative;
-  inset: auto;
-  height: min(52vh, 420px);
-  margin: clamp(16px, 4vh, 40px) 0;
-}
-
-.flavor-story-wrap.is-simple .flavor-rotation-blocks {
-  position: relative;
-  inset: auto;
-  display: flex;
-  flex-direction: column;
-  gap: clamp(40px, 8vh, 76px);
-  padding: clamp(48px, 9vh, 88px) 0 0;
-}
-
-.flavor-story-wrap.is-simple .flavor-rotation-block {
-  grid-area: auto;
-  margin: 0 auto;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  text-align: center;
 }
 
 /* ---------- Section B: the "Try the Other Flavors" gallery ---------- */
@@ -204,7 +165,11 @@
    driver in scroll/riseTransition.js, attached in FlavorDetailPage — the same
    one .screen2 and .advantages already run off, not a second copy. It starts
    at half this section's own rendered width, so the top edge opens as a true
-   semicircular dome, and reaches 0 as the section finishes covering. */
+   semicircular dome, and reaches 0 as the section finishes covering.
+
+   Vertical rhythm is the homepage's, not this page's own: the top padding and
+   the heading's gap to the cards are .advantages-heading-grid's numbers, the
+   bottom padding .advantages-content's. */
 .flavor-gallery {
   position: relative;
   /* Paints over .flavor-story-wrap, which is position: fixed while pinned. */
@@ -214,13 +179,41 @@
   border-top-left-radius: var(--rise-radius, 0px);
   border-top-right-radius: var(--rise-radius, 0px);
   overflow: hidden;
-  background: var(--paper);
+  background: #ffffff;
   color: var(--ink-on-light);
-  padding: clamp(56px, 10vh, 104px) 0 clamp(64px, 11vh, 120px);
+  padding: clamp(170px, 21vh, 260px) 0;
 }
 
-/* Nothing above it is pinned in simple mode, so there is nothing to climb
-   over — it just follows the story section in flow. */
+/* Mirrors .about-brand-bg (brand-teaser.css): white ground, the outline
+   wordmark oversized and centred behind everything. Not a shared class,
+   because that one is wired to a viewport-backdrop driver for its own pinned
+   section and carries the fixed/parked states that go with it; this block just
+   needs the look. */
+.flavor-gallery-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.flavor-gallery-bg img {
+  position: absolute;
+  left: 50%;
+  top: -1%;
+  height: 128%;
+  width: auto;
+  max-width: none;
+  transform: translateX(-50%);
+}
+
+.flavor-gallery > .site-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Nothing above it is pinned in reduced-motion mode, so there is nothing to
+   climb over — it just follows the story section in flow. */
 .flavor-gallery.is-simple {
   margin-top: 0;
   border-top-left-radius: 0;
@@ -228,7 +221,7 @@
 }
 
 .flavor-gallery-heading {
-  margin: 0 0 clamp(28px, 5vh, 56px);
+  margin: 0 0 50px;
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(30px, 5vw, 68px);
@@ -237,12 +230,15 @@
   color: var(--ink-on-light);
 }
 
+/* The track takes the container's full width and the arrows float back on top
+   of it, rather than flanking it as row items — that cost the cards ~50px of
+   width each. Overlapping a card is fine here by design. */
 .flavor-gallery-viewport {
   position: relative;
 }
 
 .flavor-gallery-track {
-  --gallery-gap: clamp(12px, 1.6vw, 24px);
+  --gallery-gap: 20px;
   --gallery-visible: 3;
   display: flex;
   column-gap: var(--gallery-gap);
@@ -250,14 +246,23 @@
   scroll-behavior: smooth;
 }
 
+/* Card proportions are the mock's: 593 wide by 560 tall. As an aspect-ratio
+   rather than a height, so the card grows with its own column at every width
+   instead of being pinned by a viewport-height clamp — which is what made it
+   read as too short next to the design on a short window. */
 .flavor-gallery-card {
   flex: 0 0 calc((100% - (var(--gallery-visible) - 1) * var(--gallery-gap)) / var(--gallery-visible));
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: clamp(320px, 46vh, 480px);
-  padding: clamp(20px, 2.4vw, 32px) 16px 0;
+  aspect-ratio: 593 / 560;
+  /* No horizontal padding on the card itself: the can's width and its crop
+     below are percentages of the mock's full card width, and padding here
+     would resolve them against the narrower content box instead (measured: a
+     62% can came out 219px wide rather than 239). The title carries its own
+     side padding instead. */
+  padding: clamp(20px, 2.4vw, 32px) 0 0;
   border-radius: 20px;
   overflow: hidden;
   background: var(--card-color);
@@ -274,66 +279,124 @@
   z-index: 0;
 }
 
+/* The size the homepage's own card headings use (.advantage-card-title in
+   advantages.css), deliberately shared rather than a per-page value — and
+   deliberately not the mock's 59px, which belongs to its 1920 frame. */
 .flavor-gallery-card-title {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   margin: 0;
+  padding: 0 16px;
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(18px, 1.7vw, 26px);
-  line-height: 1.05;
+  font-size: clamp(26px, 8vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.8px;
   text-align: center;
 }
 
+/* The homepage gallery's halo under its centred can (.center-glow in
+   layout.css) — same white radial falloff and same soft fade, scoped to the
+   card and lit only while it is hovered. Sits under the can (z-index 1 against
+   the can's 2) and over the card's texture. */
+.flavor-gallery-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 1;
+  width: 118%;
+  aspect-ratio: 1;
+  transform: translate(-50%, 30%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.22) 38%,
+    rgba(255, 255, 255, 0) 68%
+  );
+  opacity: 0;
+  transition: opacity 250ms ease;
+  pointer-events: none;
+}
+
 /* Pushed past the card's bottom edge so only the top of the can is in frame
-   at rest; the card's own overflow: hidden does the cropping. */
+   at rest; the card's own overflow: hidden does the cropping. Width and crop
+   are the mock's: a 369-wide can in a 593 card (62%), its foot 106px below a
+   560-tall card (19%). */
 .flavor-gallery-can {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: block;
-  width: min(86%, 250px);
+  width: 62%;
   height: auto;
   margin-top: auto;
-  margin-bottom: -34%;
+  /* The mock crops the can 106px below a 560-tall card — 18.9% of its height.
+     A percentage margin resolves against the containing block's WIDTH, so that
+     is restated here against the card's own 593/560 aspect: 0.189 x (560/593)
+     = 17.8% of the width. */
+  margin-bottom: -17.8%;
   transform-origin: 50% 100%;
   transition: transform 250ms ease;
 }
 
+/* The mock's hover: the can rises and tilts CLOCKWISE. Measured off its own
+   frame — the hovered card's can occupies a 444.49 x 523.98 box against the
+   369 x 467 of a resting one, which is exactly a 10° rotation of the same
+   artwork at the same scale — so the angle here is the mock's, and only its
+   direction differs from the -4° this card used to lean. */
 .flavor-gallery-card:hover .flavor-gallery-can,
 .flavor-gallery-card:focus-visible .flavor-gallery-can {
-  transform: scale(1.12) rotate(-4deg);
+  transform: scale(1.12) rotate(10deg);
 }
 
-.flavor-gallery-card.is-active {
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.85);
+.flavor-gallery-card:hover .flavor-gallery-glow,
+.flavor-gallery-card:focus-visible .flavor-gallery-glow {
+  opacity: 1;
 }
+
+/* The card for the flavor you are already on gets no ring or any other
+   treatment of its own — it reads exactly like the other four. It still
+   carries aria-current so the distinction survives for a screen reader. */
 
 /* Reuses .arrow (layout.css) for the hover/scale treatment, but replaces its
-   slider-stage placement: that rule centers itself on the stage via a --ox
-   offset, which has no meaning here. The icon's stroke is a hardcoded white,
-   so the button carries a dark disc for it to read against on paper. */
+   slider-stage placement: that rule centres itself on the stage via a --ox
+   offset, which has no meaning for a flex item.
+   A bare glyph, no disc behind it. arrow-*.svg draws its stroke in a hardcoded
+   white — right for the flavor backgrounds it was drawn for, invisible on this
+   block's paper — so brightness(0) crushes it to black rather than forking the
+   shared icon into a second, near-identical file. */
 .arrow-gallery {
   --ox: 0px;
   --arrow-scale: 1;
+  position: absolute;
   top: 50%;
   left: auto;
   transform: translateY(-50%) scale(var(--arrow-scale));
-  z-index: 3;
-  width: 52px;
-  height: 52px;
-  padding: 13px;
+  width: clamp(40px, 3.6vw, 56px);
+  height: clamp(40px, 3.6vw, 56px);
+  padding: clamp(10px, 0.9vw, 14px);
   border: none;
   border-radius: 50%;
-  background: var(--ink-on-light);
+  background: #ffffff;
   cursor: pointer;
 }
 
 .arrow-gallery-prev {
-  left: clamp(-26px, -1.6vw, -10px);
+  left: 16px;
 }
 
 .arrow-gallery-next {
-  right: clamp(-26px, -1.6vw, -10px);
+  right: 16px;
+}
+
+.arrow-gallery img {
+  filter: brightness(0);
+}
+
+/* .arrow's own :hover already nudges --arrow-scale to 1.08; a little more here
+   now that there is no disc around the glyph to carry the hover. */
+.arrow-gallery:hover {
+  --arrow-scale: 1.14;
 }
 
 .arrow-gallery.is-disabled {
@@ -341,42 +404,264 @@
   cursor: default;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .flavor-gallery-track {
     --gallery-visible: 2;
   }
-
-  .arrow-gallery-prev {
-    left: 4px;
-  }
-
-  .arrow-gallery-next {
-    right: 4px;
-  }
 }
 
-@media (max-width: 1023px) {
-  /* A REAL override, unlike the redundant ones removed elsewhere in this pass:
-     this heading keeps a desktop size of its own (its clamp tops out at 68,
-     not the block scale's 80) and desktop is not being touched, so only the
-     responsive half is brought onto the shared scale. Without this it fell to
-     its clamp's 30px floor on a phone, well under every other block heading
-     on the site at that width. */
-  .flavor-gallery-heading {
-    font-size: var(--block-heading);
-  }
-}
-
-@media (max-width: 768px) {
+/* On a phone the arrows cost more than they give: flanking the track they
+   took 96px of a 330px row, leaving a 234px card on a 390px screen. They go
+   away and the track becomes a swipeable scroll-snap carousel instead — the
+   same way .advantages-arc-cards carries the homepage's own card row at this
+   breakpoint — so the card gets the full width back. Tablet and desktop keep
+   the arrows, where there is room for them beside the cards. */
+@media (max-width: 767px) {
   .flavor-gallery-track {
     --gallery-visible: 1;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .flavor-gallery-track::-webkit-scrollbar {
+    display: none;
   }
 
   .flavor-gallery-card {
-    height: clamp(340px, 58vh, 460px);
+    scroll-snap-align: center;
   }
 
-  .flavor-gallery-can {
-    width: min(72%, 230px);
+  .arrow-gallery {
+    display: none;
   }
+}
+
+/* ---------- Mobile and tablet: story screens ----------
+   Up to 1023, matching hero.css's own breakpoint — above it the hero switches
+   to the fixed 1200x650 stage and the rules at the bottom of this file take
+   over. Here the stage wrappers are plain full-bleed layers, so the mock's
+   grid is re-expressed in vw/dvh against the site's own mobile gutter
+   (2.56vw, the same one .hero-nav and .hero-mobile-banner-logo-row use), and
+   the type drops onto the site's mobile scale rather than carrying desktop
+   pixels down. The animation itself is unchanged at these widths. */
+@media (max-width: 1023px) {
+  /* The mock's single row doesn't survive a phone: "WILD STRAWBERRY" at a
+     display size and the product line beside it both wrap and collide at
+     390px. They stack instead, left-aligned against the same gutter — which
+     is what .hero-copy does with the subhead and CTA at this breakpoint. */
+  .flavor-hero-row {
+    bottom: 8dvh;
+    left: 2.56vw;
+    right: 2.56vw;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .flavor-hero-name {
+    font-size: clamp(28px, 8.2vw, 52px);
+  }
+
+  .flavor-hero-badges {
+    font-size: clamp(11px, 3vw, 15px);
+    text-align: left;
+  }
+
+  .flavor-rotation-kicker {
+    left: 2.56vw;
+    right: 2.56vw;
+    top: 9dvh;
+    font-size: clamp(38px, 13.5vw, 96px);
+  }
+
+  .flavor-rotation-line {
+    left: 2.56vw;
+    right: 2.56vw;
+    bottom: 11dvh;
+    font-size: clamp(13px, 3.9vw, 19px);
+  }
+
+  /* The caption-only screen keeps its caption on the centre line, as the mock
+     does, rather than down at the foot where the paired ones sit. */
+  .flavor-rotation-block.is-layout-caption .flavor-rotation-line {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+  }
+}
+
+/* ---------- Desktop: the mock's grid, mapped onto the 1200x650 stage ---------- */
+@media (min-width: 1024px) {
+  /* Mock y=817 of 980 -> 542 of 650; .hero-copy-row sits at 549, and the two
+     rows are the same slot. */
+  .flavor-hero-row {
+    top: 558px;
+  }
+
+  /* Mock 64px on its 1920 frame -> 42px of stage. */
+  .flavor-hero-name {
+    font-size: 42px;
+  }
+
+  /* Mock 24px -> 16px of stage, which is also the site's own body size and
+     what .hero-subhead uses in this very slot on the homepage. */
+  .flavor-hero-badges {
+    font-size: 16px;
+  }
+
+  /* Mock: every screen's headline starts 103 below its own top edge (-> 68)
+     and is set at 217.555px (-> 143).
+     Sitting 46 lower than that 68 on purpose — see --caption-top below for why
+     the whole pair is shifted down together. */
+  .flavor-rotation-kicker {
+    top: 114px;
+    font-size: 143px;
+  }
+
+  /* Mock: 30px captions (-> 20), on the line 799 down (-> 530). */
+  .flavor-rotation-line {
+    font-size: 20px;
+  }
+
+  /* Where a screen's caption sits, and with the headline above it the whole
+     pair's vertical placement.
+     Balanced on the rendered ink, not the line boxes — Soledago carries a lot
+     of leading above its caps, so the headline's ink starts 36px below the box
+     top that positions it, and balancing the boxes would leave the top visibly
+     heavier. At 1920x920 (the stage exactly filling the viewport height) the
+     mock's own 530 gave 132px of air above and 102px below; 509 brought both
+     to 132.
+     Both numbers then move down together by 46 (65px at that viewport), which
+     is what puts the balance point where a reader actually stops rather than
+     at the block's geometric centre. Nothing dwells on this page any more —
+     the copy travels at scroll speed — so the composition only ever reads as
+     balanced at one instant, and the instant that matters is the one slightly
+     past centre, where the eye settles. Shifting the pair rather than
+     re-spacing it keeps the headline-to-caption relationship untouched. */
+  /* 555 + 35: the caption drops another 50px of screen at the 1920x920
+     reference (50 / 1.4154 of stage scale = 35 of stage). It sits close to the
+     screen's bottom edge now — about 17px of air under its ink — which is the
+     composition asked for. */
+  .flavor-rotation-block {
+    --caption-top: 625px;
+  }
+
+  /* Screen 2 — headline centred over the can, caption centred beneath it.
+     Mock: headline box x=347 w=1227 (-> 196 wide 809), caption x=724 w=473
+     (-> 444 wide 312). */
+  .is-layout-center .flavor-rotation-kicker {
+    left: 196px;
+    width: 809px;
+  }
+
+  .is-layout-center .flavor-rotation-line {
+    left: 444px;
+    width: 312px;
+    top: var(--caption-top);
+  }
+
+  /* Screen 3 — headline against the left gutter, caption against the right.
+     Mock: headline x=50 w=1227 (-> 0 wide 809), caption x=1277 w=593
+     (-> 809 wide 391, i.e. flush to the stage's right edge). */
+  .is-layout-split .flavor-rotation-kicker {
+    left: 0;
+    width: 809px;
+  }
+
+  .is-layout-split .flavor-rotation-line {
+    left: 809px;
+    width: 391px;
+    top: var(--caption-top);
+    text-align: right;
+  }
+
+  /* Screen 4 — caption alone, left gutter, on the vertical centre line.
+     Mock: x=50 y=3430 in a screen starting 2940 (-> 0, 325). */
+  .is-layout-caption .flavor-rotation-line {
+    left: 0;
+    width: 391px;
+    top: 325px;
+    text-align: left;
+  }
+
+  /* Screen 5 — the finale the can stops on. Mock: x=188 w=1554 (-> 91 wide
+     1024), centred on the stage, headline only. */
+  .is-layout-finale .flavor-rotation-kicker {
+    left: 91px;
+    width: 1024px;
+  }
+}
+
+/* ---------- Reduced motion ----------
+   The only mode that still drops the pinned scroll story: everything unstacks
+   into ordinary flow and the can turns slowly on its own axis. A narrow screen
+   does NOT come here — phones and tablets get the full animation. */
+.flavor-story-wrap.is-simple {
+  height: auto;
+}
+
+.flavor-story-wrap.is-simple .flavor-story-sticky {
+  height: auto;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(56px, 11vh, 112px) clamp(16px, 5vw, 48px) clamp(48px, 10vh, 96px);
+}
+
+.flavor-story-wrap.is-simple .flavor-hero-wordmark-layer,
+.flavor-story-wrap.is-simple .flavor-hero-copy-layer,
+.flavor-story-wrap.is-simple .flavor-hero-stage {
+  position: relative;
+  inset: auto;
+  transform: none;
+  width: auto;
+  height: auto;
+  min-height: 220px;
+}
+
+.flavor-story-wrap.is-simple .flavor-hero-row {
+  position: relative;
+  inset: auto;
+  top: auto;
+  bottom: auto;
+  margin-top: 24px;
+}
+
+.flavor-story-wrap.is-simple .flavor-story-canvas-layer {
+  position: relative;
+  inset: auto;
+  height: min(52vh, 420px);
+  margin: clamp(16px, 4vh, 40px) 0;
+}
+
+.flavor-story-wrap.is-simple .flavor-rotation-blocks {
+  position: relative;
+  inset: auto;
+  transform: none;
+  width: auto;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(40px, 8vh, 76px);
+  padding: clamp(48px, 9vh, 88px) 0 0;
+}
+
+.flavor-story-wrap.is-simple .flavor-rotation-block {
+  position: relative;
+  inset: auto;
+  min-height: 0;
+}
+
+.flavor-story-wrap.is-simple .flavor-rotation-kicker,
+.flavor-story-wrap.is-simple .flavor-rotation-line {
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
+  width: auto;
+  transform: none;
+  text-align: center;
 }

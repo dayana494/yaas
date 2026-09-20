@@ -48,16 +48,21 @@ export default function FlavorGallery({ activeFlavorId, simpleMode }) {
 
   return (
     <section className={`flavor-gallery${simpleMode ? ' is-simple' : ''}`}>
+      {/* The same ground the homepage's About the Brand block stands on: white,
+          with the outline wordmark filling it behind the content. Same asset,
+          same sizing rules (see .about-brand-bg in brand-teaser.css). */}
+      <div className="flavor-gallery-bg" aria-hidden="true">
+        <img src={asset('/images/about-brand-wordmark.svg')} alt="" />
+      </div>
+
       <div className="site-container">
         <DropText as="h2" className="flavor-gallery-heading" text={GALLERY_HEADING} />
 
+        {/* The arrows are row items flanking the track, not overlays on top of
+            it: sitting over the cards they covered the outer two at rest and
+            clipped the raised can on hover. Flanking means they cannot overlap
+            a card in any state or at any width. */}
         <div className="flavor-gallery-viewport">
-          <div className="flavor-gallery-track" ref={trackRef}>
-            {FLAVORS.map((flavor) => (
-              <FlavorStripCard key={flavor.id} flavor={flavor} isActive={flavor.id === activeFlavorId} />
-            ))}
-          </div>
-
           <button
             type="button"
             className={`arrow arrow-gallery arrow-gallery-prev${atStart ? ' is-disabled' : ''}`}
@@ -67,6 +72,13 @@ export default function FlavorGallery({ activeFlavorId, simpleMode }) {
           >
             <img src={asset('/icons/arrow-left.svg')} alt="" />
           </button>
+
+          <div className="flavor-gallery-track" ref={trackRef}>
+            {FLAVORS.map((flavor) => (
+              <FlavorStripCard key={flavor.id} flavor={flavor} isActive={flavor.id === activeFlavorId} />
+            ))}
+          </div>
+
           <button
             type="button"
             className={`arrow arrow-gallery arrow-gallery-next${atEnd ? ' is-disabled' : ''}`}

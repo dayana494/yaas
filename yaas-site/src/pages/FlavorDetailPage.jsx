@@ -41,13 +41,14 @@ export default function FlavorDetailPage() {
   // would tear the timeline down and rebuild it on every single render.
   const story = useMemo(() => (flavor ? getFlavorStory(flavor) : null), [flavor]);
 
-  // The pinned/scrubbed story is a desktop-and-pointer treatment. Below the
-  // tablet breakpoint, or whenever the reader has asked for reduced motion,
-  // the whole section degrades to plain stacked content with a slowly
-  // spinning can — same call AdvantagesScreen makes for its own arc.
+  // The pinned/scrubbed story runs at every width — phone and tablet included,
+  // where an earlier version of this page dropped it for a plain stacked
+  // fallback. Only an explicit prefers-reduced-motion still degrades to that
+  // fallback, which is what the setting is actually asking for; a narrow
+  // screen is not. The type and the composition adapt at the breakpoints
+  // instead (see styles/flavor-detail.css), the animation does not.
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const isNarrow = useMediaQuery('(max-width: 1024px)');
-  const simpleMode = reducedMotion || isNarrow;
+  const simpleMode = reducedMotion;
 
   // Arriving from another flavor's gallery card keeps the router's scroll
   // position, which on this page means landing halfway through the previous

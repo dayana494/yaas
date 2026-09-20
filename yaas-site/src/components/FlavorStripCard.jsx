@@ -6,9 +6,9 @@ import { Link } from 'react-router-dom';
 // brand color with the can cropped by the card's bottom edge, so only its top
 // peeks in until you hover.
 //
-// A <Link>, not the raw <a> the build prompt sketched: this app is already on
-// react-router, and a plain anchor would tear the whole SPA down and refetch
-// the .glb and every label texture just to move between two flavor pages.
+// A <Link>, not a raw <a>: this app is already on react-router, and a plain
+// anchor would tear the whole SPA down and refetch the .glb and every label
+// texture just to move between two flavor pages.
 export default function FlavorStripCard({ flavor, isActive }) {
   return (
     <Link
@@ -21,6 +21,10 @@ export default function FlavorStripCard({ flavor, isActive }) {
           a plain child rather than a second implementation of it. */}
       <div className="background-texture" aria-hidden="true" />
       <h3 className="flavor-gallery-card-title">{flavor.title}</h3>
+      {/* The halo the homepage gallery lights under its centred can
+          (.center-glow, layout.css) — same white radial falloff, sized to this
+          card instead of the viewport, and lit only on hover. */}
+      <span className="flavor-gallery-glow" aria-hidden="true" />
       <img src={flavor.thumbnail} alt="" className="flavor-gallery-can" loading="lazy" />
     </Link>
   );
