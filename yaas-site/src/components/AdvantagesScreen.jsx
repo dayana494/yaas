@@ -108,7 +108,7 @@ export default function AdvantagesScreen() {
           canvas is not painted at every moment, and that fill is what keeps
           the section from ever being transparent. */}
       <div className="advantages-bg" aria-hidden="true">
-        <HeroGradientBackground />
+        <HeroGradientBackground lazy />
       </div>
       <div className="advantages-pin" ref={pinRef}>
         <div className="advantages-title-row">

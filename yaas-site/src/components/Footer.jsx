@@ -79,13 +79,43 @@ function useWordmarkFit(ref) {
       if (naturalWidth > 0) el.style.transform = `scaleX(${targetWidth / naturalWidth})`;
     }
 
-    fit();
-    window.addEventListener('resize', fit);
+    // Deferred one frame past the first paint, same reasoning as
+    // HeroGradientBackground's own first read (see its comment): fit() forces
+    // two synchronous layout reads (the font-size probe, then the final
+    // width read), and calling it synchronously right here would flush that
+    // reflow for the WHOLE page in the middle of the initial mount, competing
+    // with everything else — the hero's own canvas setup among it — for the
+    // same tick. One frame later, it lands on the browser's own schedule
+    // instead.
+    let raf1 = 0;
+    let raf2 = 0;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(fit);
+    });
+
+    // Resize can fire many times a second while a window is being dragged;
+    // fit() forces the same two reflows on every call, so this collapses any
+    // run of resize events within a frame down to the one that actually gets
+    // read, rather than reflowing the page once per event.
+    let resizeRaf = null;
+    function onResize() {
+      if (resizeRaf != null) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = null;
+        fit();
+      });
+    }
+    window.addEventListener('resize', onResize);
     // The wordmark is set in Soledago, which loads with font-display: swap — the
     // first fit above runs against the fallback's metrics and would otherwise
     // stand.
     document.fonts?.ready.then(fit).catch(() => {});
-    return () => window.removeEventListener('resize', fit);
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      if (resizeRaf != null) cancelAnimationFrame(resizeRaf);
+      window.removeEventListener('resize', onResize);
+    };
   }, [ref]);
 }
 
@@ -149,7 +179,7 @@ export default function Footer({ reveal = false }) {
 
   return (
     <footer className={`site-footer ${reveal ? 'is-reveal' : ''}`} ref={footerRef}>
-      <HeroGradientBackground />
+      <HeroGradientBackground lazy />
 
       <div className="site-footer-inner">
         <div className="site-footer-logo-row">
