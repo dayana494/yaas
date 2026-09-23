@@ -57,15 +57,16 @@ const MOBILE = {
   minScale: 0.35,
   dipY: 0.02,
   fadeRange: 1.05,
-  baseScale: 0.82,
-  // The frame's own centre is 56% down, which is -0.116 here. Raised to bring
-  // the composition's two end gaps together: measured at 390x850, the space
-  // between the heading and the top of the can was 113px while the space under
-  // the flavor name was 46px. Moving the can up 34px (4% of the viewport, so
-  // 0.077 world units at this frustum) makes both about 80. The arrows and the
-  // flavor name move by the same 4dvh in layout.css so the three stay one
-  // composition rather than drifting apart.
-  yOffset: -0.039,
+  // 1.2x smaller than the Figma frame's 0.82: on a real phone the gallery ran
+  // out of height — the flavor name under the can had nowhere left to go. The
+  // can is now 35.4% of the canvas (0.683 / 1.929) rather than 42.5%.
+  baseScale: 0.683,
+  // Centre 48% down the canvas (+0.04 NDC = +0.0386 world at this frustum),
+  // up from 52%: with the can smaller, its top edge stays about where it was
+  // under the (now also smaller) heading, and the space it gives up goes
+  // below it, to the flavor name. The arrows in layout.css are placed off the
+  // same 48%, so the three stay one composition.
+  yOffset: 0.0386,
 };
 
 // Roughly 20px of screen space at typical viewport heights, in world units

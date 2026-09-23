@@ -39,7 +39,11 @@ const DETAIL_ANCHOR = { desktop: { x: 0.365, y: -0.028 }, mobile: { x: 0, y: 0.1
 // centred at 37%, is the largest that clears the title above and the copy
 // below on a 667-tall phone, and it keeps the mock's proportions on taller
 // ones.
-const DETAIL_SCALE = { desktop: 1.55, mobile: 0.656 };
+// Mobile: the Figma frame's 0.656, 1.2x smaller (as the gallery can in
+// arcLayout.js) so the detail card's title, copy and "Learn more" all fit a
+// real phone's height. .detail-can-space (layout.css) is this over the
+// canvas's 1.929-unit height — keep the two in step.
+const DETAIL_SCALE = { desktop: 1.55, mobile: 0.547 };
 // Where the detail can should sit, in NDC.
 //
 // Below 1024 this follows the DOM rather than a constant. .detail-copy lays

@@ -13,9 +13,14 @@ function useMediaQuery(query) {
   return matches;
 }
 
-// Same edge-to-edge scaleX-fit technique as the footer's own wordmark (see
-// Footer.jsx's useFillWidth) — no font-size alone lands a fixed 4-character
-// string exactly on a container's own width.
+// Fits the wordmark edge to edge across its row by solving its FONT-SIZE, not
+// by stretching it. It used to finish with a scaleX (the footer's technique),
+// and on a phone that is what made it soft: a non-uniform transform on text is
+// resampled after rasterisation, so the glyphs were drawn at one size and
+// squeezed into another. A font-size is rasterised at the size it is shown at.
+// The only cost is the aspect: this font inks "YAAS" at 3.152 against the
+// mock's 3.064, so the letters come out about 3% shorter than a stretch would
+// have made them — which is the trade the brief asks for (sharp over exact).
 //
 // fit() used to run synchronously in the mount effect: write transform:none,
 // then immediately read back two getBoundingClientRect()s to compute the
@@ -53,13 +58,15 @@ function useFillWidth(ref, enabled) {
       if (!row) return;
       const rowWidth = row.getBoundingClientRect().width;
       const naturalWidth = el.getBoundingClientRect().width;
-      if (naturalWidth > 0) {
-        el.style.transform = `scaleX(${rowWidth / naturalWidth})`;
+      const fontSize = parseFloat(getComputedStyle(el).fontSize);
+      if (naturalWidth > 0 && fontSize > 0) {
+        // Glyph advance is linear in font-size, so one ratio lands it.
+        el.style.fontSize = `${(fontSize * rowWidth) / naturalWidth}px`;
       }
     }
 
     function refit() {
-      el.style.transform = 'none';
+      el.style.fontSize = '';
       requestAnimationFrame(measure);
     }
 
@@ -74,9 +81,17 @@ function useFillWidth(ref, enabled) {
     // — see useFillWidth's own comment above) size before the fit snaps in.
     const raf = requestAnimationFrame(measure);
     const offRefit = onRealResize(refit);
+    // Soledago swaps in (font-display: swap) after the first fit may already
+    // have run against the fallback's advance widths.
+    let cancelled = false;
+    document.fonts?.ready.then(() => {
+      if (!cancelled) refit();
+    });
     return () => {
+      cancelled = true;
       cancelAnimationFrame(raf);
       offRefit();
+      el.style.fontSize = '';
     };
   }, [ref, enabled]);
 }

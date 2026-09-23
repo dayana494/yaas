@@ -334,7 +334,13 @@
        than four hand-set numbers that would need redoing whenever the copy
        rewraps or the card grows. */
     justify-content: space-between;
-    gap: 0;
+    /* A floor under space-between, not a replacement for it: where there is
+       height to spare the two gaps are still equal and larger than this, but
+       on a real phone's visible height they used to reach 0 and the closing
+       paragraph ran into the bottom of the photos. 32 rather than a round 20
+       because the rotated cards' corners reach about 12px past the deck's own
+       box, and it is the ink that must not touch the text. */
+    gap: 32px;
     padding: var(--block-gap) 20px;
   }
 
@@ -359,7 +365,17 @@
        content box, which is the thing it has to fit.
        Height comes from the aspect directly here — --about-card-h is derived
        from --about-card-w, and that cannot follow a percentage. */
-    width: 84%;
+    /* 74 rather than the 84 the rotation allowance alone permits: at 84 the
+       stack took so much of a real phone's height that the paragraph under it
+       overlapped its bottom edge. Every card position is a share of this box,
+       so the stack just scales. */
+    /* ...and capped by the height as well: on a short screen (measured at
+       375x667) even 74% left the column taller than the pin, so the gaps had
+       nothing to give. 430px is what the rest of the column needs — the stage's
+       two --block-gap paddings, both paragraphs, the two gaps above and the
+       cards' rotation overhang — so the stack takes whatever height is left and
+       its width follows through the aspect. svh: fixed for the page's life. */
+    width: min(74%, calc((100svh - 430px) * 0.7923));
     height: auto;
     aspect-ratio: 0.7923;
   }
@@ -370,12 +386,13 @@
     max-width: none;
   }
 
-  /* Figma 372:48 sets both paragraphs at the same size, and it is the site's
-     own body size — so both are --text-body here, where they used to be 14 and
-     18. Same call as item 17 makes for the side-by-side layout. */
+  /* Both paragraphs at one size, as Figma 372:48 has them — the site's small
+     body size, the same the flavor card's description uses at this width.
+     The full --text-body left too little height for the photos between them
+     on a real phone. */
   .about-brand-text,
   .about-brand-text-lead {
-    font-size: var(--text-body);
+    font-size: var(--text-body-sm);
   }
 
   .about-brand-aside {

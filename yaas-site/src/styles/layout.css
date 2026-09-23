@@ -305,7 +305,10 @@
        tablet would take it past the desktop scale it hands off to. A NAME,
        not a block heading, so it keeps its own size rather than the site's
        shared --block-heading-mobile. */
-    font-size: clamp(38px, 14.36vw, 64px);
+    /* The shared block-heading scale, like every other block heading — at
+       the frame's own 14.36vw it was the largest heading on the page and took
+       height the can below it needed. */
+    font-size: var(--block-heading);
     /* The frame breaks this over two lines ("5 flavors." / "one energy"), and
        at 14vw it has to — the base rule keeps it on one line for desktop,
        where it fits. Left as nowrap it simply ran off the right edge. */
@@ -323,9 +326,12 @@
     /* Centred on the can, which now sits 4dvh higher than it did — see the
        gallery's own yOffset in three/arcLayout.js and .flavor-name below, all
        three moved together so the composition stays one piece.
-       svh rather than dvh so the arrows do not slide while the address bar
-       collapses — see the note at the top of hero.css's mobile block. */
-    top: 52svh;
+       A percentage, not svh: it resolves against the intro pin, which is the
+       box the can's canvas fills, so 48% here is exactly the can's own 48%
+       centre (arcLayout.js) at any screen height and with the address bar in
+       or out. Less the 30px .slider-screen is translated down by, since the
+       canvas is not. */
+    top: calc(48% - 30px);
   }
 
   /* Out to the edges: 37vw leaves each arrow about 20px from its own side,
@@ -380,21 +386,27 @@
 
   .detail-title {
     /* Figma 344:335: 48px on a 390-wide frame -> 12.31vw. */
-    font-size: clamp(34px, 12.31vw, 56px);
+    /* The shared block-heading scale (was the frame's 12.31vw), so the
+       card's four items fit a real phone's height with the CTA in view. */
+    font-size: var(--block-heading);
     /* The base rule carries a 20px bottom margin. space-between owns the
        spacing here, and that margin was landing on top of the first gap only,
        making it 77 against the other two at 57. */
     margin: 0;
   }
 
-  /* The can's own on-screen height: it is scaled to 0.656 world units in a
-     frustum 1.929 tall (three/CanRig.jsx), and that ratio is 34% of the
-     viewport at any height — so the stand-in tracks the can automatically
-     instead of being a pixel guess that only holds on one screen. */
+  /* The can's own on-screen height: it is scaled to 0.547 world units in a
+     frustum 1.929 tall (DETAIL_SCALE.mobile, three/CanRig.jsx), i.e. 28.35% of
+     the canvas. Off this column's height — which fills the intro pin, the
+     same box the canvas fills — so the stand-in is the can's height exactly,
+     whatever the screen or the address bar is doing. A flex item's % resolves
+     against the column's CONTENT box, so its vertical padding (the 7.53svh
+     above, both ends) is added back first. Change it with
+     DETAIL_SCALE.mobile. */
   .detail-can-space {
     display: block;
     flex: none;
-    height: 34svh;
+    height: calc((100% + 2 * 7.53svh) * 0.2835);
   }
 
   .detail-description {

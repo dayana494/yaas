@@ -140,13 +140,15 @@
    composition resolves the same on any phone rather than only on a 390. */
 @media (max-width: 1023px) {
   .contact-frame {
-    /* Panel inset 10 of 390. */
-    padding: 0 2.56vw;
+    /* The site container's gutter, so the panel is exactly as wide as the
+       content of the blocks around it. It was the Figma frame's own 10 of 390
+       (2.56vw), 20px a side wider than everything else on the page. */
+    padding: 0 var(--content-gutter);
   }
 
   .contact-panel {
     /* The panel of the frame, 370 x 760 of 390 x 800: as wide as everything
-       else on the page at this width (the frame's 2.56vw gutter either side),
+       else on the page at this width (the container gutter either side),
        and one screen tall less 20px above and below. Width and height are now
        set independently rather than one derived from the other through an
        aspect ratio — the old rule capped the WIDTH by the height available,
@@ -178,10 +180,11 @@
   }
 
   .contact-content {
-    /* The frame's own 324 of 370 — the panel is back to the frame's full
-       width, so the heading wraps on the mock's lines at the mock's share.
-       (It was 95% while the panel was capped narrower than this.) */
-    width: 87.6%;
+    /* Wider than the frame's own 324/370 (87.6%): the panel now sits inside
+       the site container's 30px gutter, 330 wide at 390, and at 87.6% of that
+       the heading wrapped to six lines against the mock's five. 95% puts the
+       same words back on the same lines. */
+    width: 95%;
   }
 
   .contact-actions {

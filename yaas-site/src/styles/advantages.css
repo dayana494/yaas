@@ -480,6 +480,13 @@
     z-index: auto;
     isolation: isolate;
     border-radius: 0;
+    /* The section's top inset and the FAQ's bottom one were the desktop 120px
+       here, against the 80px --block-gap every other block uses at this width
+       (.screen2's padding) — measured at 390x844, this heading sat 171px below
+       its section's top edge against Screen 2's 131. The 120 exists for the
+       desktop rise (scrolled through during the climb); with no rise below
+       1024 there is no reason for it to differ. */
+    --advantages-inset: var(--block-gap);
   }
 
   /* The backdrop stays fixed while the section covers the screen here too —

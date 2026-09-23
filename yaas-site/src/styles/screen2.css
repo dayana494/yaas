@@ -3,7 +3,7 @@
 .site-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 30px;
+  padding: 0 var(--content-gutter);
 }
 
 .screen2 {
@@ -80,10 +80,31 @@
 }
 
 /* Spec allows trimming this on short screens, where 50px top and bottom eats
-   a real share of the viewport — but never to zero. */
+   a real share of the viewport — but never to zero. 40 rather than the 20 it
+   was: on a real phone the full-height card sat tight against the screen's
+   edges. One variable, so the arc's expand target and the stack's own cards
+   shrink together and the hand-off between them stays exact. */
 @media (max-width: 768px) {
   .screen2 {
-    --iso-card-inset: 20px;
+    --iso-card-inset: 40px;
+  }
+}
+
+/* The arc screen is headline / stage / subline under space-between, and the
+   stage (flex: 1, min-height: 0) could shrink to nothing when height ran short
+   — the card, absolutely centred in it, then sat on the headline and the
+   subline. A real phone's visible height after the address bar is enough to
+   get there. A minimum gap either side and a stage never shorter than the
+   card plus those gaps keep all three apart; if a screen is too short for
+   that, the subline is what gives, not the spacing. The card is 240 x 171.5
+   below the arc card's clamp floor (screen2-arc-card below). */
+@media (max-width: 1023px) {
+  .screen2-arc-inner {
+    gap: 24px;
+  }
+
+  .screen2-arc-stage {
+    min-height: calc(clamp(240px, 19.9vw, 382px) * 273 / 382 + 16px);
   }
 }
 

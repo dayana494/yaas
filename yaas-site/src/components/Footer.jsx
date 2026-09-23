@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import HeroGradientBackground from './HeroGradientBackground';
 import Logo from './Logo';
 import { FOOTER_TRIGGER_ID } from '../data/layout';
-import { RISE_UNITS, useOverlapEnabled } from '../scroll/riseTransition';
+import { RISE_UNITS, overlapEnabled, useOverlapEnabled } from '../scroll/riseTransition';
 import {
   FLAVORS_ROUTE,
   SECTION_ABOUT,
@@ -74,10 +74,21 @@ function useWordmarkFit(ref) {
       el.style.fontSize = `${PROBE}px`;
       const probeHeight = el.getBoundingClientRect().height;
       if (!probeHeight) return;
-      el.style.fontSize = `${(PROBE * targetHeight) / probeHeight}px`;
+      const heightFit = (PROBE * targetHeight) / probeHeight;
+      el.style.fontSize = `${heightFit}px`;
 
       const naturalWidth = el.getBoundingClientRect().width;
-      if (naturalWidth > 0) el.style.transform = `scaleX(${targetWidth / naturalWidth})`;
+      if (!(naturalWidth > 0)) return;
+      // Below 1024 the width is met with font-size too, never a scaleX: a
+      // non-uniform transform on text is resampled after rasterisation and
+      // reads soft on a phone screen — the same fix as the hero's wordmark
+      // (HeroWordmark.jsx). Whichever of the two sizes is smaller wins, so the
+      // wordmark keeps its own proportions and stays inside both limits.
+      if (!overlapEnabled()) {
+        el.style.fontSize = `${Math.min(heightFit, (heightFit * targetWidth) / naturalWidth)}px`;
+        return;
+      }
+      el.style.transform = `scaleX(${targetWidth / naturalWidth})`;
     }
 
     fit();

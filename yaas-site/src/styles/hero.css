@@ -198,6 +198,14 @@
      .hero-stage child) correctly faded, an inconsistent, obviously-wrong
      mismatch confirmed by scrolling through it directly. */
   opacity: clamp(0, calc(1 - var(--h2g, 0) * 2), 1);
+}
+
+/* The blur only while the entrance is actually running. At rest it resolved to
+   blur(0px), which is still a filter: it put the wordmark on its own
+   compositing layer, and text on a layer is rasterised once and then
+   resampled — part of why the logo read soft on a phone. .is-entrance-active
+   is set from HomePage.jsx the moment the entrance leaves 0. */
+.intro-pin.is-entrance-active .hero-mobile-banner-logo-row {
   filter: blur(calc(var(--h2g, 0) * 14px));
 }
 
@@ -214,11 +222,10 @@
    87.7px tall against the mock's 120.8 — a third short, which is what still
    read as squat after the first pass fixed the box. Dividing through by that
    0.725 gives 42.71vw.
-   The stretch that follows is then almost nothing: this font inks "YAAS" at an
-   aspect of 3.152 and the mock's wordmark is 3.064, so useFillWidth lands at
-   about 0.97 and the letterforms render essentially undistorted. That the two
-   aspects agree this closely is the sign the mock is this font at its natural
-   proportions, rather than a stretched version of it. */
+   useFillWidth (HeroWordmark.jsx) then nudges this font-size — by about 3%,
+   since this font inks "YAAS" at an aspect of 3.152 against the mock's 3.064 —
+   so the ink spans the row exactly. It changes the font-size rather than
+   stretching the text, which kept the logo soft on a phone. */
 .logo-text.hero-mobile-banner-logo {
   display: inline-block;
   font-size: clamp(88px, 42.71vw, 460px);
@@ -315,6 +322,11 @@
     align-items: flex-start;
     gap: 3.6svh;
     padding: 0 2.56vw;
+    /* 20px more air under the wordmark than the frame's own 29.8svh leaves —
+       on a real phone the copy read as crowding the logo. A fixed margin on
+       top of the proportional top, so the extra gap is the same on every
+       screen height. */
+    margin-top: 20px;
   }
 
   .hero-subhead {

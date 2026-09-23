@@ -39,9 +39,10 @@
      formula itself resolves to just past the 1024 handover (4.17vw of 1023 =
      42.6), so the two meet at the breakpoint instead of stepping.
 
-     Product/flavor NAMES deliberately do not use this: .slider-heading,
-     .flavor-name, .detail-title and .flavor-story-flavorname have their own
-     sizes from their own Figma frames. */
+     Product/flavor NAMES mostly keep their own sizes from their own Figma
+     frames (.flavor-name, .flavor-story-flavorname) — except below 1024, where
+     .slider-heading and .detail-title take this scale too: at their frame
+     sizes the gallery and the flavor card ran out of a real phone's height. */
   --block-heading: clamp(30px, 4.17vw, 80px);
 
   /* Body copy. The site has exactly two sizes and they are not viewport
@@ -49,6 +50,11 @@
      (captions, footer legal, card descriptions). */
   --text-body: 16px;
   --text-body-sm: 14px;
+
+  /* The side gutter of the site's content container (.site-container). Blocks
+     that must line up with it at every width read this rather than repeating
+     the number — see .contact-frame. */
+  --content-gutter: 30px;
 
   --paper: #fdfaf1;
   --bg-color: #f3d118;
