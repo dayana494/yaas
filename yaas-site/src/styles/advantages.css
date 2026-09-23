@@ -469,6 +469,31 @@
 }
 
 @media (max-width: 1023px) {
+  /* No handovers at this width, in or out: the section follows Screen 2 in
+     plain flow (the card stack's pin no longer holds for a climb —
+     ScenarioCardsIsometric.jsx) and About the Brand follows it the same way.
+     So neither negative margin, neither rounded edge, and no stacking rank
+     against the neighbours; isolation keeps the internal layers (backdrop at
+     0, content at 1) contained. */
+  .advantages {
+    margin-top: 0;
+    z-index: auto;
+    isolation: isolate;
+    border-radius: 0;
+  }
+
+  /* Just this section's own background. The backdrop driver is not attached
+     below 1024 (riseTransition.js), so nothing flips it to fixed; stretched
+     over the whole block — advantages and FAQ — from one layer, as before. */
+  .advantages-bg,
+  .advantages-bg.is-fixed,
+  .advantages-bg.is-parked {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    transform: none;
+  }
+
   /* 18, down from the flat 20 the rule above sets. The question read large
      against everything near it — its own answer is 14 and the card copy on
      this same block is 14. Two points, which is the reduction asked for;

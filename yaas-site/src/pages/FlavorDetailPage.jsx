@@ -63,7 +63,8 @@ export default function FlavorDetailPage() {
   // story section and flattens them as it finishes covering — the shared
   // driver from scroll/riseTransition.js, the same one the homepage runs for
   // .screen2 and .advantages, not a second copy of the effect. Nothing to
-  // drive in simple mode, where the gallery simply follows in flow.
+  // drive in simple mode, where the gallery simply follows in flow — nor below
+  // 1024, where attachRiseDriver keeps it off the ticker entirely.
   useEffect(() => {
     if (!flavor || simpleMode) return undefined;
     const driveRise = createRiseDriver(['.flavor-gallery']);

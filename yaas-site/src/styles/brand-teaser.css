@@ -284,6 +284,34 @@
 @media (max-width: 1023px) {
   .about-brand {
     --about-heading-line-2-trim: 6px;
+    /* No handovers at this width: Advantages/FAQ no longer slides off over
+       this section and this one no longer slides off the footer — each block
+       simply follows the one above in flow. So no negative margin, no rounded
+       bottom edge, and no stacking rank against the neighbours; isolation
+       keeps the internal layers contained. */
+    margin-top: 0;
+    z-index: auto;
+    isolation: isolate;
+    border-radius: 0;
+  }
+
+  /* Just this section's own background, with the backdrop driver detached
+     (riseTransition.js) — nothing flips it to fixed. The wordmark keeps its
+     one-viewport sizing rather than stretching with the box, so it reads the
+     same at the top of the section as it did in the pinned frame. */
+  .about-brand-bg,
+  .about-brand-bg.is-fixed,
+  .about-brand-bg.is-parked {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    transform: none;
+  }
+
+  .about-brand-bg img {
+    top: -1dvh;
+    height: 128vh;
+    height: 128dvh;
   }
 }
 

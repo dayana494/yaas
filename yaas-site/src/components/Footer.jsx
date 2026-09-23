@@ -5,7 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import HeroGradientBackground from './HeroGradientBackground';
 import Logo from './Logo';
 import { FOOTER_TRIGGER_ID } from '../data/layout';
-import { RISE_UNITS } from '../scroll/riseTransition';
+import { RISE_UNITS, useOverlapEnabled } from '../scroll/riseTransition';
 import {
   FLAVORS_ROUTE,
   SECTION_ABOUT,
@@ -122,16 +122,18 @@ export default function Footer({ reveal = false }) {
   const footerRef = useRef(null);
   const handleNavClick = useSectionNav();
   useWordmarkFit(logoRef);
+  const overlap = useOverlapEnabled();
 
   useEffect(() => {
     if (!reveal) return undefined;
     // No pinned rise below 1024. The block is sized by its content there rather
     // than held for a viewport while the section above travels off it, so there
     // is nothing for this trigger to drive — and leaving it in would reserve a
-    // viewport of scroll for a handover that no longer happens. Read live
-    // rather than through a hook so this matches the media query in footer.css
-    // that drops the negative margin with it.
-    if (window.matchMedia('(max-width: 1023px)').matches) return undefined;
+    // viewport of scroll for a handover that no longer happens. Read through
+    // the shared breakpoint hook, so crossing it (a rotation) creates or removes
+    // the trigger without a reload, matching the media query in footer.css that
+    // drops the negative margin with it.
+    if (!overlap) return undefined;
     const ctx = gsap.context(() => {
       // 'top top' is a placeholder, corrected once from HomePage after mount —
       // same chained-after-a-pin situation as every other pin on this page.
@@ -144,8 +146,13 @@ export default function Footer({ reveal = false }) {
         invalidateOnRefresh: true,
       });
     }, footerRef);
-    return () => ctx.revert();
-  }, [reveal]);
+    return () => {
+      // HomePage's correction pass replaces this trigger with one created
+      // outside this context, which ctx.revert() would not reach.
+      ScrollTrigger.getById(FOOTER_TRIGGER_ID)?.kill(true);
+      ctx.revert();
+    };
+  }, [reveal, overlap]);
 
   return (
     <footer className={`site-footer ${reveal ? 'is-reveal' : ''}`} ref={footerRef}>

@@ -133,6 +133,8 @@
      work would simply pull the footer up over the section above it. */
   .site-footer.is-reveal {
     margin-top: 0;
+    z-index: auto;
+    isolation: isolate;
   }
 
   .site-footer-inner {
@@ -164,16 +166,5 @@
     margin-top: 7.7vw;
     padding-top: 7.7vw;
     font-size: var(--text-body-sm);
-  }
-}
-
-/* The corner rounding that plays as the section above travels off is part of
-   that pinned handover, and there is no handover here — see the .is-reveal rule
-   above. Zeroed rather than unhooked from the driver, which still runs and is
-   harmless: it only writes a custom property nothing reads at this width. */
-@media (max-width: 1023px) {
-  .about-brand {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
   }
 }

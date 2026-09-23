@@ -44,6 +44,7 @@ export const ENTRANCE_MIN_SECONDS = 1;
 // the breathing room asked for between the two blocks — deliberately scroll
 // distance *before* the rise rather than padding inside Screen 2, which
 // would have pushed its pinned contents down out of position.
+// Desktop only: below 1024 there is no rise and HomePage holds for neither.
 export const SCREEN2_GAP_PX = 120; // 120px, matching .screen2's own padding (was 150)
 export const SCREEN2_RISE_UNITS = 1;
 
@@ -75,6 +76,8 @@ export const ABOUT_TRIGGER_ID = 'aboutBrandPin';
 // (see createFallDriver in scroll/riseTransition.js), and this section is held
 // still underneath it with the heading already centred and at full size. Only
 // once that unit is behind us does anything here start moving.
+// Desktop only — below 1024 nothing slides off over this section, so the phase
+// and its scroll are dropped (BrandTeaserScreen.jsx).
 export const ABOUT_EXIT_UNITS = 1;
 // The last stretch is a deliberate hold: once the stack has assembled and the
 // side copy has landed, the pin keeps the finished layout on screen for roughly

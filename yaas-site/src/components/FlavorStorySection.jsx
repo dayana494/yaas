@@ -6,7 +6,7 @@ import HeroWordmark from './HeroWordmark';
 import SiteHeader from './SiteHeader';
 import FlavorStoryScene from '../three/FlavorStoryScene';
 import { useHeroScale } from '../hooks/useHeroScale';
-import { RISE_UNITS } from '../scroll/riseTransition';
+import { riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -180,6 +180,10 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
   useHeroScale();
 
   const blocks = story.rotationBlocks;
+  // The gallery only climbs over this section at desktop widths; below 1024 it
+  // follows in plain flow, so the pin loses its hold and the timeline its idle
+  // tail. Rebuilt when the breakpoint is crossed.
+  const overlap = useOverlapEnabled();
 
   useEffect(() => {
     let cancelled = false;
@@ -224,7 +228,8 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
         (start, i) => start + (i === els.length - 1 ? FINALE_TRAVEL : BLOCK_TRAVEL / 2)
       );
       const finaleCentre = centres[centres.length - 1];
-      const total = finaleCentre + RISE_UNITS;
+      const hold = riseUnits();
+      const total = finaleCentre + hold;
 
       gsap.set(els, { opacity: 1, y: viewportTravel() * 1.1 });
 
@@ -233,7 +238,7 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
           trigger: wrapRef.current,
           start: 'top top',
           // Long enough for every block to cross the screen at 1x scroll
-          // speed, plus RISE_UNITS at the end during which the can is simply
+          // speed, plus riseUnits() at the end during which the can is simply
           // held still while the gallery below climbs up over it — the same
           // handover the homepage's own pinned sections give the sections that
           // rise onto them.
@@ -316,14 +321,14 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
 
       // The hold. Animates nothing — it exists only so the timeline's own
       // duration matches the pin's extended length. Without it everything
-      // above would stretch to fill the extra RISE_UNITS of pinned scroll
+      // above would stretch to fill the extra riseUnits() of pinned scroll
       // instead of holding its real timing, since a scrubbed timeline maps
       // the trigger's whole 0->1 onto its own duration.
-      tl.to({}, { duration: RISE_UNITS }, finaleCentre);
+      if (hold > 0) tl.to({}, { duration: hold }, finaleCentre);
     }, wrapRef);
 
     return () => ctx.revert();
-  }, [simpleMode, blocks]);
+  }, [simpleMode, blocks, overlap]);
 
   return (
     <section className={`flavor-story-wrap${simpleMode ? ' is-simple' : ''}`} ref={wrapRef}>

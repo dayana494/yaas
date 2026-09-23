@@ -408,6 +408,18 @@
   .flavor-gallery-track {
     --gallery-visible: 2;
   }
+
+  /* No climb below 1024, same as reduced-motion mode above: the story's pin
+     no longer holds for one (FlavorStorySection.jsx) and the rise driver is
+     not attached (riseTransition.js), so the gallery just follows the story
+     section in flow. */
+  .flavor-gallery {
+    margin-top: 0;
+    z-index: auto;
+    isolation: isolate;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
 }
 
 /* On a phone the arrows cost more than they give: flanking the track they

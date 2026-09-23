@@ -13,6 +13,7 @@ import {
   STACK_SLOTS,
 } from '../data/aboutBrand';
 import { ABOUT_EXIT_UNITS, ABOUT_SCROLL_UNITS, ABOUT_TRIGGER_ID } from '../data/layout';
+import { useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -86,6 +87,11 @@ export default function BrandTeaserScreen() {
   const cycleRef = useRef({ running: false, timer: 0, active: 0 });
 
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  // Phase 0 exists only where Advantages/FAQ slides off over this section —
+  // desktop. Below 1024 the two simply follow each other in flow, so holding
+  // the heading for another viewport would be a dead pause: the phase and the
+  // scroll it costs both go. Rebuilt when the breakpoint is crossed.
+  const overlap = useOverlapEnabled();
 
   useEffect(() => {
     const pin = pinRef.current;
@@ -221,6 +227,8 @@ export default function BrandTeaserScreen() {
     }
 
     // ---- phases 1-3: one scrubbed timeline ------------------------------
+    const exitUnits = overlap ? ABOUT_EXIT_UNITS : 0;
+    const scrollUnits = ABOUT_SCROLL_UNITS - ABOUT_EXIT_UNITS + exitUnits;
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ paused: true });
 
@@ -235,7 +243,7 @@ export default function BrandTeaserScreen() {
         headingRef.current,
         { opacity: 1, filter: 'blur(0px)' },
         { opacity: 0, filter: `blur(${HEADING_BLUR_PX}px)`, ease: 'power1.in', duration: 0.75 },
-        ABOUT_EXIT_UNITS
+        exitUnits
       );
 
       cards.forEach((card, i) => {
@@ -276,7 +284,7 @@ export default function BrandTeaserScreen() {
             ease: 'power2.out',
             duration: 1.3,
           },
-          ABOUT_EXIT_UNITS + 0.15 + i * 0.07
+          exitUnits + 0.15 + i * 0.07
         );
       });
 
@@ -286,7 +294,7 @@ export default function BrandTeaserScreen() {
       // stack lands and settle just after it — which is what the reference does
       // (measured: its side copy is still 47% of the way out when its photos are
       // ~90% assembled).
-      const textsAt = ABOUT_EXIT_UNITS + 1.35;
+      const textsAt = exitUnits + 1.35;
       tl.fromTo(
         leftRef.current,
         { xPercent: -140, opacity: 0 },
@@ -307,13 +315,13 @@ export default function BrandTeaserScreen() {
       // scroll range and every timing above would drift. Same trick as
       // ScenarioCardsIsometric's own rise tail.
       const assembleEnd = tl.duration();
-      tl.to({}, { duration: Math.max(0, ABOUT_SCROLL_UNITS - assembleEnd) }, assembleEnd);
+      tl.to({}, { duration: Math.max(0, scrollUnits - assembleEnd) }, assembleEnd);
 
       // Phase 4 owns the cards from the moment the assembly is done — i.e. for
       // the whole hold, not just the single frame at progress 1. Derived from
       // the timeline rather than hard-coded so re-timing a phase above can
       // never leave this threshold behind.
-      const cycleFrom = assembleEnd / ABOUT_SCROLL_UNITS;
+      const cycleFrom = assembleEnd / scrollUnits;
 
       // Applied once up front so the section starts in its phase-1 state even
       // before the first scroll event — ScrollTrigger's onUpdate does not
@@ -341,7 +349,7 @@ export default function BrandTeaserScreen() {
         id: ABOUT_TRIGGER_ID,
         trigger: pin,
         start: 'top top',
-        end: () => `+=${ABOUT_SCROLL_UNITS * window.innerHeight}`,
+        end: () => `+=${scrollUnits * window.innerHeight}`,
         scrub: 1,
         pin: true,
         invalidateOnRefresh: true,
@@ -364,9 +372,13 @@ export default function BrandTeaserScreen() {
 
     return () => {
       stopCycle();
+      // HomePage's correction pass replaces this trigger with one created
+      // outside this context, which ctx.revert() would not reach — and its
+      // onUpdate would keep driving a reverted timeline.
+      ScrollTrigger.getById(ABOUT_TRIGGER_ID)?.kill(true);
       ctx.revert();
     };
-  }, [reducedMotion]);
+  }, [reducedMotion, overlap]);
 
   return (
     <section className={`about-brand ${reducedMotion ? 'is-static' : ''}`} id="about">

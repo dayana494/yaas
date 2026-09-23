@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { SECTION_ABOUT, SECTION_FLAVORS } from '../data/navLinks';
 import { ENTRANCE_UNITS, introUnitsPx } from '../data/layout';
+import { overlapEnabled } from './riseTransition';
 
 // Sections whose document top is not where they visually begin, in pixels.
 //
@@ -11,7 +12,8 @@ import { ENTRANCE_UNITS, introUnitsPx } from '../data/layout';
 // it and uncover it. Aiming at its real top therefore lands a full screen
 // early, inside the previous block: measured at 1440, the element under the
 // middle of the screen at #about's own top is .faq-list, and only one viewport
-// further down does it become .about-brand-deck.
+// further down does it become .about-brand-deck. Desktop only: below 1024
+// there is no handover and no negative margin, so its top is its top.
 //
 // #flavors is the gallery, which sits at the end of the intro's scroll-scrubbed
 // entrance rather than at its start. That entrance is shorter below 1024
@@ -19,7 +21,7 @@ import { ENTRANCE_UNITS, introUnitsPx } from '../data/layout';
 // own scrubbed flight — so it is aimed at exactly the end of the entrance.
 function sectionOffsetPx(hash) {
   if (hash === SECTION_FLAVORS) return introUnitsPx(ENTRANCE_UNITS);
-  if (hash === SECTION_ABOUT) return window.innerHeight;
+  if (hash === SECTION_ABOUT) return overlapEnabled() ? window.innerHeight : 0;
   return 0;
 }
 

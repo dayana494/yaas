@@ -25,6 +25,7 @@ import {
   createFallDriver,
   createRiseDriver,
   createViewportBackdropDriver,
+  overlapEnabled,
 } from '../scroll/riseTransition';
 import { SCROLL_TO_STATE, scrollToSection } from '../scroll/sectionNav';
 import {
@@ -203,12 +204,9 @@ export default function HomePage() {
         return box.getBoundingClientRect().top + window.scrollY;
       };
 
-      // EXPERIMENT (sticky-intro-screen2): .intro-wrap's height is now set
-      // directly in the entrance effect above (plain CSS sticky has no
-      // spacer of its own), so there is no INTRO_TRIGGER_ID pin left to
-      // refresh here — arcEl's own 'top top' below now measures against a
-      // plain, already-correct document position instead of one that used
-      // to depend on an earlier pin's spacer having settled first.
+      // .intro-wrap is CSS sticky with its height set directly (see the
+      // entrance effect below), not a GSAP pin, so there is no spacer above
+      // arcEl to settle first — its measurement is already correct.
 
       // Screen 2's arc gallery is now the first pin after .intro-wrap, so it
       // inherits the same unreliable 'top top' resolution and gets corrected
@@ -429,59 +427,40 @@ export default function HomePage() {
     // onUpdate doesn't necessarily fire pre-scroll).
     applyEntrance(0);
 
-    // Pinning .intro-pin via ScrollTrigger (transform/position:fixed under
-    // the hood) instead of plain CSS `position: sticky` — sticky here hit a
-    // real Chromium compositing bug: any opacity<1 descendant (e.g.
-    // .background-layer's --h2g fade) inside a sticky ancestor with
-    // overflow:hidden intermittently failed to paint over part of the
-    // viewport during scroll (a solid black band, proportional to scroll
-    // position, with every element's own geometry/style otherwise
-    // reporting correctly — not something fixable from this side). This
-    // pin covers the *entire* .intro-wrap scroll range (entrance + the
-    // slider<->detail phase after it). Releases straight into Screen2 — no
-    // decoy cover panel in between (a stand-in copy of Screen2's own
-    // heading used to slide up here first; it never quite lined up with
-    // the real one, so scrolling through the handoff showed both at once).
+    // .intro-pin is plain CSS `position: sticky` (see index.css), which
+    // handles "hold in place, then release into Screen2" natively. Sticky has
+    // no spacer, so the scroll room it holds for — ENTRANCE_UNITS +
+    // GALLERY_SETTLE_GAP_UNITS + INTERACTIVE_UNITS, then a plain
+    // SCREEN2_GAP_PX pause and SCREEN2_RISE_UNITS while Screen 2 climbs over
+    // it (see .screen2's own negative margin) — is set here as the wrapper's
+    // height: sticky's range is wrapper height minus the pin's own 100vh.
     //
-    // pinSpacing defaults to true here — same as ScenarioCardsIsometric's
-    // own pin into AdvantagesScreen, which never needed any z-index/visibility
-    // trickery to hand off cleanly. This used to be pinSpacing:false (relying
-    // on .intro-wrap's own CSS height for the reserved scroll room instead of
-    // GSAP's auto-inserted spacer), which left the hero's own box visually
-    // "scrolling away" for a full extra viewport height after release instead
-    // of just disappearing — a lingering tail that no z-index arbitration
-    // between it and Screen2 could actually fix, since z-index only decides
-    // who paints on top when both are visible, not whether the hero is still
-    // there to be seen at all. pinSpacing:true removes the tail entirely:
-    // release lands exactly at the spacer's own end, same as every other
-    // pinned section on this page.
-    // Held past the gallery for two more stretches: a plain SCREEN2_GAP_PX
-    // pause, then SCREEN2_RISE_UNITS while Screen 2 climbs up over this
-    // still-pinned screen and covers it (see .screen2's own negative margin,
-    // which lines the end of this pin up with the top of that section).
-    // EXPERIMENT (branch experiment/sticky-intro-screen2): .intro-pin is
-    // plain CSS `position: sticky` now (see index.css) instead of a GSAP
-    // pin, so nothing here creates a ScrollTrigger for it — sticky handles
-    // "hold in place, then release into Screen2" natively. What GSAP's
-    // pinSpacing used to size automatically (a spacer exactly ENTRANCE_UNITS +
-    // GALLERY_SETTLE_GAP_UNITS + INTERACTIVE_UNITS + SCREEN2_RISE_UNITS + gap tall,
-    // on top of the pin's own 100vh box) has to be set explicitly here
-    // instead: sticky's own "how long does it stick" range is just
-    // wrapper-height minus the sticky element's own height, so the wrapper
-    // needs to actually be that tall.
+    // This used to be a GSAP ScrollTrigger pin because sticky hit a Chromium
+    // compositing bug: any opacity<1 descendant (e.g. .background-layer's
+    // --h2g fade) inside a sticky ancestor with overflow:hidden
+    // intermittently failed to paint over part of the viewport during scroll
+    // (a solid black band, proportional to scroll position). If that band
+    // comes back, going back to a pin is the known fix.
     //
     // The rise is left out of introUnitsPx's mobile scaling: Screen 2 climbs
     // by plain scrolling (its -100vh margin), so it always takes a full
     // viewport of scroll. A scaled-down budget never shortened it, it only
     // started it early — below 1024 that put Screen 2 over the flavor card
     // before the card's scroll-scrubbed flight had even landed.
+    //
+    // Below 1024 there is no rise at all (.screen2 carries no negative margin
+    // there), so neither the gap nor the rise is held for: the intro releases
+    // the moment the card lands and Screen 2 simply follows it in flow.
+    // Re-read on every resize, which is also what a rotation or a breakpoint
+    // crossing fires.
     const setIntroWrapHeight = () => {
       const wrap = introWrapRef.current;
       if (!wrap) return;
+      const handoverPx = overlapEnabled()
+        ? SCREEN2_GAP_PX + SCREEN2_RISE_UNITS * window.innerHeight
+        : 0;
       const extraPx =
-        introUnitsPx(ENTRANCE_UNITS + GALLERY_SETTLE_GAP_UNITS + INTERACTIVE_UNITS) +
-        SCREEN2_GAP_PX +
-        SCREEN2_RISE_UNITS * window.innerHeight;
+        introUnitsPx(ENTRANCE_UNITS + GALLERY_SETTLE_GAP_UNITS + INTERACTIVE_UNITS) + handoverPx;
       wrap.style.height = `calc(100vh + ${extraPx}px)`;
     };
     setIntroWrapHeight();
@@ -515,12 +494,11 @@ export default function HomePage() {
     // slides up off About the Brand, and About the Brand + Contacts slides up
     // off the footer. Same driver, same radius formula.
     const driveFall = createFallDriver(['.advantages', '.about-brand']);
-    const driveAll = () => {
-      driveRise();
-      driveFall();
-      driveBackdrop();
-      driveAboutBackdrop();
-    };
+    const drivers = [driveRise, driveFall, driveBackdrop, driveAboutBackdrop];
+    const driveAll = () => drivers.forEach((drive) => drive());
+    // Called when the breakpoint drops below 1024 and the driver detaches (see
+    // attachRiseDriver), so no dome or fixed backdrop is left where it was.
+    driveAll.reset = () => drivers.forEach((drive) => drive.reset());
     const detachRiseDriver = attachRiseDriver(gsap.ticker, driveAll);
 
     // A speed limit rather than GSAP's numeric scrub, whose ease-out catch-up

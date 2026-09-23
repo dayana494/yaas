@@ -63,6 +63,22 @@
   color: var(--ink-on-light);
 }
 
+/* No rise below 1024: Screen 2 follows the intro in plain document flow. The
+   intro's sticky range no longer holds for a climb (HomePage.jsx), so the
+   negative margin would only pull this section up over the flavor card, and
+   the dome has nothing to round. z-index goes with the overlap it served;
+   isolation keeps the stacking context the two z-index:-1 background layers
+   below depend on, without ranking this section against its neighbours. */
+@media (max-width: 1023px) {
+  .screen2 {
+    margin-top: 0;
+    z-index: auto;
+    isolation: isolate;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
 /* Spec allows trimming this on short screens, where 50px top and bottom eats
    a real share of the viewport — but never to zero. */
 @media (max-width: 768px) {

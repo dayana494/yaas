@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
 // Shared "rise into place" transition — Screen 2's, kept as its own module
 // rather than inlined, so anything else that needs the same climb can reuse it
 // instead of growing a second copy.
@@ -61,30 +64,87 @@ export function applyRise(el) {
 // immediately, so a driver that starts late still corrects whatever the last
 // one left behind rather than inheriting it.
 export function createRiseDriver(selectors) {
-  return function driveRise() {
+  function driveRise() {
     for (const selector of selectors) {
       applyRise(document.querySelector(selector));
     }
-  };
+  }
+  driveRise.reset = () => clearProps(selectors, ['--rise', '--rise-radius']);
+  return driveRise;
+}
+
+function clearProps(selectors, props) {
+  for (const selector of selectors) {
+    const el = document.querySelector(selector);
+    if (el) props.forEach((prop) => el.style.removeProperty(prop));
+  }
+}
+
+// The breakpoint every overlapping handover on the site lives behind. Below it
+// (phones and tablets) blocks simply follow one another in document flow: every
+// negative margin that made a handover is zeroed in CSS, and no pin holds for a
+// rise (see riseUnits below).
+//
+// The exact query the CSS uses, negated — deliberately not '(min-width:
+// 1024px)'. At a fractional viewport width (1023.2px at a 1.25 device pixel
+// ratio, measured) neither of those two matches, and CSS would keep the
+// negative margins while JS dropped the holds they are paid for by.
+export const NARROW_QUERY = '(max-width: 1023px)';
+
+export function overlapEnabled() {
+  return typeof window !== 'undefined' && !window.matchMedia(NARROW_QUERY).matches;
 }
 
 // Attaches `driveRise` to the ticker *and* to scroll/resize, and returns the
 // teardown for all three. Belt and braces on purpose — see above.
+//
+// Only at desktop widths. Below the breakpoint there is nothing for a driver to
+// write, and on a phone every frame spent writing custom properties nobody
+// reads is a frame the scroll doesn't get — so there it is neither on the
+// ticker nor listening to anything. Crossing the breakpoint (a rotation, a
+// resized window) attaches or detaches it live, and detaching clears whatever
+// it last wrote, so no half-applied dome or fixed backdrop is left behind.
 export function attachRiseDriver(ticker, driveRise) {
-  driveRise();
-  ticker.add(driveRise);
-  window.addEventListener('scroll', driveRise, { passive: true });
-  window.addEventListener('resize', driveRise);
-  return function detach() {
+  const mql = window.matchMedia(NARROW_QUERY);
+  let attached = false;
+
+  const attach = () => {
+    if (attached) return;
+    attached = true;
+    driveRise();
+    ticker.add(driveRise);
+    window.addEventListener('scroll', driveRise, { passive: true });
+    window.addEventListener('resize', driveRise);
+  };
+  const detach = () => {
+    if (!attached) return;
+    attached = false;
     ticker.remove(driveRise);
     window.removeEventListener('scroll', driveRise);
     window.removeEventListener('resize', driveRise);
+    driveRise.reset?.();
+  };
+  const sync = () => (mql.matches ? detach() : attach());
+
+  sync();
+  mql.addEventListener('change', sync);
+  return function teardown() {
+    mql.removeEventListener('change', sync);
+    detach();
   };
 }
 
 // Viewport heights of scroll a rise travels across. The section below is held
 // still (its own pin is extended by exactly this) for the whole handover.
 export const RISE_UNITS = 1;
+
+// RISE_UNITS where there is a handover to hold for, 0 below the breakpoint
+// where there is none. The one place every pin reads its hold from, so no
+// component carries its own copy of the breakpoint check. Read live: a pin's
+// `end` function calls it again on every refresh.
+export function riseUnits() {
+  return overlapEnabled() ? RISE_UNITS : 0;
+}
 
 // Keeps a section's backdrop layer in frame for as long as that section
 // occupies the viewport — one gradient shared by everything inside the section,
@@ -115,7 +175,7 @@ export const RISE_UNITS = 1;
 //   - section's bottom above the viewport bottom: absolute again, parked at
 //     the section's bottom, so its last viewport stays covered.
 export function createViewportBackdropDriver(sectionSelector, backdropSelector) {
-  return function driveBackdrop() {
+  function driveBackdrop() {
     const section = document.querySelector(sectionSelector);
     const backdrop = section?.querySelector(backdropSelector);
     if (!section || !backdrop) return;
@@ -124,7 +184,12 @@ export function createViewportBackdropDriver(sectionSelector, backdropSelector) 
     const past = rect.bottom < window.innerHeight;
     backdrop.classList.toggle('is-fixed', covering);
     backdrop.classList.toggle('is-parked', past);
+  }
+  driveBackdrop.reset = () => {
+    const backdrop = document.querySelector(sectionSelector)?.querySelector(backdropSelector);
+    backdrop?.classList.remove('is-fixed', 'is-parked');
   };
+  return driveBackdrop;
 }
 
 // The mirror image of applyRise, for the section that is *leaving*.
@@ -153,9 +218,30 @@ export function applyFall(el) {
 // Same shape as createRiseDriver — hand the result to attachRiseDriver, which
 // covers the ticker plus scroll and resize for the reasons above.
 export function createFallDriver(selectors) {
-  return function driveFall() {
+  function driveFall() {
     for (const selector of selectors) {
       applyFall(document.querySelector(selector));
     }
-  };
+  }
+  driveFall.reset = () => clearProps(selectors, ['--fall', '--fall-radius']);
+  return driveFall;
+}
+
+// React side of overlapEnabled(), for effects whose timelines are *built* around
+// the hold (an idle tail, a phase offset) rather than just reading riseUnits()
+// from an `end` function: put the result in the effect's deps and the effect
+// rebuilds when the breakpoint is crossed. The refresh re-measures every pin
+// once the rebuilt ones exist, without a page reload.
+export function useOverlapEnabled() {
+  const [enabled, setEnabled] = useState(overlapEnabled);
+  useEffect(() => {
+    const mql = window.matchMedia(NARROW_QUERY);
+    const onChange = (e) => {
+      setEnabled(!e.matches);
+      requestAnimationFrame(() => ScrollTrigger.refresh());
+    };
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return enabled;
 }

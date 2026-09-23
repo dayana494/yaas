@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SCENARIOS } from '../data/scenarios';
 import { FLAVORS } from '../data/flavors';
 import { SCENARIO_CARDS_TRIGGER_ID } from '../data/layout';
-import { RISE_UNITS } from '../scroll/riseTransition';
+import { riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -33,11 +33,17 @@ export default function ScenarioCardsIsometric() {
     if (el) cardRefs.current.push(el);
   };
 
+  // The hold at the end of this pin exists only for Screen 3 to climb over it,
+  // which happens at desktop widths only — so the timeline is rebuilt when the
+  // breakpoint is crossed, to gain or lose its idle tail.
+  const overlap = useOverlapEnabled();
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       const cards = cardRefs.current;
       if (!cards.length) return;
       const N = cards.length;
+      const hold = riseUnits();
 
       cards.forEach((card, i) => {
         gsap.set(card, { xPercent: -50, y: 0, rotate: 0, opacity: 1, zIndex: N - i });
@@ -80,7 +86,7 @@ export default function ScenarioCardsIsometric() {
           id: SCENARIO_CARDS_TRIGGER_ID,
           trigger: pinRef.current,
           start: 'top top',
-          // (N-1) viewports of card flips, plus RISE_UNITS more during which
+          // (N-1) viewports of card flips, plus riseUnits() more during which
           // this stack is simply held still while Screen 3 climbs up over it —
           // the same handover Screen 2 gets from the intro pin above it. The
           // matching idle tail on the timeline below is what keeps the flips
@@ -94,7 +100,7 @@ export default function ScenarioCardsIsometric() {
           // amount and pushes that section down with it, so the two never
           // converge. That offset is cancelled on .advantages's own negative
           // margin instead (see advantages.css).
-          end: () => `+=${(N - 1 + RISE_UNITS) * window.innerHeight}`,
+          end: () => `+=${(N - 1 + hold) * window.innerHeight}`,
           scrub: 1,
           pin: true,
           invalidateOnRefresh: true,
@@ -111,12 +117,19 @@ export default function ScenarioCardsIsometric() {
       }
 
       // The hold. Animates nothing — it exists only to give the timeline the
-      // same total duration as the pin's extended length.
-      tl.to({}, { duration: RISE_UNITS }, N - 1);
+      // same total duration as the pin's extended length. None below 1024,
+      // where nothing climbs over this stack and the pin releases on the last
+      // flip.
+      if (hold > 0) tl.to({}, { duration: hold }, N - 1);
     }, pinRef);
 
-    return () => ctx.revert();
-  }, []);
+    return () => {
+      // HomePage's correction pass replaces this trigger with one created
+      // outside this context, which ctx.revert() would not reach.
+      ScrollTrigger.getById(SCENARIO_CARDS_TRIGGER_ID)?.kill(true);
+      ctx.revert();
+    };
+  }, [overlap]);
 
   return (
     <section className="scenario-cards-iso" ref={pinRef}>
