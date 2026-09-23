@@ -4,14 +4,25 @@ import SectionHeading from './SectionHeading';
 import { FLAVORS, FLAVOR_COUNT } from '../data/flavors';
 import { SCREEN3_HEADING } from '../data/gallery';
 import { asset } from '../data/assetUrl';
+import { useOverlapEnabled } from '../scroll/riseTransition';
 
 const TAP_THRESHOLD = 6;
 // Fraction of the stage's half-width that counts as "the center can" —
 // taps outside this band act like the left/right arrows instead.
 const CENTER_ZONE_RATIO = 0.16;
+// Below 1024 the side taps do nothing (see below), so the centre band can be
+// as wide as the can itself there: at 390 the desktop ratio left a 62px strip
+// down the middle of a can roughly three times that wide.
+const CENTER_ZONE_RATIO_NARROW = 0.45;
 
 export default function SliderScreen({ sceneRef, activeFlavor, onPickFlavor, onEnter, visible }) {
-  const dragHandlers = useCarouselDrag(sceneRef, visible);
+  // Below 1024 the flavors change on the arrows only. A finger on a phone is
+  // almost never moving straight up: the sideways part of an ordinary scroll
+  // gesture was read as a carousel drag and swapped the flavor under the
+  // reader mid-scroll. So there the stage neither drags nor turns side taps
+  // into prev/next — a tap on the centre can still opens its card.
+  const desktop = useOverlapEnabled();
+  const dragHandlers = useCarouselDrag(sceneRef, visible && desktop);
   const moved = useRef(0);
 
   function goPrev() {
@@ -43,8 +54,9 @@ export default function SliderScreen({ sceneRef, activeFlavor, onPickFlavor, onE
       dragHandlers.cancelDrag();
       const rect = e.currentTarget.getBoundingClientRect();
       const offsetFromCenter = e.clientX - (rect.left + rect.width / 2);
-      const zoneWidth = (rect.width / 2) * CENTER_ZONE_RATIO;
+      const zoneWidth = (rect.width / 2) * (desktop ? CENTER_ZONE_RATIO : CENTER_ZONE_RATIO_NARROW);
       if (Math.abs(offsetFromCenter) < zoneWidth) onEnter();
+      else if (!desktop) return;
       else if (offsetFromCenter < 0) goPrev();
       else goNext();
     },

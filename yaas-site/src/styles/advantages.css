@@ -482,16 +482,16 @@
     border-radius: 0;
   }
 
-  /* Just this section's own background. The backdrop driver is not attached
-     below 1024 (riseTransition.js), so nothing flips it to fixed; stretched
-     over the whole block — advantages and FAQ — from one layer, as before. */
-  .advantages-bg,
-  .advantages-bg.is-fixed,
-  .advantages-bg.is-parked {
-    position: absolute;
-    inset: 0;
-    height: auto;
-    transform: none;
+  /* The backdrop stays fixed while the section covers the screen here too —
+     its driver runs at every width (HomePage.jsx), and the pins it sits beside
+     are transform pins below 1024, so nothing around it moves with the
+     address bar. lvh rather than dvh: the viewport with the bar collapsed, so
+     one fixed layer always covers the screen whether the bar is in or out,
+     and its height never changes mid-scroll. (svh would leave a strip of
+     nothing along the bottom once the bar collapses.) */
+  .advantages-bg {
+    height: 100vh;
+    height: 100lvh;
   }
 
   /* 18, down from the flat 20 the rule above sets. The question read large

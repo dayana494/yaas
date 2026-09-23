@@ -7,6 +7,7 @@ import FaqScreen from './FaqScreen';
 import HeroGradientBackground from './HeroGradientBackground';
 import { ADVANTAGES_HEADING_FULL } from '../data/advantages';
 import { ADVANTAGES_TRIGGER_ID } from '../data/layout';
+import { mobilePinType, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -38,6 +39,9 @@ export default function AdvantagesScreen() {
   // .advantage-card/.advantages-arc-cards). prefers-reduced-motion is the
   // only thing that still falls back to the plain, non-pinned reveal.
   const simpleMode = reducedMotion;
+  // The pin type depends on the width (mobilePinType), so the trigger is
+  // rebuilt when the breakpoint is crossed.
+  const overlap = useOverlapEnabled();
 
   useEffect(() => {
     const applyProgress = (progress) => {
@@ -74,13 +78,19 @@ export default function AdvantagesScreen() {
         end: () => `+=${window.innerHeight * SCROLL_LENGTH_MULTIPLIER}`,
         scrub: 1,
         pin: true,
+        ...mobilePinType(),
         invalidateOnRefresh: true,
         onUpdate: (self) => applyProgress(self.progress),
       });
     }, pinRef);
 
-    return () => ctx.revert();
-  }, [simpleMode]);
+    return () => {
+      // HomePage's correction pass replaces this trigger with one created
+      // outside this context, which ctx.revert() would not reach.
+      ScrollTrigger.getById(ADVANTAGES_TRIGGER_ID)?.kill(true);
+      ctx.revert();
+    };
+  }, [simpleMode, overlap]);
 
   // Two nested boxes, the same split Screen 2 uses. .advantages is the rise
   // container: it carries the negative margin the climb is made of, the top

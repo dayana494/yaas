@@ -11,6 +11,7 @@ import {
   SCREEN2_SUBLINE,
 } from '../data/scenarios';
 import { SCREEN2_ARC_TRIGGER_ID } from '../data/layout';
+import { mobilePinType, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -165,6 +166,9 @@ export default function ScenarioArcGallery() {
   const progressRef = useRef(0);
   const resizeObsRef = useRef(null);
   const screen2Ref = useRef(null);
+  // The pin type depends on the width (mobilePinType), so the trigger is
+  // rebuilt when the breakpoint is crossed.
+  const overlap = useOverlapEnabled();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -352,6 +356,7 @@ export default function ScenarioArcGallery() {
         // still a few percent short, which reads as a pop.
         scrub: true,
         pin: true,
+        ...mobilePinType(),
         invalidateOnRefresh: true,
         onRefresh: () => {
           measure();
@@ -374,9 +379,12 @@ export default function ScenarioArcGallery() {
       resizeObsRef.current = null;
       screen2Ref.current?.classList.remove('is-arc-running');
       screen2Ref.current = null;
+      // HomePage's correction pass replaces this trigger with one created
+      // outside this context, which ctx.revert() would not reach.
+      ScrollTrigger.getById(SCREEN2_ARC_TRIGGER_ID)?.kill(true);
       ctx.revert();
     };
-  }, []);
+  }, [overlap]);
 
   return (
     <section className="screen2-arc" ref={pinRef}>

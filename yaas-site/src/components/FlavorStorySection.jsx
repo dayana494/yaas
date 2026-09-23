@@ -6,7 +6,7 @@ import HeroWordmark from './HeroWordmark';
 import SiteHeader from './SiteHeader';
 import FlavorStoryScene from '../three/FlavorStoryScene';
 import { useHeroScale } from '../hooks/useHeroScale';
-import { riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
+import { mobilePinType, riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -245,6 +245,7 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
           end: () => `+=${total * window.innerHeight}`,
           scrub: 1,
           pin: true,
+          ...mobilePinType(),
           anticipatePin: 1,
           invalidateOnRefresh: true,
         },

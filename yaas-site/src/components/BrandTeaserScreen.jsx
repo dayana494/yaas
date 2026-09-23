@@ -13,7 +13,7 @@ import {
   STACK_SLOTS,
 } from '../data/aboutBrand';
 import { ABOUT_EXIT_UNITS, ABOUT_SCROLL_UNITS, ABOUT_TRIGGER_ID } from '../data/layout';
-import { useOverlapEnabled } from '../scroll/riseTransition';
+import { mobilePinType, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -352,6 +352,7 @@ export default function BrandTeaserScreen() {
         end: () => `+=${scrollUnits * window.innerHeight}`,
         scrub: 1,
         pin: true,
+        ...mobilePinType(),
         invalidateOnRefresh: true,
         // invalidateOnRefresh only reaches a linked animation, so with the
         // timeline driven by hand this is what re-resolves its function-based

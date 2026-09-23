@@ -494,12 +494,21 @@ export default function HomePage() {
     // slides up off About the Brand, and About the Brand + Contacts slides up
     // off the footer. Same driver, same radius formula.
     const driveFall = createFallDriver(['.advantages', '.about-brand']);
-    const drivers = [driveRise, driveFall, driveBackdrop, driveAboutBackdrop];
+    const drivers = [driveRise, driveFall];
     const driveAll = () => drivers.forEach((drive) => drive());
     // Called when the breakpoint drops below 1024 and the driver detaches (see
-    // attachRiseDriver), so no dome or fixed backdrop is left where it was.
+    // attachRiseDriver), so no dome is left where it was.
     driveAll.reset = () => drivers.forEach((drive) => drive.reset());
     const detachRiseDriver = attachRiseDriver(gsap.ticker, driveAll);
+    // The backdrops are the exception: fixed while their section covers the
+    // screen at every width, phones included, so they ride their own driver
+    // that stays attached below 1024. It only reads two rects and flips a
+    // class when a boundary is crossed — no per-frame style writes.
+    const driveBackdrops = () => {
+      driveBackdrop();
+      driveAboutBackdrop();
+    };
+    const detachBackdropDriver = attachRiseDriver(gsap.ticker, driveBackdrops, { allWidths: true });
 
     // A speed limit rather than GSAP's numeric scrub, whose ease-out catch-up
     // still spent most of the flight in its first few frames, and which would
@@ -527,6 +536,7 @@ export default function HomePage() {
       entranceTrigger.kill();
       entranceProgress.kill();
       detachRiseDriver();
+      detachBackdropDriver();
     };
   }, []);
 

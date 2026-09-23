@@ -51,14 +51,23 @@ const DETAIL_SCALE = { desktop: 1.55, mobile: 0.656 };
 //
 // Falls back to the constant when the stand-in is not in the DOM yet (the
 // detail screen is lazy-loaded) or is display: none (desktop).
-function detailAnchor(isMobile) {
+//
+// Measured against the canvas's own box, not the window. NDC are the canvas's
+// coordinates, and on a phone the two differ in both ways that matter: the
+// canvas fills the intro's 100vh (the large viewport) while innerHeight tracks
+// the address bar, and once the sticky intro starts to release, the canvas
+// is no longer at the top of the window. Against the window, the stand-in's
+// own scroll was counted twice — the can drifted up the screen at double the
+// page's speed, off its card, and jumped whenever the address bar moved.
+function detailAnchor(isMobile, canvas) {
   if (!isMobile) return DETAIL_ANCHOR.desktop;
   const el = typeof document !== 'undefined' && document.querySelector('.detail-can-space');
-  if (el) {
+  if (el && canvas) {
     const rect = el.getBoundingClientRect();
-    if (rect.height > 0) {
-      const centre = rect.top + rect.height / 2;
-      return { x: 0, y: 1 - (2 * centre) / window.innerHeight };
+    const box = canvas.getBoundingClientRect();
+    if (rect.height > 0 && box.height > 0) {
+      const centre = rect.top + rect.height / 2 - box.top;
+      return { x: 0, y: 1 - (2 * centre) / box.height };
     }
   }
   return DETAIL_ANCHOR.mobile;
@@ -99,7 +108,7 @@ const CanRig = forwardRef(function CanRig(
   { activeFlavor, isMobile, onFlavorMidSpin, onSettle, armed = true, onEntranceStart },
   ref
 ) {
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
   const { invalidate, hold, keepAlive, holding } = useRenderHold();
   const geometry = useCanGeometry();
   const materials = useCanMaterials();
@@ -333,7 +342,7 @@ const CanRig = forwardRef(function CanRig(
     const group = groupRefs[heroIndex].current;
     if (group) {
       const from = arcTransform(wrappedDelta(heroIndex, ci), isMobile);
-      const anchor = detailAnchor(isMobile);
+      const anchor = detailAnchor(isMobile, gl.domElement);
       const target = ndcToWorldAtZ(camera, anchor.x, anchor.y, 0);
       const detailScale = isMobile ? DETAIL_SCALE.mobile : DETAIL_SCALE.desktop;
       group.visible = true;

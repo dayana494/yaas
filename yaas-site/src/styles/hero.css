@@ -231,9 +231,14 @@
 @media (max-width: 1023px) {
   /* ---------- Everything below is Figma 344:237, a 390x850 frame ----------
      Positions are that frame's own numbers divided by its width or height and
-     re-applied as vw / dvh, never lifted as pixels — so a 667-tall phone and a
+     re-applied as vw / svh, never lifted as pixels — so a 667-tall phone and a
      926-tall one both get the mockup's composition rather than the mockup
      stretched or cropped.
+
+     svh, not dvh. dvh follows the address bar as it collapses mid-scroll, so
+     every top below it grew with it and the whole composition slid down the
+     screen while the page scrolled — the copy block by ~17px at 29.8dvh. svh
+     is the viewport with the bar out, fixed for the life of the page.
 
      Up to 1023, not 768. Above that the hero switches to its fixed 1200x650
      contain-scaled stage (the min-width: 1024px block further up), so 769-1023
@@ -251,7 +256,7 @@
      four pills direct children of the row, and space-between then gives the
      equal gaps the brief asks for, with the outer two flush to the padding. */
   .hero-nav {
-    top: 2.59dvh;
+    top: 2.59svh;
     padding: 0 2.56vw;
     gap: 0;
     justify-content: space-between;
@@ -285,15 +290,15 @@
   }
 
   /* Wordmark: 370 of 390 wide (so 10px either side), letters starting 102 of
-     850 down — 12dvh.
-     The row is pulled up off that by 5.35vw because 12dvh has to land on the
+     850 down — 12svh.
+     The row is pulled up off that by 5.35vw because 12svh has to land on the
      TOP OF THE LETTERS, and the line box starts higher than they do: measured
      on Soledago, the ink begins 12.52% of the font-size below the box top
      (that is the line's own leading and ascent, which this wordmark does not
      use). 12.52% of the 42.71vw font-size is 5.35vw. Without it the letters
      sat that far below where the mock puts them. */
   .hero-mobile-banner-logo-row {
-    top: calc(12dvh - 5.35vw);
+    top: calc(12svh - 5.35vw);
     left: 2.56vw;
     right: 2.56vw;
   }
@@ -302,13 +307,13 @@
      follows at 346.37/850, which is the gap below. */
   .hero-copy {
     inset: auto;
-    top: 29.8dvh;
+    top: 29.8svh;
     left: 0;
     right: 0;
     bottom: auto;
     justify-content: flex-start;
     align-items: flex-start;
-    gap: 3.6dvh;
+    gap: 3.6svh;
     padding: 0 2.56vw;
   }
 

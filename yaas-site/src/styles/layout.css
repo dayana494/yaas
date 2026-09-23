@@ -322,8 +322,10 @@
     height: 56px;
     /* Centred on the can, which now sits 4dvh higher than it did — see the
        gallery's own yOffset in three/arcLayout.js and .flavor-name below, all
-       three moved together so the composition stays one piece. */
-    top: 52dvh;
+       three moved together so the composition stays one piece.
+       svh rather than dvh so the arrows do not slide while the address bar
+       collapses — see the note at the top of hero.css's mobile block. */
+    top: 52svh;
   }
 
   /* Out to the edges: 37vw leaves each arrow about 20px from its own side,
@@ -342,7 +344,7 @@
        the space under the name matches the space between the heading and the
        can: measured at 390x850 those were 46px and 113px, and moving the pair
        up 4dvh (34px) brings both to about 80. */
-    bottom: 13dvh;
+    bottom: 13svh;
     /* 32px on the frame's 390 width -> 8.2vw. A flavor NAME, so it keeps its
        own scale rather than the shared block-heading size. */
     font-size: clamp(24px, 8.2vw, 38px);
@@ -359,7 +361,7 @@
        That control is hidden at this width now (.detail-switcher-wrap
        below).
 
-       7.53dvh top and bottom is 64px at 850 — the same distance from the
+       7.53svh top and bottom is 64px at 850 — the same distance from the
        top of the screen that the gallery heading sits at, so the flavor
        name here and "5 flavors. one energy." there start on the same line,
        and the button ends as far from the bottom as the name is from the
@@ -371,7 +373,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 7.53dvh 22px;
+    padding: 7.53svh 22px;
     max-width: none;
     text-align: center;
   }
@@ -392,7 +394,7 @@
   .detail-can-space {
     display: block;
     flex: none;
-    height: 34dvh;
+    height: 34svh;
   }
 
   .detail-description {

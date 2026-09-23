@@ -104,7 +104,10 @@ export function overlapEnabled() {
 // ticker nor listening to anything. Crossing the breakpoint (a rotation, a
 // resized window) attaches or detaches it live, and detaching clears whatever
 // it last wrote, so no half-applied dome or fixed backdrop is left behind.
-export function attachRiseDriver(ticker, driveRise) {
+//
+// `allWidths` opts a driver out of that: the section backdrops are wanted
+// fixed on a phone too, so theirs runs at every width.
+export function attachRiseDriver(ticker, driveRise, { allWidths = false } = {}) {
   const mql = window.matchMedia(NARROW_QUERY);
   let attached = false;
 
@@ -124,7 +127,7 @@ export function attachRiseDriver(ticker, driveRise) {
     window.removeEventListener('resize', driveRise);
     driveRise.reset?.();
   };
-  const sync = () => (mql.matches ? detach() : attach());
+  const sync = () => (mql.matches && !allWidths ? detach() : attach());
 
   sync();
   mql.addEventListener('change', sync);
@@ -225,6 +228,18 @@ export function createFallDriver(selectors) {
   }
   driveFall.reset = () => clearProps(selectors, ['--fall', '--fall-radius']);
   return driveFall;
+}
+
+// How a pin should hold its element at the current width, spread into a
+// ScrollTrigger's vars. Desktop keeps GSAP's default for the page scroller
+// (position: fixed) exactly as it was. Below 1024 the pin is a transform
+// inside normal flow instead: a fixed element is placed against the layout
+// viewport, which on a phone grows and shrinks as the address bar collapses
+// and expands mid-scroll, and the pinned block visibly jumps with it.
+// Read when the trigger is created, so a component that pins must rebuild when
+// the breakpoint is crossed (useOverlapEnabled in its effect's deps).
+export function mobilePinType() {
+  return overlapEnabled() ? {} : { pinType: 'transform' };
 }
 
 // React side of overlapEnabled(), for effects whose timelines are *built* around

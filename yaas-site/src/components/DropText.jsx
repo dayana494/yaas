@@ -157,19 +157,30 @@ const DropText = forwardRef(function DropText(
       // as a static one. rootMargin trims the bottom 15% of the viewport so it
       // still fires where 'top 85%' did — as the heading comes up into view,
       // not the instant its first pixel clears the edge.
+      //
+      // The reveal also waits for the webfonts, the same as the play-on-signal
+      // path below. The pieces are invisible until it runs, so a heading that
+      // reaches the screen before its face has loaded (a cold first visit on a
+      // slow connection) stays hidden through the swap instead of dropping in
+      // at the fallback's narrower width and then re-wrapping wider.
       let played = false;
+      let cancelled = false;
+      const fontsReady = 'fonts' in document ? document.fonts.ready : Promise.resolve();
       const observer = new IntersectionObserver(
         (entries) => {
           if (played || !entries.some((entry) => entry.isIntersecting)) return;
           played = true;
           observer.disconnect();
-          playPieces();
+          fontsReady.finally(() => {
+            if (!cancelled) playPieces();
+          });
         },
         { threshold: 0, rootMargin: '0px 0px -15% 0px' }
       );
       observer.observe(container);
 
       return () => {
+        cancelled = true;
         observer.disconnect();
         gsap.killTweensOf(pieces);
       };

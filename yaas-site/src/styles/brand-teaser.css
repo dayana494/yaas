@@ -295,23 +295,24 @@
     border-radius: 0;
   }
 
-  /* Just this section's own background, with the backdrop driver detached
-     (riseTransition.js) — nothing flips it to fixed. The wordmark keeps its
-     one-viewport sizing rather than stretching with the box, so it reads the
-     same at the top of the section as it did in the pinned frame. */
-  .about-brand-bg,
-  .about-brand-bg.is-fixed,
-  .about-brand-bg.is-parked {
-    position: absolute;
-    inset: 0;
-    height: auto;
-    transform: none;
+  /* Fixed while the section covers the screen, as on desktop — the backdrop
+     driver runs at every width (HomePage.jsx). lvh for the same reason as
+     .advantages-bg: covers the screen with the address bar in or out, and
+     never changes height mid-scroll. */
+  .about-brand-bg {
+    height: 100vh;
+    height: 100lvh;
   }
 
-  .about-brand-bg img {
-    top: -1dvh;
-    height: 128vh;
-    height: 128dvh;
+  /* 900-1023 only in effect (the 899 block below overrides both): the
+     desktop sizes read 100dvh, so the card and the copy's offset changed as
+     the address bar collapsed. */
+  .about-brand {
+    --about-card-w: clamp(180px, min(29vw, calc((100svh - 140px) * 0.7923)), 560px);
+  }
+
+  .about-brand-stage {
+    padding-top: 42.3svh;
   }
 }
 

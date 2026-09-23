@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SCENARIOS } from '../data/scenarios';
 import { FLAVORS } from '../data/flavors';
 import { SCENARIO_CARDS_TRIGGER_ID } from '../data/layout';
-import { riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
+import { mobilePinType, riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -103,6 +103,7 @@ export default function ScenarioCardsIsometric() {
           end: () => `+=${(N - 1 + hold) * window.innerHeight}`,
           scrub: 1,
           pin: true,
+          ...mobilePinType(),
           invalidateOnRefresh: true,
         },
       });
