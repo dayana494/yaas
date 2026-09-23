@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>sticky+overflow:hidden+opacity repro</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #444; }
+  .spacer { height: 100vh; background: repeating-linear-gradient(45deg,#333,#333 20px,#3a3a3a 20px,#3a3a3a 40px); }
+
+  /* Mirrors yaas-site's .intro-wrap / .intro-pin structure, but with
+     position: sticky instead of GSAP pin: true. */
+  .intro-wrap {
+    position: relative;
+    /* enough scroll room for the sticky section to hold + release, same
+       idea as the GSAP auto-spacer height */
+    height: 300vh;
+  }
+  .intro-pin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+    /* Deliberately NOT black: a real rendering bug (stale/un-repainted tile)
+       must show up as an obviously wrong color patch against this, instead
+       of being confused with an intentional CSS cross-fade to black. */
+    background: repeating-conic-gradient(from 0deg, #0a4 0deg 15deg, #084 15deg 30deg);
+  }
+
+  /* .background-layer: absolute, inset:0, opacity: var(--h2g) */
+  .background-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: var(--h2g, 0);
+    background: linear-gradient(135deg, #ff5f6d, #ffc371);
+  }
+
+  /* .app-root: absolute, inset:0, overflow:hidden, holds the "hero" content */
+  .app-root {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  /* .hero-stage: opacity/blur driven by --h2g, same formula as hero.css */
+  .hero-stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font: 700 80px/1 sans-serif;
+    opacity: clamp(0, calc(1 - var(--h2g, 0) * 2), 1);
+    filter: blur(calc(var(--h2g, 0) * 14px));
+  }
+
+  /* .ui-layer: absolute, inset:0, opacity based on (--h2g - 0.7) * 3.3333 */
+  .ui-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 40px;
+    color: #111;
+    font: 600 28px/1 sans-serif;
+    opacity: clamp(0, calc((var(--h2g, 0) - 0.7) * 3.3333), 1);
+  }
+
+  .progress-readout {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 999;
+    color: #0f0;
+    font: 16px monospace;
+    background: rgba(0,0,0,0.6);
+    padding: 6px 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="progress-readout" id="readout">--h2g: 0.00</div>
+
+  <div class="spacer"></div>
+
+  <div class="intro-wrap" id="introWrap">
+    <div class="intro-pin" id="introPin">
+      <div class="background-layer"></div>
+      <div class="app-root">
+        <div class="hero-stage">HERO</div>
+      </div>
+      <div class="ui-layer">SLIDER UI</div>
+    </div>
+  </div>
+
+  <div class="spacer" style="background:#222;"></div>
+
+  <script>
+    const introWrap = document.getElementById('introWrap');
+    const introPin = document.getElementById('introPin');
+    const readout = document.getElementById('readout');
+
+    function onScroll() {
+      const rect = introWrap.getBoundingClientRect();
+      const total = introWrap.offsetHeight - window.innerHeight;
+      // progress 0 at top of intro-wrap, 1 at bottom (when it's about to release)
+      let t = -rect.top / total;
+      t = Math.max(0, Math.min(1, t));
+      introPin.style.setProperty('--h2g', String(t));
+      readout.textContent = '--h2g: ' + t.toFixed(2) + '  scrollY: ' + Math.round(window.scrollY);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  </script>
+</body>
+</html>

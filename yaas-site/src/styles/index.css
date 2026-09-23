@@ -125,33 +125,21 @@ button {
    viewport AND the same Canvas (see Scene.jsx/CanRig.jsx — hero and gallery
    render the same 5 can objects, never two separate instances), so the hero
    can visibly blur/fade away while those cans flip into their gallery slot
-   underneath it. .intro-pin holds in place for two back-to-back scroll
-   windows (see the ENTRANCE_UNITS/INTERACTIVE_UNITS constants in App.jsx):
-   first the hero->gallery entrance (scrubbed via --h2g, 0 -> 1, set
-   imperatively from App.jsx's ScrollTrigger — see the App.jsx comment by
-   its setup), then the gallery -> flavor detail card flight, scrubbed from
-   the same page scroll (HomePage.jsx's detail ScrollTrigger). The pin's own
-   pinSpacing:true (the default) reserves that scroll room automatically via
-   its own spacer — same as every other pinned section on this page (the
-   scenario-cards stack, the advantages carousel) — so .intro-wrap doesn't
-   need an explicit height of its own to match; it just sizes to its pinned
-   child + GSAP's spacer. Scrolling past both releases the pin straight into
-   Screen2, exactly at the spacer's own end — no lingering "hero still
-   visually scrolling away" tail to arbitrate with z-index tricks, no cover
-   panel to line up either (a stand-in copy of Screen2's own heading used to
-   slide up here first, but it never quite lined up with the real one, so
-   scrolling through the handoff showed both at once) — and continues
-   normally, in either direction, so the page still behaves like one
-   continuously scrollable site.
-   EXPERIMENT (branch experiment/sticky-intro-screen2): .intro-pin below is
-   plain CSS `position: sticky` instead of a GSAP ScrollTrigger pin, testing
-   whether the Chromium compositing bug that originally ruled sticky out here
-   (see HomePage.jsx's pin-effect comment, now removed on this branch) still
-   reproduces on the real page. .intro-wrap's height is set imperatively in
-   HomePage.jsx (same total room GSAP's pinSpacing used to reserve
-   automatically: 100vh for the pin's own box + ENTRANCE_UNITS +
-   INTERACTIVE_UNITS + SCREEN2_RISE_UNITS + SCREEN2_GAP_PX) since sticky has
-   no spacer of its own to size that for us. Revert: git checkout main. */
+   underneath it. .intro-pin holds in place for the whole intro, all of it
+   scrubbed from page scroll (see data/layout.js for the units): the
+   hero->gallery entrance (--h2g, 0 -> 1, set from HomePage.jsx), a dead gap,
+   the gallery -> flavor detail card flight, then Screen 2 rising over it.
+   Releases straight into Screen2 — no cover panel to line up (a stand-in copy
+   of Screen2's own heading used to slide up here first, but it never quite
+   lined up with the real one, so scrolling through the handoff showed both
+   at once) — and continues normally, in either direction, so the page still
+   behaves like one continuously scrollable site.
+   .intro-pin is plain CSS `position: sticky`. Sticky has no spacer of its
+   own, so .intro-wrap's height — the pin's own 100vh plus every stage's
+   scroll room — is set from HomePage.jsx. It was once a GSAP pin because of
+   a Chromium compositing bug (see HomePage.jsx's setIntroWrapHeight
+   comment); if a black band ever shows over the intro while scrolling, that
+   is the first thing to look at. */
 .intro-wrap {
   position: relative;
   height: 100vh; /* pre-JS fallback only — HomePage.jsx overwrites this */

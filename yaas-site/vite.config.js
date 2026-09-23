@@ -39,24 +39,6 @@ function staticRoutes() {
       const index = bundle['index.html'];
       if (!index) return;
 
-      // index.html's own <body> carries a static pre-mount snapshot of the
-      // HOMEPAGE's mobile hero wordmark (see its own LCP-SHELL comment) so
-      // PageSpeed's LCP text paints before any JS runs, instead of waiting
-      // on the whole app to load. That snapshot is only ever a genuine match
-      // for '/' — every other route below reuses this same bundled HTML
-      // purely as a React Router fallback shell (so a direct load/refresh of
-      // e.g. /flavors gets a real 200 instead of 404, per the file's own
-      // top comment), and none of them render that mobile banner at all, so
-      // shipping it there would just be a wrong flash of "YAAS" before the
-      // real page underneath took over. Stripped back out for those routes,
-      // between its own start/end markers.
-      const shellPattern = /\s*<!-- LCP-SHELL:START[\s\S]*?LCP-SHELL:END -->/;
-      const indexSource = typeof index.source === 'string' ? index.source : index.source.toString();
-      if (!shellPattern.test(indexSource)) {
-        this.warn('LCP-SHELL markers not found in index.html — check it still matches vite.config.js');
-      }
-      const routeSource = indexSource.replace(shellPattern, '');
-
       const registry = readFileSync(resolve(root, 'src/data/flavors.js'), 'utf8');
       const slugs = [...registry.matchAll(/^\s*id:\s*'([^']+)'/gm)].map((m) => m[1]);
       if (!slugs.length) {
@@ -69,9 +51,9 @@ function staticRoutes() {
       const routes = ['flavors', 'contacts', ...slugs.map((s) => `flavors/${s}`)];
 
       for (const route of routes) {
-        this.emitFile({ type: 'asset', fileName: `${route}/index.html`, source: routeSource });
+        this.emitFile({ type: 'asset', fileName: `${route}/index.html`, source: index.source });
       }
-      this.emitFile({ type: 'asset', fileName: '404.html', source: routeSource });
+      this.emitFile({ type: 'asset', fileName: '404.html', source: index.source });
     },
   };
 }
