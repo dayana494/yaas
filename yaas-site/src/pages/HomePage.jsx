@@ -145,9 +145,23 @@ export default function HomePage() {
   const [displayFlavor, setDisplayFlavor] = useState(DEFAULT_FLAVOR_INDEX);
   const [detailTextVisible, setDetailTextVisible] = useState(false);
   const [heroTextVisible, setHeroTextVisible] = useState(false);
+  // The hero entrance (can flight + text) waits for the first-load preloader
+  // in index.html to finish fading out. Its `done` is already resolved on SPA
+  // visits and whenever there is no overlay, so then this only costs a tick.
+  const [introReleased, setIntroReleased] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    (window.__yaasPreloader?.done ?? Promise.resolve()).then(() => {
+      if (!cancelled) setIntroReleased(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const activeFlavorRef = useRef(activeFlavor);
   activeFlavorRef.current = activeFlavor;
-  // No preloader and no fade-in: the page paints as soon as it can. The
+  // No React-side preloader and no fade-in: the page paints as soon as it can,
+  // under index.html's overlay (which never hides or delays #root). The
   // `loaded` flag and the rAF that flipped it existed only to drive the
   // whole-page opacity transition, which had to go — see the note in
   // styles/index.css for why it was costing the Lighthouse score.
@@ -366,6 +380,11 @@ export default function HomePage() {
 
   const handleHeroEntranceStart = useCallback(() => {
     setHeroTextVisible(true);
+  }, []);
+
+  // CanRig calls this once the hero cluster has drawn a frame with its labels.
+  const handleHeroReady = useCallback(() => {
+    window.__yaasPreloader?.ready();
   }, []);
 
   const handlePickFlavor = useCallback(
@@ -693,7 +712,8 @@ export default function HomePage() {
               ref={attachScene}
               activeFlavor={activeFlavor}
               isMobile={isMobile}
-              armed
+              armed={introReleased}
+              onReady={handleHeroReady}
               onEntranceStart={handleHeroEntranceStart}
               onFlavorMidSpin={handleFlavorMidSpin}
               onSettle={handleSettle}

@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { useTexture } from '@react-three/drei';
 import { FLAVORS, DEFAULT_FLAVOR_INDEX } from '../data/flavors';
+import { getHeroCans } from './heroLayout';
 
 const TEXTURE_URLS = FLAVORS.map((f) => f.texture);
 
@@ -34,6 +35,24 @@ function configureTexture(texture) {
 const textureLoader = new THREE.TextureLoader();
 const idle = typeof requestIdleCallback === 'function' ? requestIdleCallback : (cb) => setTimeout(cb, 1);
 const cancelIdle = typeof cancelIdleCallback === 'function' ? cancelIdleCallback : clearTimeout;
+
+// Resolves once flavor i's material has its real label map. The preloader
+// (index.html) stays up until the hero cluster's three labels are in, so the
+// cans never fly in as flat brand-color placeholders — see CanRig's onReady.
+const textureLoaded = FLAVORS.map(() => {
+  let resolve;
+  const promise = new Promise((r) => (resolve = r));
+  return { promise, resolve };
+});
+textureLoaded[DEFAULT_FLAVOR_INDEX].resolve();
+
+export function whenTexturesLoaded(indices) {
+  return Promise.all(indices.map((i) => textureLoaded[i].promise));
+}
+
+// The deferred queue starts with the hero cluster's two other flavors, since
+// they are on screen from the first frame; the rest keep registry order.
+const HERO_INDICES = getHeroCans(false).map((can) => can.flavorIndex);
 
 // Loads only the on-screen (DEFAULT_FLAVOR_INDEX) flavor's label texture up
 // front — via useTexture, so it still suspends the can mesh until that one
@@ -77,7 +96,9 @@ export function useCanMaterials() {
   useEffect(() => {
     let cancelled = false;
     let handle;
-    const pending = FLAVORS.map((_, i) => i).filter((i) => i !== DEFAULT_FLAVOR_INDEX);
+    const pending = FLAVORS.map((_, i) => i)
+      .filter((i) => i !== DEFAULT_FLAVOR_INDEX)
+      .sort((a, b) => HERO_INDICES.includes(b) - HERO_INDICES.includes(a));
 
     function loadNext() {
       if (cancelled) return;
@@ -88,6 +109,7 @@ export function useCanMaterials() {
         materials[i].map = configureTexture(texture);
         materials[i].color.set('#ffffff');
         materials[i].needsUpdate = true;
+        textureLoaded[i].resolve();
         handle = idle(loadNext);
       });
     }

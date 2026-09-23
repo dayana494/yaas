@@ -1,9 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { addAfterEffect, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { useCanGeometry } from './useCanGeometry';
-import { CAN_CAP_MATERIAL, useCanMaterials } from './useCanMaterials';
+import { CAN_CAP_MATERIAL, useCanMaterials, whenTexturesLoaded } from './useCanMaterials';
 import { getHeroCans, bezierPoint, lerp } from './heroLayout';
 import { FLAVORS } from '../data/flavors';
 import { arcTransform, wrappedDelta, nearestTarget, mod, FLAVOR_N, GALLERY_SLOT_DELTA } from './arcLayout';
@@ -109,7 +109,7 @@ const DIM = new THREE.Color(0.72, 0.72, 0.75);
 const tmpColor = new THREE.Color();
 
 const CanRig = forwardRef(function CanRig(
-  { activeFlavor, isMobile, onFlavorMidSpin, onSettle, armed = true, onEntranceStart },
+  { activeFlavor, isMobile, onFlavorMidSpin, onSettle, armed = true, onEntranceStart, onReady },
   ref
 ) {
   const { camera, gl } = useThree();
@@ -220,12 +220,39 @@ const CanRig = forwardRef(function CanRig(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Tells the page the hero is ready to be seen: all three cluster labels
+  // loaded, uploaded to the GPU and drawn in a rendered frame. The cans are
+  // still parked off-stage at this point (the flight waits on `armed`), so
+  // they can be frustum-culled and skip their first upload; initTexture
+  // forces it, so the flight's first frame doesn't hitch on it.
+  useEffect(() => {
+    if (!onReady) return undefined;
+    let cancelled = false;
+    whenTexturesLoaded(heroCans.map((can) => can.flavorIndex)).then(() => {
+      if (cancelled) return;
+      heroCans.forEach((can) => {
+        const map = materials[can.flavorIndex].map;
+        if (map) gl.initTexture(map);
+      });
+      const off = addAfterEffect(() => {
+        off();
+        if (!cancelled) onReady();
+      });
+      invalidate();
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Flies the three hero-flavor cans into their resting cluster pose along a
   // bezier arc, with extra rotation turns baked into the start angle so
   // decelerating into place reads as a spiral settle rather than a straight
-  // fly-in. Mount-triggered (independent of scroll — `armed` defaults true,
-  // no preloader gates it), calls onEntranceStart the moment it begins so
-  // the DOM text layer (HeroScreen) can fade in alongside it.
+  // fly-in. Mount-triggered (independent of scroll — `armed` defaults true;
+  // the homepage holds it false until the first-load preloader is gone),
+  // calls onEntranceStart the moment it begins so the DOM text layer
+  // (HeroScreen) can fade in alongside it.
   useEffect(() => {
     if (!armed || started.current) return;
     started.current = true;
