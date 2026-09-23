@@ -147,6 +147,14 @@
   text-align: center;
 }
 
+/* The split screen is the one whose headline sits against the gutter rather
+   than on the frame's centre line, so its lines rag from that same edge — a
+   centred ragged block inside a left-aligned box reads as neither. Stated
+   outside the breakpoints because it holds at every width. */
+.is-layout-split .flavor-rotation-kicker {
+  text-align: left;
+}
+
 .flavor-rotation-line {
   font-family: var(--font-beiruti);
   font-weight: 500;
@@ -408,17 +416,25 @@
   .flavor-gallery-track {
     --gallery-visible: 2;
   }
+}
 
-  /* No climb below 1024, same as reduced-motion mode above: the story's pin
-     no longer holds for one (FlavorStorySection.jsx) and the rise driver is
-     not attached (riseTransition.js), so the gallery just follows the story
-     section in flow. */
+/* The climb is kept at every width here — deliberately unlike the homepage,
+   where every overlapping handover flattens into plain flow below 1024. The
+   negative margin and the radii in the base rule therefore stay, and the two
+   things that pay for them are held on to match: the story's pin keeps its
+   RISE_UNITS tail (FlavorStorySection) and the rise driver is attached with
+   allWidths (FlavorDetailPage).
+
+   Vertical rhythm switches to the homepage's own at this breakpoint, though:
+   .advantages-heading-grid's top padding and heading gap, .advantages-content's
+   bottom. */
+@media (max-width: 768px) {
   .flavor-gallery {
-    margin-top: 0;
-    z-index: auto;
-    isolation: isolate;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
+    padding: calc(clamp(170px, 21vh, 260px) - 55px) 0 clamp(64px, 10vh, 100px);
+  }
+
+  .flavor-gallery-heading {
+    margin-bottom: 40px;
   }
 }
 

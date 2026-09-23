@@ -6,7 +6,7 @@ import HeroWordmark from './HeroWordmark';
 import SiteHeader from './SiteHeader';
 import FlavorStoryScene from '../three/FlavorStoryScene';
 import { useHeroScale } from '../hooks/useHeroScale';
-import { mobilePinType, riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
+import { RISE_UNITS, mobilePinType, useOverlapEnabled } from '../scroll/riseTransition';
 import { onRealResize } from '../scroll/onRealResize';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -119,33 +119,60 @@ function viewportTravel() {
   return window.innerHeight / stageScale();
 }
 
-// Where the flavor name's baseline sits, as a fraction of the screen — the
-// line the can is stood on, so its foot and the name's feet share one rule.
+// The breakpoint HeroWordmark itself switches on: above it the giant desktop
+// wordmark, below it the contained mobile banner.
+const MOBILE_QUERY = '(max-width: 768px)';
+
+// Ink top and bottom of a run of text, in screen px.
 //
 // Read off the rendered text rather than computed from the CSS, because the
-// two sit in different coordinate systems: the name is inside the scaled
-// stage, the can is in a full-bleed canvas measured in world units, and the
-// only thing they share is the screen. Canvas metrics give the real baseline
-// (the title is all caps, so its ink bottom IS the baseline) instead of the
-// line box, which for Soledago sits a long way below the letters.
-function measureNameBaseline(nameEl, boxEl) {
-  if (!nameEl || !boxEl) return null;
-  const style = getComputedStyle(nameEl);
+// copy and the can sit in different coordinate systems: the name is inside the
+// scaled stage, the can is in a full-bleed canvas measured in world units, and
+// the only thing they share is the screen. Canvas metrics give the real ink
+// bounds instead of the line box, which for Soledago sits a long way below and
+// above the letters.
+function textInk(el) {
+  const style = getComputedStyle(el);
   const fontSize = parseFloat(style.fontSize);
-  const lineHeight = parseFloat(style.lineHeight);
-  const context =
-    measureNameBaseline.ctx || (measureNameBaseline.ctx = document.createElement('canvas').getContext('2d'));
+  const lineHeight = parseFloat(style.lineHeight) || fontSize;
+  const context = textInk.ctx || (textInk.ctx = document.createElement('canvas').getContext('2d'));
   context.font = `${style.fontWeight} ${fontSize}px ${style.fontFamily}`;
-  const metrics = context.measureText(nameEl.textContent.trim());
+  const metrics = context.measureText(el.textContent.trim());
   const baselineInBox =
     (lineHeight - (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent)) / 2 +
     metrics.fontBoundingBoxAscent;
   const scale = stageScale();
-  const rect = nameEl.getBoundingClientRect();
+  const rect = el.getBoundingClientRect();
+  return {
+    top: rect.top + (baselineInBox - metrics.actualBoundingBoxAscent) * scale,
+    // The LAST line's, in case the name has wrapped.
+    bottom: rect.bottom - (lineHeight - baselineInBox - metrics.actualBoundingBoxDescent) * scale,
+  };
+}
+
+// Where the can sits on the first screen, as a fraction of the screen, plus
+// which part of the can that fraction refers to.
+//
+// Desktop stands it on the flavor name's baseline ('foot'), so the can and the
+// name share one line. A phone has no room for that: the wordmark is a banner
+// at the top and the name sits at the foot, and standing the can on the name
+// pushed it right down against it. There it is centred in the gap instead
+// ('centre'), which is what "equal air above and below" asks for. The mobile
+// wordmark is an SVG, so its own box is already its ink and needs no metrics.
+function measureCanAnchor(nameEl, boxEl) {
+  if (!nameEl || !boxEl) return null;
   const box = boxEl.getBoundingClientRect();
-  // Bottom line of the LAST line of the name, in case it has wrapped.
-  const baseline = rect.bottom - (lineHeight - baselineInBox) * scale;
-  return box.height > 0 ? (baseline - box.top) / box.height : null;
+  if (!(box.height > 0)) return null;
+  const name = textInk(nameEl);
+
+  if (window.matchMedia(MOBILE_QUERY).matches) {
+    const logo = boxEl.querySelector('.hero-mobile-banner-logo');
+    if (!logo) return null;
+    const centre = (logo.getBoundingClientRect().bottom + name.top) / 2;
+    return { mode: 'centre', at: (centre - box.top) / box.height };
+  }
+
+  return { mode: 'foot', at: (name.bottom - box.top) / box.height };
 }
 
 // Section A of the flavor detail page: the hero read and the scroll-driven
@@ -167,7 +194,7 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
   // Fraction of the screen the can's foot is stood on — the flavor name's
   // baseline. Null until measured, which is one frame; the can renders
   // centred for that frame, then drops onto the line.
-  const [canBaseline, setCanBaseline] = useState(null);
+  const [canAnchor, setCanAnchor] = useState(null);
   const blockRefs = useRef([]);
   // Stable across renders and mutated in place by the timeline below — the
   // can rig reads it every frame. See FlavorStoryCanRig for why the rotation
@@ -190,8 +217,11 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
     let cancelled = false;
     const remeasure = () => {
       if (cancelled) return;
-      const next = measureNameBaseline(nameRef.current, stickyRef.current);
-      if (next != null) setCanBaseline((prev) => (prev != null && Math.abs(prev - next) < 0.001 ? prev : next));
+      const next = measureCanAnchor(nameRef.current, stickyRef.current);
+      if (!next) return;
+      setCanAnchor((prev) =>
+        prev && prev.mode === next.mode && Math.abs(prev.at - next.at) < 0.001 ? prev : next
+      );
     };
     const fonts = 'fonts' in document ? document.fonts.ready : Promise.resolve();
     fonts.finally(remeasure);
@@ -229,7 +259,10 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
         (start, i) => start + (i === els.length - 1 ? FINALE_TRAVEL : BLOCK_TRAVEL / 2)
       );
       const finaleCentre = centres[centres.length - 1];
-      const hold = riseUnits();
+      // RISE_UNITS flat, not riseUnits(): that helper drops the hold to 0 below
+      // 1024, because every other handover on the site stops overlapping there.
+      // This page keeps its rounded climb on a phone, so it always pays for one.
+      const hold = RISE_UNITS;
       const total = finaleCentre + hold;
 
       gsap.set(els, { opacity: 1, y: viewportTravel() * 1.1 });
@@ -239,7 +272,7 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
           trigger: wrapRef.current,
           start: 'top top',
           // Long enough for every block to cross the screen at 1x scroll
-          // speed, plus riseUnits() at the end during which the can is simply
+          // speed, plus RISE_UNITS at the end during which the can is simply
           // held still while the gallery below climbs up over it — the same
           // handover the homepage's own pinned sections give the sections that
           // rise onto them.
@@ -323,7 +356,7 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
 
       // The hold. Animates nothing — it exists only so the timeline's own
       // duration matches the pin's extended length. Without it everything
-      // above would stretch to fill the extra riseUnits() of pinned scroll
+      // above would stretch to fill the extra RISE_UNITS of pinned scroll
       // instead of holding its real timing, since a scrubbed timeline maps
       // the trigger's whole 0->1 onto its own duration.
       if (hold > 0) tl.to({}, { duration: hold }, finaleCentre);
@@ -353,7 +386,7 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
             flavorId={flavor.id}
             rotation={rotationRef.current}
             spin={simpleMode}
-            baseline={canBaseline}
+            anchor={canAnchor}
           />
         </div>
 

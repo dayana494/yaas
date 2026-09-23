@@ -65,13 +65,17 @@ export default function FlavorDetailPage() {
   // Rounds the gallery's top corners into a dome while it climbs over the
   // story section and flattens them as it finishes covering — the shared
   // driver from scroll/riseTransition.js, the same one the homepage runs for
-  // .screen2 and .advantages, not a second copy of the effect. Nothing to
-  // drive in simple mode, where the gallery simply follows in flow — nor below
-  // 1024, where attachRiseDriver keeps it off the ticker entirely.
+  // .screen2 and .advantages, not a second copy of the effect.
+  //
+  // allWidths, unlike the homepage's: there every overlapping handover flattens
+  // into plain flow below 1024, and attachRiseDriver would take this one off
+  // the ticker with them. This page keeps its climb on a phone, so the driver
+  // has to keep writing --rise-radius there. Only simple mode has nothing to
+  // drive, because nothing is pinned for the gallery to climb over.
   useEffect(() => {
     if (!flavor || simpleMode) return undefined;
     const driveRise = createRiseDriver(['.flavor-gallery']);
-    return attachRiseDriver(gsap.ticker, driveRise);
+    return attachRiseDriver(gsap.ticker, driveRise, { allWidths: true });
   }, [flavor, simpleMode]);
 
   if (!flavor) {
