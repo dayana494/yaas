@@ -209,30 +209,15 @@
   filter: blur(calc(var(--h2g, 0) * 14px));
 }
 
-/* inline-block (not block) on purpose — useFillWidth measures this
-   element's own *natural* (shrink-to-fit content) width to compute the
-   scaleX ratio; a block-level element would just report the row's own
-   full width back, making that ratio a no-op and leaving the oversized
-   text to overflow the row instead of being scaled down to fit it. */
-/* Sized so the LETTERS are the height Figma 344:237 draws them at — 120.768 on
-   its 390-wide frame, i.e. 30.97vw.
-   font-size is not that number. Measured on Soledago, "YAAS" inks 0.725 of its
-   font-size (the rest is the line box's ascent and descent, which this
-   wordmark has no use for), so a font-size of 30.97vw drew letters only
-   87.7px tall against the mock's 120.8 — a third short, which is what still
-   read as squat after the first pass fixed the box. Dividing through by that
-   0.725 gives 42.71vw.
-   useFillWidth (HeroWordmark.jsx) then nudges this font-size — by about 3%,
-   since this font inks "YAAS" at an aspect of 3.152 against the mock's 3.064 —
-   so the ink spans the row exactly. It changes the font-size rather than
-   stretching the text, which kept the logo soft on a phone. */
-.logo-text.hero-mobile-banner-logo {
-  display: inline-block;
-  font-size: clamp(88px, 42.71vw, 460px);
-  line-height: 1;
-  letter-spacing: -0.01em;
+/* The wordmark is vector outlines (YaasWordmarkSvg.jsx), not live text: as
+   text it read soft on real phones. The viewBox is the ink itself, so a full
+   width box is the letters edge to edge across the row with no fitting script,
+   and its height follows from the ink aspect, 3.105. */
+.hero-mobile-banner-logo {
+  display: block;
+  width: 100%;
+  height: auto;
   color: var(--ink);
-  transform-origin: left center;
 }
 
 @media (max-width: 1023px) {
@@ -283,19 +268,17 @@
      min-height stays at 44px for the touch target this file already committed
      to.
 
-     From the frame's 12 it grows with the width to the site's standard 16px
-     pill (--text-body) and stops, so a tablet gets the real thing rather than
-     phone-sized type, and the handover to the desktop rules at 1024 is
-     seamless. See the padding note below for why the floor is 12. */
+     13 rather than the frame's 12 at the bottom, which is the "raise it a
+     point or two if the row can take it" the brief asks for, and 13 is as far
+     as it goes: measured on a 375-wide row, 13px leaves 8px between pills and
+     14px leaves 2px, which is no longer a gap. From there it grows to the
+     site's standard 16px pill (--text-body) and stops, so a tablet gets the
+     real thing rather than phone-sized type, and the handover to the desktop
+     rules at 1024 is seamless. */
   .hero-pill {
-    /* 12px floor (the frame's own size) and a 2vw side padding: with the row
-       now inside the 30px content gutter, the four pills at 13px and 3.1vw
-       padding came to 334px in a 330px row at 390 — touching, and over the
-       edge. These give about 10px between pills at 390 and 8 at 360. Both
-       still grow to the desktop pill (16px, 20px) and stop. */
-    font-size: clamp(12px, 3.33vw, 16px);
+    font-size: clamp(13px, 3.33vw, 16px);
     letter-spacing: -0.24px;
-    padding: 8px clamp(6px, 2vw, 20px);
+    padding: 8px clamp(12px, 3.1vw, 20px);
     min-height: 44px;
   }
 
@@ -311,27 +294,15 @@
      under them (to the subhead), by construction rather than by eye — the
      frame's own top plus hand-set margins only held at one screen height.
        nav pills end at    2.59svh + 44px (their min-height)
-       subhead starts at   29.8svh + 60px (.hero-copy below)
-       midpoint            16.195svh + 52px
-     The letters are centred on that midpoint. On Soledago the ink starts
-     12.52% of the font-size below the box top and is 72.5% of it tall, so the
-     box top sits 48.77% of the font-size above the midpoint; with the
-     font-size below, that is 21.73vw - 13px. */
+       subhead starts at   29.8svh + 53px (.hero-copy below)
+       midpoint            16.195svh + 48.5px
+     The letters are centred on that midpoint: the SVG's box is the ink, as
+     wide as the row and 1/3.105 as tall, so its top sits half of that above. */
   .hero-mobile-banner-logo-row {
-    top: calc(16.2svh + 65px - 21.73vw);
-    /* The shared content gutter rather than the frame's 10px — the wordmark
-       now spans the same width as every block below it. */
+    top: calc(16.2svh + 48.5px - (100vw - 2 * var(--content-gutter)) / 6.21);
     left: var(--content-gutter);
     right: var(--content-gutter);
-  }
-
-  /* The size useFillWidth (HeroWordmark.jsx) would fit anyway — the row's
-     width over the 2.245 that "YAAS" advances per px of font-size in Soledago
-     — so the wordmark paints at its final size before any script runs and the
-     row above can be placed off it. The script then only corrects by a pixel
-     for rounding. */
-  .logo-text.hero-mobile-banner-logo {
-    font-size: calc((100vw - 2 * var(--content-gutter)) / 2.245);
+    overflow: visible;
   }
 
   /* Copy block: subhead top 253.37/850, left 10/390, 323/390 wide; the CTA
@@ -346,11 +317,11 @@
     align-items: flex-start;
     gap: 3.6svh;
     padding: 0 var(--content-gutter);
-    /* More air under the wordmark than the frame's own 29.8svh leaves — on a
-       real phone the copy read as crowding the logo. A fixed margin on top of
-       the proportional top, so the extra gap is the same on every screen
-       height; tuned so the gap under the wordmark equals the one above it. */
-    margin-top: 60px;
+    /* More air under the wordmark than the frame's own 29.8svh leaves, as a
+       fixed margin so it is the same on every screen height. 53 makes both
+       gaps around the wordmark (which is centred between the nav and this)
+       10px tighter than they were with the old 30px gutter. */
+    margin-top: 53px;
   }
 
   .hero-subhead {

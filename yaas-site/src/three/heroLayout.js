@@ -111,11 +111,15 @@ const MOBILE_SIDE_TILT = 0.349;
 // under half of it either way and each side can still breaks the edge.
 const MOBILE_SIDE_SPREAD = 0.44;
 
+// 1.2x smaller than the frame's trio (0.83 / 0.78 -> 0.692 / 0.65): on a phone
+// the cluster crowded the copy above it. Each can is lowered by half of the
+// height it gave up (a can's world height is ~its scale here), so the trio
+// stays standing on the bottom of the screen and the room opens up above it.
 const MOBILE_CANS = [
   {
     id: 'strawberry',
     flavorIndex: flavorIndex('strawberry'),
-    end: { x: 0, y: -0.434, z: 0.2, rotY: 0.1, rotZ: 0.05, scale: 0.83 },
+    end: { x: 0, y: -0.503, z: 0.2, rotY: 0.1, rotZ: 0.05, scale: 0.692 },
     start: { x: 0, y: 1.7, z: -0.4, rotY: 0.1, rotZ: 0.05 + Math.PI * 3, scale: 0.22 },
     control: { x: -0.1, y: 1.3, z: 0.9 },
     delay: 0,
@@ -123,7 +127,7 @@ const MOBILE_CANS = [
   {
     id: 'blueberry',
     flavorIndex: flavorIndex('blueberry'),
-    end: { x: -MOBILE_SIDE_SPREAD, y: -0.52, z: 0, rotY: 0.18, rotZ: MOBILE_SIDE_TILT, scale: 0.78 },
+    end: { x: -MOBILE_SIDE_SPREAD, y: -0.585, z: 0, rotY: 0.18, rotZ: MOBILE_SIDE_TILT, scale: 0.65 },
     start: { x: -1.6, y: -1.5, z: -0.5, rotY: 0.18, rotZ: MOBILE_SIDE_TILT - Math.PI * 3, scale: 0.2 },
     control: { x: -1.5, y: -1.1, z: 0.5 },
     delay: 0.12,
@@ -131,7 +135,7 @@ const MOBILE_CANS = [
   {
     id: 'orange',
     flavorIndex: flavorIndex('orange'),
-    end: { x: MOBILE_SIDE_SPREAD, y: -0.52, z: -0.1, rotY: -0.18, rotZ: -MOBILE_SIDE_TILT, scale: 0.78 },
+    end: { x: MOBILE_SIDE_SPREAD, y: -0.585, z: -0.1, rotY: -0.18, rotZ: -MOBILE_SIDE_TILT, scale: 0.65 },
     start: { x: 1.6, y: -1.5, z: -0.7, rotY: -0.18, rotZ: -MOBILE_SIDE_TILT + Math.PI * 3, scale: 0.2 },
     control: { x: 1.5, y: -1.1, z: 0.3 },
     delay: 0.24,

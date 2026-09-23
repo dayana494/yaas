@@ -1,7 +1,7 @@
 import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { overlapEnabled } from '../scroll/riseTransition';
+import { useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -17,8 +17,6 @@ gsap.registerPlugin(ScrollTrigger);
 // heading tag/className — the caller's own CSS still owns font, color, etc.
 const STAGGER_FROM_MAP = { left: 'start', right: 'end', center: 'center', random: 'random' };
 
-// The furthest a piece drops in below 1024 — see `drop` in the component.
-const NARROW_MAX_DROP_PX = 12;
 
 // Each segment also carries where it starts in the original string. That is
 // what lets ONE DropText render a heading whose second sentence is a different
@@ -98,24 +96,19 @@ const DropText = forwardRef(function DropText(
 
   const segments = useMemo(() => splitText(text, splitBy), [text, splitBy]);
   const reducedMotion = useReducedMotion();
+  // No reveal at all below 1024: the headings are simply there, the same as
+  // with prefers-reduced-motion. On a phone the staggered drop-in read as the
+  // heading glitching — half-faded words passing over its other lines — and
+  // the brief is to drop it there entirely rather than tame it.
+  const overlap = useOverlapEnabled();
+  const still = reducedMotion || !overlap;
 
-  // Below 1024 the pieces drop a short way, not the full yOffset. At -80px a
-  // word starts about two lines above its slot on a phone — the block heading
-  // is 40px there — and with the random stagger and the fade, a heading
-  // mid-reveal showed half-faded words sitting over the lines above them: what
-  // read on a real phone as the heading glitching into two overlapping
-  // states. 12px keeps the drop-in, inside the word's own line.
-  const drop =
-    typeof window !== 'undefined' && !overlapEnabled()
-      ? Math.sign(yOffset) * Math.min(Math.abs(yOffset), NARROW_MAX_DROP_PX)
-      : yOffset;
-
-  const initialPieceStyle = reducedMotion
+  const initialPieceStyle = still
     ? undefined
     : {
         opacity: startOpacity,
         filter: `blur(${blur}px)`,
-        transform: `translate3d(${xOffset}px, ${drop}px, 0px) rotate(${rotate}deg) scale(${scaleFrom})`,
+        transform: `translate3d(${xOffset}px, ${yOffset}px, 0px) rotate(${rotate}deg) scale(${scaleFrom})`,
       };
 
   useEffect(() => {
@@ -123,7 +116,7 @@ const DropText = forwardRef(function DropText(
     if (!container) return undefined;
     const pieces = container.querySelectorAll('[data-drop-piece]');
 
-    if (reducedMotion) {
+    if (still) {
       gsap.set(pieces, { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1, filter: 'blur(0px)' });
       return undefined;
     }
@@ -131,7 +124,7 @@ const DropText = forwardRef(function DropText(
     function playPieces() {
       gsap.fromTo(
         pieces,
-        { x: xOffset, y: drop, rotate, scale: scaleFrom, opacity: startOpacity, filter: `blur(${blur}px)` },
+        { x: xOffset, y: yOffset, rotate, scale: scaleFrom, opacity: startOpacity, filter: `blur(${blur}px)` },
         {
           x: 0,
           y: 0,
@@ -212,7 +205,7 @@ const DropText = forwardRef(function DropText(
       gsap.killTweensOf(pieces);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [segments, reducedMotion, animateOnScroll, play]);
+  }, [segments, still, animateOnScroll, play]);
 
   return (
     <Tag ref={containerRef} className={className}>

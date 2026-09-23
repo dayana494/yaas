@@ -20,7 +20,9 @@
    cannot do. */
 .contact-frame {
   position: relative;
-  padding: 0 50px;
+  /* The site's content column (index.css), so the panel is exactly as wide as
+     the content of the blocks around it — was the Figma frame's own 50px. */
+  padding: 0 var(--content-inline);
 }
 
 .contact-panel {
@@ -180,11 +182,9 @@
   }
 
   .contact-content {
-    /* Wider than the frame's own 324/370 (87.6%): the panel now sits inside
-       the site container's 30px gutter, 330 wide at 390, and at 87.6% of that
-       the heading wrapped to six lines against the mock's five. 95% puts the
-       same words back on the same lines. */
-    width: 95%;
+    /* The frame's own 324 of 370. The panel is the frame's 370 again at 390
+       (10px gutter), so the mock's share puts the heading on the mock's lines. */
+    width: 87.6%;
   }
 
   .contact-actions {

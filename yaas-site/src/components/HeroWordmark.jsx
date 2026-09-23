@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Logo from './Logo';
+import YaasWordmarkSvg from './YaasWordmarkSvg';
 import { onRealResize } from '../scroll/onRealResize';
 
 function useMediaQuery(query) {
@@ -13,89 +14,6 @@ function useMediaQuery(query) {
   return matches;
 }
 
-// Fits the wordmark edge to edge across its row by solving its FONT-SIZE, not
-// by stretching it. It used to finish with a scaleX (the footer's technique),
-// and on a phone that is what made it soft: a non-uniform transform on text is
-// resampled after rasterisation, so the glyphs were drawn at one size and
-// squeezed into another. A font-size is rasterised at the size it is shown at.
-// The only cost is the aspect: this font inks "YAAS" at 3.152 against the
-// mock's 3.064, so the letters come out about 3% shorter than a stretch would
-// have made them — which is the trade the brief asks for (sharp over exact).
-//
-// fit() used to run synchronously in the mount effect: write transform:none,
-// then immediately read back two getBoundingClientRect()s to compute the
-// ratio. That read-right-after-write is a forced reflow, and PageSpeed's own
-// "Forced reflow" audit named this exact call — 108ms of it — as the single
-// most expensive one on the page, sitting directly in front of the page's
-// own LCP candidate (this row's span.logo-text): the browser had to flush
-// layout synchronously, mid-mount, before it could paint that text at all.
-// Confirmed directly, not just from the audit's minified stack: intercepting
-// every getBoundingClientRect() call during a real page load showed this
-// exact element pair as the very first reads after the page's own initial
-// content, ~150ms into the load.
-//
-// The mount call needs no reset-to-none at all — there is no prior
-// transform to undo yet, so skipping the write there removes half the
-// problem for free. A resize re-fit does have one to undo, so that call
-// still writes it, but the read is deferred a frame: requestAnimationFrame
-// between the write and the read lets the browser fold the resulting layout
-// pass into its own next-frame work instead of forcing it synchronously
-// inside this handler.
-function useFillWidth(ref, enabled) {
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !enabled) return undefined;
-
-    function measure() {
-      // The element can be off the document by the time this runs. Crossing
-      // the 768px breakpoint swaps the mobile banner for the desktop stage,
-      // and the browser's own resize listener fires before React has
-      // re-rendered and torn this effect down — so `el` is a detached node
-      // and `parentElement` is null. It threw there (confirmed in the console
-      // on a window resize across that width); the deferred rAF read below
-      // widens the same window by a frame.
-      const row = el.parentElement;
-      if (!row) return;
-      const rowWidth = row.getBoundingClientRect().width;
-      const naturalWidth = el.getBoundingClientRect().width;
-      const fontSize = parseFloat(getComputedStyle(el).fontSize);
-      if (naturalWidth > 0 && fontSize > 0) {
-        // Glyph advance is linear in font-size, so one ratio lands it.
-        el.style.fontSize = `${(fontSize * rowWidth) / naturalWidth}px`;
-      }
-    }
-
-    function refit() {
-      el.style.fontSize = '';
-      requestAnimationFrame(measure);
-    }
-
-    // Deferred a frame here too: the very first measure() still reads
-    // geometry right after React's own initial commit just wrote this
-    // element (and the rest of the page) into the DOM, which forced-reflow
-    // flagged the same way — first geometry read after a pending layout
-    // invalidation, regardless of which code did the invalidating. This
-    // doesn't delay the wordmark's own text from painting: that happens on
-    // React's normal commit, independent of when this scale correction
-    // runs. Worst case is one frame at the CSS-only (close, not pixel-exact
-    // — see useFillWidth's own comment above) size before the fit snaps in.
-    const raf = requestAnimationFrame(measure);
-    const offRefit = onRealResize(refit);
-    // Soledago swaps in (font-display: swap) after the first fit may already
-    // have run against the fallback's advance widths.
-    let cancelled = false;
-    document.fonts?.ready.then(() => {
-      if (!cancelled) refit();
-    });
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(raf);
-      offRefit();
-      el.style.fontSize = '';
-    };
-  }, [ref, enabled]);
-}
-
 // Sizes the wordmark so its INK — not its box — spans the container exactly:
 // flush to the left and right edges, nothing running off either, and its own
 // proportions intact.
@@ -103,7 +21,7 @@ function useFillWidth(ref, enabled) {
 // The desktop wordmark is a fixed 539px string centred in the 1200-wide stage,
 // and at that size the glyphs are wider than the stage: measured at 1920x920,
 // 1742px of ink in a 1698px container, so 22px of the Y and the final S were
-// being cut off by .hero-logo-giant's overflow. useFillWidth above cannot fix
+// being cut off by .hero-logo-giant's overflow. Width-fitting its box cannot fix
 // it — that element is position:absolute with an explicit width, so its own
 // getBoundingClientRect is the container's width and the ratio comes out 1.
 //
@@ -185,15 +103,14 @@ function useInkFitWidth(ref, enabled) {
 // designed with.
 export default function HeroWordmark({ fitToContainer = false }) {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const mobileLogoRef = useRef(null);
   const desktopLogoRef = useRef(null);
-  useFillWidth(mobileLogoRef, isMobile);
   useInkFitWidth(desktopLogoRef, fitToContainer && !isMobile);
 
   if (isMobile) {
     return (
       <div className="hero-mobile-banner-logo-row" aria-hidden="true">
-        <Logo ref={mobileLogoRef} className="hero-mobile-banner-logo" />
+        {/* Vector outlines rather than live text — see YaasWordmarkSvg. */}
+        <YaasWordmarkSvg className="hero-mobile-banner-logo" />
       </div>
     );
   }

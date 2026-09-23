@@ -56,6 +56,14 @@
      that must line up with it at every width read this rather than repeating
      the number — see .contact-frame. */
   --content-gutter: 30px;
+  /* The widest the content column gets — the FAQ's (.site-container: 1400
+     including its 30px gutters, so 1340 of content) — and the side padding
+     that puts a full-width block's content in exactly that column: the
+     gutter, or more once the screen is wider than the column plus two
+     gutters. A percentage, so it must sit on an element whose containing
+     block is the full width. */
+  --content-max: 1340px;
+  --content-inline: max(var(--content-gutter), calc((100% - var(--content-max)) / 2));
 
   --paper: #fdfaf1;
   --bg-color: #f3d118;
@@ -68,6 +76,9 @@
 @media (max-width: 1023px) {
   :root {
     --block-gap: 80px;
+    /* 10px a side on phones and tablets — every block that lines up with the
+       content container reads this, so they all change together. */
+    --content-gutter: 10px;
     --block-heading: clamp(30px, 10.26vw, 40px);
   }
 }

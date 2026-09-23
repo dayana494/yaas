@@ -35,6 +35,7 @@ import {
   ENTRANCE_MIN_SECONDS,
   ENTRANCE_UNITS,
   galleryGapPx,
+  MOBILE_DETAIL_HOLD_UNITS,
   introUnitsPx,
   INTERACTIVE_UNITS,
   SCREEN2_GAP_PX,
@@ -54,13 +55,13 @@ const DetailScreen = lazy(() => import('../components/DetailScreen'));
 
 const DETAIL_EDGE_PX = 2;
 
-// How far into the gallery -> card flight the card's copy and CTA come in. Not
-// at 1: waiting for the can to land exactly made the copy trail the gesture
-// that opened the card, which read as needing a second scroll. The flight is
-// eased power3.inOut (CanRig.jsx's heroEase), so at 0.85 the can is already
-// 98.6% of the way there — close enough that the copy never lands on a can
-// still visibly moving.
-const DETAIL_TEXT_AT = 0.85;
+// How far into the gallery -> card flight the card's copy and CTA come in.
+// Desktop: at 1, once the can has landed — as it always was. Below 1024: at
+// 0.85, where waiting for the exact landing made the copy trail the gesture
+// that opened the card. The flight is eased power3.inOut (CanRig.jsx's
+// heroEase), so at 0.85 the can is already 98.6% of the way there — close
+// enough that the copy never lands on a can still visibly moving.
+const DETAIL_TEXT_AT = { desktop: 1, narrow: 0.85 };
 
 // Walks a shown 0..1 progress toward whatever set() last asked for, on the GSAP
 // ticker, at no more than one full sweep per `minSeconds`. Below that speed it
@@ -438,7 +439,7 @@ export default function HomePage() {
       entranceProgressRef.current = t;
       pin.style.setProperty('--h2g', String(t));
       pin.classList.toggle('is-entrance-active', t > 0.001);
-      const done = t >= DETAIL_TEXT_AT;
+      const done = t >= (overlapEnabled() ? DETAIL_TEXT_AT.desktop : DETAIL_TEXT_AT.narrow);
       sceneRef.current?.setEntranceProgress(t);
       if (done !== entranceDoneRef.current) {
         entranceDoneRef.current = done;
@@ -474,8 +475,10 @@ export default function HomePage() {
     // before the card's scroll-scrubbed flight had even landed.
     //
     // Below 1024 there is no rise at all (.screen2 carries no negative margin
-    // there), so neither the gap nor the rise is held for: the intro releases
-    // the moment the card lands and Screen 2 simply follows it in flow.
+    // there), so neither the gap nor the rise is held for. The card is held
+    // instead, for MOBILE_DETAIL_HOLD_UNITS once it has landed: releasing the
+    // moment it landed let the same swipe that opened it carry straight on
+    // into Screen 2 before the card had been seen.
     // Re-read on every resize, which is also what a rotation or a breakpoint
     // crossing fires.
     const setIntroWrapHeight = () => {
@@ -483,7 +486,7 @@ export default function HomePage() {
       if (!wrap) return;
       const handoverPx = overlapEnabled()
         ? SCREEN2_GAP_PX + SCREEN2_RISE_UNITS * window.innerHeight
-        : 0;
+        : MOBILE_DETAIL_HOLD_UNITS * window.innerHeight;
       const extraPx =
         introUnitsPx(ENTRANCE_UNITS + INTERACTIVE_UNITS) + galleryGapPx() + handoverPx;
       wrap.style.height = `calc(100vh + ${extraPx}px)`;

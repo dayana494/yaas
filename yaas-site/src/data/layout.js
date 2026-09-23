@@ -115,8 +115,17 @@ export const FOOTER_TRIGGER_ID = 'footerPin';
 //
 // A multiplier rather than separate mobile unit counts, so the ratios between
 // the entrance, the interactive window and the rise stay exactly as they are
-// and only the total shortens.
-export const MOBILE_INTRO_SCALE = 0.6;
+// and only the total changes.
+//
+// 1 now — the same scroll per stage as desktop. At 0.6 a phone's swipe, whose
+// own momentum does not shrink with the page, ran through the entrance and
+// into the card before either had been seen.
+export const MOBILE_INTRO_SCALE = 1;
+
+// Below 1024, how long the landed flavor card holds before the intro releases
+// into Screen 2, in viewport heights (HomePage.jsx). Desktop holds for Screen
+// 2's own gap and rise instead.
+export const MOBILE_DETAIL_HOLD_UNITS = 0.5;
 
 // Viewport heights -> pixels, with that scale applied. Read live rather than
 // captured, so rotating a phone or crossing the breakpoint re-resolves it on

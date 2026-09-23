@@ -200,7 +200,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 42.3dvh 50px 0;
+  /* Sides on the site's content column (index.css), like every other block —
+     was the Figma frame's own 50px margins. */
+  padding: 42.3dvh var(--content-inline) 0;
 }
 
 /* The site's own body scale (16px / 14px), same as .brand-teaser-text was and
@@ -324,6 +326,17 @@
     --about-card-w: 100%;
   }
 
+  /* The pinned box is the viewport with the address bar collapsed (lvh), not
+     the dvh it read at load. On a phone the page loads with the bar out, so a
+     dvh box was measured short; once the bar folded away on scroll the screen
+     grew past it — which put the centred heading visibly above the middle of
+     the screen and left the closing paragraph further from the bottom than
+     the opening one is from the top. */
+  .about-brand-pin {
+    height: 100vh;
+    height: 100lvh;
+  }
+
   .about-brand-stage {
     flex-direction: column;
     align-items: stretch;
@@ -334,13 +347,11 @@
        than four hand-set numbers that would need redoing whenever the copy
        rewraps or the card grows. */
     justify-content: space-between;
-    /* A floor under space-between, not a replacement for it: where there is
-       height to spare the two gaps are still equal and larger than this, but
-       on a real phone's visible height they used to reach 0 and the closing
-       paragraph ran into the bottom of the photos. 40, the gap asked for
-       either side of the stack (the rotated cards' corners reach about 12px
-       past the deck's own box, so the ink clears the text by a little less). */
-    gap: 40px;
+    /* The gap either side of the photo stack's box. The rotated cards reach
+       about 13px past that box, so 53 here is the 40px asked for between the
+       photos themselves and the text. The stack fills the rest (see
+       .about-brand-deck), so this is the actual distance, not a floor. */
+    gap: 53px;
     padding: var(--block-gap) var(--content-gutter);
   }
 
@@ -354,28 +365,25 @@
     /* No margins of its own — space-between on the stage owns the two gaps
        around it now, and a margin here would make them unequal again. */
     margin: 0;
-    /* 84% so the whole STACK fits, not just one upright card.
-       The cards are rotated (6.58deg at the front) and skewed (2.37deg), and a
-       rotated rectangle is wider than its own box: worked out from this card's
-       aspect, the widest slot spans 1.19x its width, so 1/1.19 is what keeps
-       the outermost corner inside the container.
-       A percentage rather than the 100vw this was: vw counts the scrollbar
-       gutter, so on a 390 viewport it resolved 350 against a 335 container and
-       the card was over the edge before any rotation. % is the stage's own
-       content box, which is the thing it has to fit.
-       Height comes from the aspect directly here — --about-card-h is derived
-       from --about-card-w, and that cannot follow a percentage. */
-    /* 82, just under the 84 the rotation allowance permits — the stack reads as
-       the block's centrepiece. On a short screen the height cap below is what
-       binds instead. Every card position is a share of this box, so the stack
-       just scales. */
-    /* ...and capped by the height as well: on a short screen (measured at
-       375x667) even 74% left the column taller than the pin, so the gaps had
-       nothing to give. 446px is what the rest of the column needs — the stage's
-       two --block-gap paddings, both paragraphs, the two 40px gaps above and
-       the cards' rotation overhang — so the stack takes whatever height is left
-       and its width follows through the aspect. svh: fixed for the page's life. */
-    width: min(82%, calc((100svh - 446px) * 0.7923));
+    /* The stack takes exactly the height the column has left: the two
+       paragraphs sit on the stage's top and bottom padding, the gap either
+       side is exactly the 40px asked for, and everything in between is the
+       stack — sized by HEIGHT (flex), its width following through the card
+       aspect. So the gaps are 40 on any screen, rather than whatever a
+       width-derived height happened to leave.
+       Capped through its HEIGHT, not a max-width — a max-width let the width
+       stop while the flexed height carried on, and the box lost its aspect
+       (measured 311 x 472 at 390x844), which every card position is a share
+       of. The cap is 1/1.15 of the screen's width: at 1/1.1 (measured at
+       390x844) the front card touched the left edge of the screen and a back
+       card's corner ran 13px off the right one. On a screen tall enough to
+       reach the cap the stack stops growing and the leftover goes into the two
+       gaps equally — so the 40px is exact on shorter phones and a little more
+       on tall ones. */
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: calc(100vw / 1.15 / 0.7923);
+    width: auto;
     height: auto;
     aspect-ratio: 0.7923;
   }

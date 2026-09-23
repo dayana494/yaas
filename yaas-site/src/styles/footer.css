@@ -33,8 +33,8 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  /* 56px side margins in the mock. */
-  padding: 0 56px;
+  /* The site's content column (index.css) — was the mock's own 56px. */
+  padding: 0 var(--content-inline);
 }
 
 /* ---------- Wordmark ----------
@@ -42,13 +42,14 @@
    the mock's own height, then a scaleX onto its own width. Nothing here sets a
    size — a clamp() here would just fight it. */
 .site-footer-logo-row {
-  /* Full bleed back out of .site-footer-inner's 56px padding: in the mock the
-     wordmark is inset 50px from the frame while the pills below it start at 56,
-     so measuring it against the padded row would inset it twice (measured 1244
-     against the mock's own 1351 at this width). */
-  margin: 0 -56px;
+  /* Inside the content gutter like the pills below it, and the wordmark fills
+     the row (WORDMARK_WIDTH_RATIO = 1 in Footer.jsx), so its edges line up with
+     every other block's. */
+  margin: 0;
   width: auto;
-  text-align: center;
+  /* Left, not centre: the fit (Footer.jsx) scales the wordmark from its own
+     left edge to span the row, so it has to start on the row's left edge. */
+  text-align: left;
   line-height: 0.78;
 }
 
@@ -62,7 +63,10 @@
 
 .logo-text.site-footer-logo-giant {
   display: inline-block;
-  transform-origin: center center;
+  /* From the left edge: Footer.jsx fits the LETTERS to the row, and the
+     letter-spacing after the last one hangs off the right, so scaling about
+     the centre would push the letters off the row's left edge. */
+  transform-origin: left center;
   color: var(--ink);
   white-space: nowrap;
   line-height: 0.78;

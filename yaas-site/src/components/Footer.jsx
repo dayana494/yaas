@@ -22,7 +22,10 @@ gsap.registerPlugin(ScrollTrigger);
 // The wordmark's own box in Figma node 309:231: 1820 x 594.046 inside a
 // 1920-wide frame — 94.8% of the block's width, and 0.3264 as tall as it is
 // wide. Both numbers are the point of the fit below.
-const WORDMARK_WIDTH_RATIO = 1820 / 1920;
+// The mock inset it 50 of 1920 from the frame; the row now sits inside the
+// site's content gutter instead, and the wordmark spans all of it, so its edges
+// line up with every other block's.
+const WORDMARK_WIDTH_RATIO = 1;
 const WORDMARK_ASPECT = 594.046 / 1820;
 // And how much of the block's own height it is allowed to take (594 of 951 in
 // the mock). The width alone cannot decide this: on a wide, short window the
@@ -77,7 +80,14 @@ function useWordmarkFit(ref) {
       const heightFit = (PROBE * targetHeight) / probeHeight;
       el.style.fontSize = `${heightFit}px`;
 
-      const naturalWidth = el.getBoundingClientRect().width;
+      // The letters' own width: the box also carries the letter-spacing after
+      // the final S (0.04em from .logo-text), which fitting the box would count
+      // as wordmark — the letters came out that much short of the right edge
+      // and off-centre. The element is scaled from its left edge
+      // (footer.css), so the letters run exactly from the row's left edge to
+      // its right one and the trailing space simply hangs past it.
+      const trailing = parseFloat(getComputedStyle(el).letterSpacing) || 0;
+      const naturalWidth = el.getBoundingClientRect().width - trailing;
       if (!(naturalWidth > 0)) return;
       // Below 1024 the width is met with font-size too, never a scaleX: a
       // non-uniform transform on text is resampled after rasterisation and

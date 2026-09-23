@@ -371,20 +371,21 @@
        top of the screen that the gallery heading sits at, so the flavor
        name here and "5 flavors. one energy." there start on the same line,
        and the button ends as far from the bottom as the name is from the
-       top. space-between then divides what is left equally between the four
-       items, the can's stand-in included, so all three gaps are equal by
-       construction rather than by arithmetic that would need redoing every
-       time a description runs to another line. */
+       top.
+
+       Now a fixed 30px between each of the four items — title, the can's
+       stand-in, copy, CTA — with the group centred on the screen, rather
+       than space-between spreading whatever height was left into the gaps.
+       The can is placed on its stand-in (CanRig.jsx's detailAnchor), so it
+       follows the group wherever it lands. --detail-pad only guards the
+       edges on a screen too short for the group. */
     inset: 0;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    /* 5svh, down from the frame's 7.53: with the CTA still falling below the
-       fold on a real phone, the outer margins were the space to give — the
-       three gaps between the items come out of space-between and shrink with
-       whatever is left. */
+    justify-content: center;
+    gap: 30px;
     --detail-pad: 5svh;
-    padding: var(--detail-pad) 22px;
+    padding: var(--detail-pad) var(--content-gutter);
     max-width: none;
     text-align: center;
   }
