@@ -373,19 +373,18 @@
        and the button ends as far from the bottom as the name is from the
        top.
 
-       Now a fixed 30px between each of the four items — title, the can's
-       stand-in, copy, CTA — with the group centred on the screen, rather
-       than space-between spreading whatever height was left into the gaps.
-       The can is placed on its stand-in (CanRig.jsx's detailAnchor), so it
-       follows the group wherever it lands. --detail-pad only guards the
-       edges on a screen too short for the group. */
+       Now: the title at the top of the column (--detail-pad), the copy and
+       the CTA 30px apart where they would sit if all four items were stacked
+       30px apart and centred (--detail-bottom, measured in DetailScreen.jsx),
+       and the can's stand-in on auto margins between them — equal gaps from
+       the title to the can and from the can to the copy. The can is placed
+       on its stand-in (CanRig.jsx's detailAnchor), so it follows. */
     inset: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    gap: 30px;
+    justify-content: flex-start;
     --detail-pad: 5svh;
-    padding: var(--detail-pad) var(--content-gutter);
+    padding: var(--detail-pad) var(--content-gutter) var(--detail-bottom, var(--detail-pad));
     max-width: none;
     text-align: center;
   }
@@ -412,16 +411,20 @@
   .detail-can-space {
     display: block;
     flex: none;
-    height: calc((100% + 2 * var(--detail-pad)) * 0.2835);
+    height: calc((100% + var(--detail-pad) + var(--detail-bottom, var(--detail-pad))) * 0.2835);
+    margin-block: auto;
   }
 
   .detail-description {
-    /* No auto margin any more. That was what pushed this and the CTA to the
-       bottom of the column, clear of a can that had no box here; the
-       stand-in above gives the can one, so space-between places all four
-       items and an auto margin would only fight it. */
+    /* No vertical margins: the can's stand-in carries the auto margins that
+       place it between the title and this (see .detail-copy above). */
     margin: 0 auto;
     font-size: var(--text-body-sm);
+  }
+
+  .detail-cta {
+    /* The one fixed gap in the column — DetailScreen.jsx's DETAIL_GAP_PX. */
+    margin-top: 30px;
   }
 
   .detail-switcher-wrap {

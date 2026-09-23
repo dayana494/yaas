@@ -217,11 +217,17 @@ const DropText = forwardRef(function DropText(
         // visible only where a line happened to wrap. Between two inline-blocks
         // the same space renders normally. It is whitespace, so nothing is lost
         // by it not being part of the reveal.
+        // With no reveal to run (`still`), each piece is a plain inline span —
+        // not an inline-block on its own compositing layer. On iPhone WebKit
+        // balanced a heading made of those inline-blocks into one word per
+        // line for its first few lines ("WHY / YAAS / BEATS / ..."); it only
+        // ever showed once the reveal stopped hiding the first layout. Plain
+        // text wraps like any other heading. The accent class still applies.
         <Fragment key={i}>
           <span
-            data-drop-piece
+            data-drop-piece={still ? undefined : ''}
             className={[
-              'drop-text-piece',
+              still ? '' : 'drop-text-piece',
               splitBy === 'lines' ? 'drop-text-piece-block' : '',
               accentFrom != null && segment.start >= accentFrom ? accentClassName : '',
             ]

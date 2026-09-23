@@ -326,15 +326,15 @@
     --about-card-w: 100%;
   }
 
-  /* The pinned box is the viewport with the address bar collapsed (lvh), not
-     the dvh it read at load. On a phone the page loads with the bar out, so a
-     dvh box was measured short; once the bar folded away on scroll the screen
-     grew past it — which put the centred heading visibly above the middle of
-     the screen and left the closing paragraph further from the bottom than
-     the opening one is from the top. */
+  /* The pinned box is the SMALL viewport (svh) — the screen with the
+     browser's bars showing, which is always fully visible. lvh (bars folded
+     away) was tried and left the closing paragraph under a bottom toolbar in
+     browsers that keep it on screen while scrolling (measured on a real
+     iPhone). The heading is centred in this box, so it is centred in what can
+     actually be seen. */
   .about-brand-pin {
     height: 100vh;
-    height: 100lvh;
+    height: 100svh;
   }
 
   .about-brand-stage {
@@ -352,7 +352,9 @@
        photos themselves and the text. The stack fills the rest (see
        .about-brand-deck), so this is the actual distance, not a floor. */
     gap: 53px;
-    padding: var(--block-gap) var(--content-gutter);
+    /* 50 top and bottom — the opening paragraph 30px higher than the
+       --block-gap (80) it had, and the closing one as far from the bottom. */
+    padding: 50px var(--content-gutter);
   }
 
   .about-brand-deck {
