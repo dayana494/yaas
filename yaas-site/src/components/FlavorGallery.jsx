@@ -4,6 +4,7 @@ import FlavorStripCard from './FlavorStripCard';
 import { FLAVORS } from '../data/flavors';
 import { GALLERY_HEADING } from '../data/flavorStories';
 import { asset } from '../data/assetUrl';
+import { onRealResize } from '../scroll/onRealResize';
 
 // "Try the Other Flavors" — the block that climbs up over the story section
 // above it. The climb itself is the site's shared rise transition: this
@@ -31,10 +32,10 @@ export default function FlavorGallery({ activeFlavorId, simpleMode }) {
     if (!track) return undefined;
     syncEdges();
     track.addEventListener('scroll', syncEdges, { passive: true });
-    window.addEventListener('resize', syncEdges);
+    const offSyncEdges = onRealResize(syncEdges);
     return () => {
       track.removeEventListener('scroll', syncEdges);
-      window.removeEventListener('resize', syncEdges);
+      offSyncEdges();
     };
   }, [syncEdges]);
 

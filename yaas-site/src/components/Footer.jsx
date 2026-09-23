@@ -15,6 +15,7 @@ import {
   sectionHref,
 } from '../data/navLinks';
 import { useSectionNav } from '../scroll/sectionNav';
+import { onRealResize } from '../scroll/onRealResize';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -80,12 +81,12 @@ function useWordmarkFit(ref) {
     }
 
     fit();
-    window.addEventListener('resize', fit);
+    const offFit = onRealResize(fit);
     // The wordmark is set in Soledago, which loads with font-display: swap — the
     // first fit above runs against the fallback's metrics and would otherwise
     // stand.
     document.fonts?.ready.then(fit).catch(() => {});
-    return () => window.removeEventListener('resize', fit);
+    return () => offFit();
   }, [ref]);
 }
 

@@ -7,6 +7,7 @@ import SiteHeader from './SiteHeader';
 import FlavorStoryScene from '../three/FlavorStoryScene';
 import { useHeroScale } from '../hooks/useHeroScale';
 import { mobilePinType, riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
+import { onRealResize } from '../scroll/onRealResize';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -195,10 +196,10 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
     const fonts = 'fonts' in document ? document.fonts.ready : Promise.resolve();
     fonts.finally(remeasure);
     remeasure();
-    window.addEventListener('resize', remeasure);
+    const offRemeasure = onRealResize(remeasure);
     return () => {
       cancelled = true;
-      window.removeEventListener('resize', remeasure);
+      offRemeasure();
     };
   }, [flavor.title]);
 

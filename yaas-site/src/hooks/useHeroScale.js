@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { onRealResize } from '../scroll/onRealResize';
 
 // The hero's fixed stage, shared by the homepage hero and every flavor detail
 // page's first screen.
@@ -41,8 +42,8 @@ export function useHeroScale() {
       root.style.setProperty('--hero-scale', String(scale));
     }
     update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    const offUpdate = onRealResize(update);
+    return () => offUpdate();
   }, []);
 }
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { onRealResize } from './onRealResize';
 
 // Shared "rise into place" transition — Screen 2's, kept as its own module
 // rather than inlined, so anything else that needs the same climb can reuse it
@@ -59,7 +60,7 @@ export function applyRise(el) {
 // replaces this module and leaves the old callback detached from the ticker
 // with no new one attached.
 //
-// So `attachRiseDriver` also recomputes on plain scroll and resize events,
+// So `attachRiseDriver` also recomputes on plain scroll and (real) resize events,
 // which fire regardless of GSAP's state, and — importantly — runs once
 // immediately, so a driver that starts late still corrects whatever the last
 // one left behind rather than inheriting it.
@@ -110,6 +111,7 @@ export function overlapEnabled() {
 export function attachRiseDriver(ticker, driveRise, { allWidths = false } = {}) {
   const mql = window.matchMedia(NARROW_QUERY);
   let attached = false;
+  let offResize = () => {};
 
   const attach = () => {
     if (attached) return;
@@ -117,14 +119,16 @@ export function attachRiseDriver(ticker, driveRise, { allWidths = false } = {}) 
     driveRise();
     ticker.add(driveRise);
     window.addEventListener('scroll', driveRise, { passive: true });
-    window.addEventListener('resize', driveRise);
+    // A real resize only (onRealResize): the address bar's own resizes land
+    // mid-scroll, where the scroll listener and the ticker already cover it.
+    offResize = onRealResize(driveRise);
   };
   const detach = () => {
     if (!attached) return;
     attached = false;
     ticker.remove(driveRise);
     window.removeEventListener('scroll', driveRise);
-    window.removeEventListener('resize', driveRise);
+    offResize();
     driveRise.reset?.();
   };
   const sync = () => (mql.matches && !allWidths ? detach() : attach());

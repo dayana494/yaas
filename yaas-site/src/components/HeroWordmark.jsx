@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Logo from './Logo';
+import { onRealResize } from '../scroll/onRealResize';
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
@@ -72,10 +73,10 @@ function useFillWidth(ref, enabled) {
     // runs. Worst case is one frame at the CSS-only (close, not pixel-exact
     // — see useFillWidth's own comment above) size before the fit snaps in.
     const raf = requestAnimationFrame(measure);
-    window.addEventListener('resize', refit);
+    const offRefit = onRealResize(refit);
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener('resize', refit);
+      offRefit();
     };
   }, [ref, enabled]);
 }
@@ -139,10 +140,10 @@ function useInkFitWidth(ref, enabled) {
     fonts.finally(() => {
       if (!cancelled) fit();
     });
-    window.addEventListener('resize', fit);
+    const offFit = onRealResize(fit);
     return () => {
       cancelled = true;
-      window.removeEventListener('resize', fit);
+      offFit();
       if (el) el.style.transform = '';
     };
   }, [ref, enabled]);

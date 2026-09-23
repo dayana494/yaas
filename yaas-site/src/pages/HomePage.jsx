@@ -28,6 +28,7 @@ import {
   overlapEnabled,
 } from '../scroll/riseTransition';
 import { SCROLL_TO_STATE, scrollToSection } from '../scroll/sectionNav';
+import { onRealResize, whenScrollIdle } from '../scroll/onRealResize';
 import {
   DETAIL_TRANSITION_DURATION,
   ENTRANCE_MIN_SECONDS,
@@ -322,19 +323,32 @@ export default function HomePage() {
     // wrong scroll position (measured ~930px early). Re-running the pass is
     // what keeps them honest; debounced, and on the next frame so
     // ScrollTrigger's own resize refresh has already settled the new layout.
+    //
+    // Only on a real resize (onRealResize): on a phone the address bar fires
+    // `resize` several times per scroll gesture, and re-running this pass for
+    // each one killed and recreated every pin on the page mid-scroll — the
+    // shake on real devices. And never mid-gesture even then (whenScrollIdle):
+    // this pass measures the document as if nothing were moving, and rebuilding
+    // the pins under an inertial scroll after a rotation would jolt every
+    // section the reader is looking at.
+    let cancelIdle = () => {};
     const onResize = () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
-        cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(correctPinStarts);
+        cancelIdle();
+        cancelIdle = whenScrollIdle(() => {
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(correctPinStarts);
+        });
       }, 250);
     };
-    window.addEventListener('resize', onResize);
+    const offResize = onRealResize(onResize);
 
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(resizeTimer);
-      window.removeEventListener('resize', onResize);
+      cancelIdle();
+      offResize();
     };
   }, []);
 
@@ -464,12 +478,19 @@ export default function HomePage() {
       wrap.style.height = `calc(100vh + ${extraPx}px)`;
     };
     setIntroWrapHeight();
+    // Same filtering as the pin-start pass above: a real resize only, applied
+    // once scrolling has stopped. The address bar is not a reason to resize
+    // the intro — GSAP doesn't refresh for it either, so the two stay in step.
     let introResizeTimer = 0;
+    let cancelIntroIdle = () => {};
     const onIntroResize = () => {
       clearTimeout(introResizeTimer);
-      introResizeTimer = setTimeout(setIntroWrapHeight, 250);
+      introResizeTimer = setTimeout(() => {
+        cancelIntroIdle();
+        cancelIntroIdle = whenScrollIdle(setIntroWrapHeight);
+      }, 250);
     };
-    window.addEventListener('resize', onIntroResize);
+    const offIntroResize = onRealResize(onIntroResize);
 
     // Top corners round off while a section is mid-climb and flatten out as it
     // finishes covering — the giveaway detail of this transition, and only
@@ -532,7 +553,8 @@ export default function HomePage() {
 
     return () => {
       clearTimeout(introResizeTimer);
-      window.removeEventListener('resize', onIntroResize);
+      cancelIntroIdle();
+      offIntroResize();
       entranceTrigger.kill();
       entranceProgress.kill();
       detachRiseDriver();
