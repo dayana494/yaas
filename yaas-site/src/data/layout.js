@@ -15,6 +15,26 @@ export const ENTRANCE_UNITS = 1;
 export const INTERACTIVE_UNITS = 1;
 export const INTRO_TOTAL_VH_UNITS = 1 + ENTRANCE_UNITS + INTERACTIVE_UNITS;
 
+// The gallery -> detail card flight is scrubbed across INTERACTIVE_UNITS of
+// scroll, but it still plays out in real time whenever the page scrolls itself
+// through that window (the snap after a partial scroll, a tap on the centre
+// can): this is how long the whole window takes then. Kept from the timed
+// GSAP transition it replaced, so those cases move exactly as that one did.
+export const DETAIL_TRANSITION_DURATION = 1.1;
+
+// Dead scroll between the hero -> gallery entrance and the gallery -> card
+// flight, in the same scaled units: nothing on the intro reacts to it, the page
+// just scrolls. It is what lets one scroll gesture finish the entrance and stop
+// on a usable gallery, instead of carrying straight on into the card.
+export const GALLERY_SETTLE_GAP_UNITS = 0.5;
+
+// The shortest time the hero -> gallery entrance can play out in, however fast
+// the scroll. Its visible progress follows the scroll 1:1 up to that speed and
+// is rate-limited beyond it. Unlimited, a fast flick crossed the whole entrance
+// in a frame or two and the cans that travel furthest (lemon and apple, which
+// slide in from off the arc) jumped to their slots instead of flying there.
+export const ENTRANCE_MIN_SECONDS = 1;
+
 // Screen 2 rises up over the still-pinned intro to cover it (the
 // state-of-space transition), rather than the intro scrolling away to reveal
 // it. Both numbers extend .intro-wrap's own pin, so the intro is held still

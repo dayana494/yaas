@@ -28,12 +28,14 @@ import {
 } from '../scroll/riseTransition';
 import { SCROLL_TO_STATE, scrollToSection } from '../scroll/sectionNav';
 import {
+  DETAIL_TRANSITION_DURATION,
+  ENTRANCE_MIN_SECONDS,
   ENTRANCE_UNITS,
+  GALLERY_SETTLE_GAP_UNITS,
   introUnitsPx,
   INTERACTIVE_UNITS,
   SCREEN2_GAP_PX,
   SCREEN2_RISE_UNITS,
-  INTRO_TRIGGER_ID,
   SCREEN2_ARC_TRIGGER_ID,
   SCENARIO_CARDS_TRIGGER_ID,
   ADVANTAGES_TRIGGER_ID,
@@ -45,14 +47,39 @@ gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 const DetailScreen = lazy(() => import('../components/DetailScreen'));
 
-const WHEEL_THRESHOLD = 22;
-const SWIPE_THRESHOLD = 60;
-const GESTURE_LOCK_MS = 1200;
-// pinSpacing:true (the default — see the pin's own ScrollTrigger below)
-// means GSAP reserves ENTRANCE_UNITS+INTERACTIVE_UNITS worth of scroll room
-// itself with its own spacer; nothing in index.css has to add up to this
-// total. Both constants (plus the section's own 1-viewport visible height)
-// live in data/layout.js, shared with ScenarioCardsIsometric.jsx.
+const DETAIL_EDGE_PX = 2;
+
+// Walks a shown 0..1 progress toward whatever set() last asked for, on the GSAP
+// ticker, at no more than one full sweep per `minSeconds`. Below that speed it
+// is one frame behind the scroll and otherwise exact; above it, a flick still
+// plays the whole motion instead of jumping to its end.
+function createRateLimitedProgress(minSeconds, apply) {
+  let target = 0;
+  let shown = 0;
+  let ticking = false;
+  const step = (_time, deltaMs) => {
+    const diff = target - shown;
+    const maxStep = deltaMs / 1000 / minSeconds;
+    shown = Math.abs(diff) <= maxStep ? target : shown + Math.sign(diff) * maxStep;
+    apply(shown);
+    if (shown === target) {
+      gsap.ticker.remove(step);
+      ticking = false;
+    }
+  };
+  return {
+    set(next) {
+      target = next;
+      if (ticking || target === shown) return;
+      ticking = true;
+      gsap.ticker.add(step);
+    },
+    kill() {
+      gsap.ticker.remove(step);
+      ticking = false;
+    },
+  };
+}
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
@@ -75,12 +102,22 @@ export default function HomePage() {
   const sceneRef = useRef(null);
   const introWrapRef = useRef(null);
   const introPinRef = useRef(null);
-  // Mirrors the --h2g/`.is-entrance-done` state App.jsx also writes onto
-  // introPinRef's DOM node — kept as a plain ref (not React state) so the
-  // wheel/touch gesture handlers below can read it every event without
-  // re-subscribing, and so scroll-driven updates never trigger a React
-  // re-render (this can fire every frame while scrubbing).
+  // Mirrors the `.is-entrance-done` class written onto introPinRef's DOM node,
+  // so scroll-driven updates only touch the class when it actually flips.
   const entranceDoneRef = useRef(false);
+  // Last progress each intro scrub reported, and which side of the detail
+  // window's two thresholds it is on — refs, not state, since both scrubs
+  // fire every frame while scrolling.
+  const entranceProgressRef = useRef(0);
+  const detailProgressRef = useRef(0);
+  const detailStartedRef = useRef(false);
+  const detailDoneRef = useRef(false);
+  const detailTriggerRef = useRef(null);
+  // The detail window's own scroll progress, and the function that applies
+  // it — held back at 0 until the entrance has visibly finished, since the
+  // entrance's smoothing can still be landing after the scroll has moved on.
+  const detailScrollProgressRef = useRef(0);
+  const applyDetailRef = useRef(null);
   const isMobile = useIsMobile();
 
   // Set by a section link clicked on another page (see scroll/sectionNav.js).
@@ -94,6 +131,8 @@ export default function HomePage() {
   const [displayFlavor, setDisplayFlavor] = useState(DEFAULT_FLAVOR_INDEX);
   const [detailTextVisible, setDetailTextVisible] = useState(false);
   const [heroTextVisible, setHeroTextVisible] = useState(false);
+  const activeFlavorRef = useRef(activeFlavor);
+  activeFlavorRef.current = activeFlavor;
   // No preloader and no fade-in: the page paints as soon as it can. The
   // `loaded` flag and the rAF that flipped it existed only to drive the
   // whole-page opacity transition, which had to go — see the note in
@@ -164,11 +203,12 @@ export default function HomePage() {
         return box.getBoundingClientRect().top + window.scrollY;
       };
 
-      // .intro-wrap's own spacer is what everything below sits on top of, and
-      // its height comes from an `end` function that may not have been
-      // evaluated yet this frame — settle it first so the very first
-      // measurement below isn't taken against a short spacer.
-      ScrollTrigger.getById(INTRO_TRIGGER_ID)?.refresh();
+      // EXPERIMENT (sticky-intro-screen2): .intro-wrap's height is now set
+      // directly in the entrance effect above (plain CSS sticky has no
+      // spacer of its own), so there is no INTRO_TRIGGER_ID pin left to
+      // refresh here — arcEl's own 'top top' below now measures against a
+      // plain, already-correct document position instead of one that used
+      // to depend on an earlier pin's spacer having settled first.
 
       // Screen 2's arc gallery is now the first pin after .intro-wrap, so it
       // inherits the same unreliable 'top top' resolution and gets corrected
@@ -313,38 +353,53 @@ export default function HomePage() {
     [screen, activeFlavor]
   );
 
+  // A tap on the centre can opens its card by scrolling to the end of the
+  // detail window, so the tap and a scroll land in the same place and
+  // scrolling back up undoes either. Linear on purpose: the scrub applies the
+  // flight's own easing, so a linear scroll plays it exactly as the old timed
+  // transition did. autoKill hands control straight back if the reader scrolls.
+  // The dead gap in front of the window is skipped outright — nothing on screen
+  // changes across it, and gliding through it would only delay the flight.
   const handleEnter = useCallback(() => {
-    setScreen((prev) => (prev === 'slider' ? 'detail' : prev));
+    const trigger = detailTriggerRef.current;
+    if (!trigger) return;
+    if (window.scrollY < trigger.start) window.scrollTo(0, trigger.start);
+    gsap.to(window, {
+      duration: DETAIL_TRANSITION_DURATION,
+      ease: 'none',
+      scrollTo: { y: trigger.end, autoKill: true },
+    });
   }, []);
-
-  const handleEnterDetailComplete = useCallback(() => {
-    setDisplayFlavor(activeFlavor);
-    setDetailTextVisible(true);
-  }, [activeFlavor]);
 
   const handleFlavorMidSpin = useCallback((i) => {
     setDisplayFlavor(i);
-    setDetailTextVisible(true);
+    if (detailDoneRef.current) setDetailTextVisible(true);
   }, []);
 
   const handleSettle = useCallback((i) => {
     setActiveFlavor(i);
   }, []);
 
-  const handleExitDetailStart = useCallback(() => {
-    setDetailTextVisible(false);
-  }, []);
-
-  const handleExitDetailComplete = useCallback(() => {
-    setScreen('slider');
+  // Re-applies both scrubs whenever the lazily-mounted scene attaches: any
+  // progress reported before it existed would otherwise be lost until the
+  // next scroll event (e.g. a reload that restores the scroll position).
+  const attachScene = useCallback((api) => {
+    sceneRef.current = api;
+    if (!api) return;
+    api.setEntranceProgress(entranceProgressRef.current);
+    api.setDetailProgress(detailProgressRef.current);
   }, []);
 
   // Hero -> gallery entrance. Screens 1+2 are merged into one section
   // (.intro-wrap/.intro-pin, see index.css) so the hero can visibly fade
   // away while the *same* cluster cans flip into their gallery arc slot
   // underneath it (hero and gallery now share one Canvas/camera — see
-  // Scene.jsx/CanRig.jsx). Scrubbed 1:1 to scroll position (scrub: true, no
-  // easing/lag of its own) and fully reversible by scrolling back up.
+  // Scene.jsx/CanRig.jsx). Scrubbed from scroll position, 1:1 up to the speed
+  // at which the whole entrance would take ENTRANCE_MIN_SECONDS and no faster,
+  // so however hard the flick, the cans still fly the whole way; fully
+  // reversible by scrolling back up. Stopping
+  // part-way snaps on to whichever end the reader was heading for, so one
+  // gesture from the hero always lands on the finished gallery.
   // Every tick this drives two independent surfaces:
   //  - the hero DOM's fade/blur and the gallery background's fade-in, both
   //    pure CSS via the --h2g custom property set directly on the pin node
@@ -357,14 +412,16 @@ export default function HomePage() {
     if (!pin) return undefined;
 
     function applyEntrance(t) {
+      entranceProgressRef.current = t;
       pin.style.setProperty('--h2g', String(t));
       pin.classList.toggle('is-entrance-active', t > 0.001);
       const done = t >= 1;
+      sceneRef.current?.setEntranceProgress(t);
       if (done !== entranceDoneRef.current) {
         entranceDoneRef.current = done;
         pin.classList.toggle('is-entrance-done', done);
+        applyDetailRef.current?.(done ? detailScrollProgressRef.current : 0);
       }
-      sceneRef.current?.setEntranceProgress(t);
     }
 
     // Applied once up front so the gallery cans/background start fully
@@ -402,15 +459,38 @@ export default function HomePage() {
     // pause, then SCREEN2_RISE_UNITS while Screen 2 climbs up over this
     // still-pinned screen and covers it (see .screen2's own negative margin,
     // which lines the end of this pin up with the top of that section).
-    const pinTrigger = ScrollTrigger.create({
-      id: INTRO_TRIGGER_ID,
-      trigger: introWrapRef.current,
-      start: 'top top',
-      end: () =>
-        `+=${introUnitsPx(ENTRANCE_UNITS + INTERACTIVE_UNITS + SCREEN2_RISE_UNITS) + SCREEN2_GAP_PX}`,
-      pin,
-      invalidateOnRefresh: true,
-    });
+    // EXPERIMENT (branch experiment/sticky-intro-screen2): .intro-pin is
+    // plain CSS `position: sticky` now (see index.css) instead of a GSAP
+    // pin, so nothing here creates a ScrollTrigger for it — sticky handles
+    // "hold in place, then release into Screen2" natively. What GSAP's
+    // pinSpacing used to size automatically (a spacer exactly ENTRANCE_UNITS +
+    // GALLERY_SETTLE_GAP_UNITS + INTERACTIVE_UNITS + SCREEN2_RISE_UNITS + gap tall,
+    // on top of the pin's own 100vh box) has to be set explicitly here
+    // instead: sticky's own "how long does it stick" range is just
+    // wrapper-height minus the sticky element's own height, so the wrapper
+    // needs to actually be that tall.
+    //
+    // The rise is left out of introUnitsPx's mobile scaling: Screen 2 climbs
+    // by plain scrolling (its -100vh margin), so it always takes a full
+    // viewport of scroll. A scaled-down budget never shortened it, it only
+    // started it early — below 1024 that put Screen 2 over the flavor card
+    // before the card's scroll-scrubbed flight had even landed.
+    const setIntroWrapHeight = () => {
+      const wrap = introWrapRef.current;
+      if (!wrap) return;
+      const extraPx =
+        introUnitsPx(ENTRANCE_UNITS + GALLERY_SETTLE_GAP_UNITS + INTERACTIVE_UNITS) +
+        SCREEN2_GAP_PX +
+        SCREEN2_RISE_UNITS * window.innerHeight;
+      wrap.style.height = `calc(100vh + ${extraPx}px)`;
+    };
+    setIntroWrapHeight();
+    let introResizeTimer = 0;
+    const onIntroResize = () => {
+      clearTimeout(introResizeTimer);
+      introResizeTimer = setTimeout(setIntroWrapHeight, 250);
+    };
+    window.addEventListener('resize', onIntroResize);
 
     // Top corners round off while a section is mid-climb and flatten out as it
     // finishes covering — the giveaway detail of this transition, and only
@@ -443,132 +523,115 @@ export default function HomePage() {
     };
     const detachRiseDriver = attachRiseDriver(gsap.ticker, driveAll);
 
+    // A speed limit rather than GSAP's numeric scrub, whose ease-out catch-up
+    // still spent most of the flight in its first few frames, and which would
+    // have lagged every slow, careful scroll too.
+    const entranceProgress = createRateLimitedProgress(ENTRANCE_MIN_SECONDS, applyEntrance);
+
     const entranceTrigger = ScrollTrigger.create({
       trigger: introWrapRef.current,
       start: 'top top',
       end: () => `+=${introUnitsPx(ENTRANCE_UNITS)}`,
-      scrub: true,
       invalidateOnRefresh: true,
-      onUpdate: (self) => applyEntrance(self.progress),
+      onUpdate: (self) => entranceProgress.set(self.progress),
+      snap: {
+        snapTo: 1,
+        directional: true,
+        delay: 0.08,
+        duration: { min: 0.2, max: DETAIL_TRANSITION_DURATION },
+        ease: 'none',
+      },
     });
 
     return () => {
-      pinTrigger.kill();
+      clearTimeout(introResizeTimer);
+      window.removeEventListener('resize', onIntroResize);
       entranceTrigger.kill();
+      entranceProgress.kill();
       detachRiseDriver();
     };
   }, []);
 
-  // The carousel/detail app is a normal in-flow section (.intro-wrap) whose
-  // inner .intro-pin (pinned via ScrollTrigger above) holds in place for two
-  // back-to-back scroll windows: first the hero->gallery
-  // entrance above, then this wheel/touch slider<->detail sub-navigation.
-  // `entranceDoneRef`
-  // keeps the latter from firing mid-entrance (before the gallery cans have
-  // even finished settling); otherwise this is unchanged from before the
-  // merge — scrolling past the pinned section releases it and continues
-  // normally, and scrolling back up releases it the same way, so the page
-  // always behaves like one continuously scrollable site. A short lock
-  // avoids re-triggering mid-animation.
+  // Gallery -> flavor detail card, driven by the same page scroll as the
+  // entrance above and Screen 2's rise below, with no wheel/touch
+  // interception: an INTERACTIVE_UNITS window maps straight onto the card's
+  // flight (CanRig's setDetailProgress), reversibly. It starts
+  // GALLERY_SETTLE_GAP_UNITS after the entrance ends — dead scroll in which
+  // nothing reacts, so the gesture that brought the gallery in can run out
+  // there instead of opening the card — and it stays at 0 until the smoothed
+  // entrance has visibly landed, however far the scroll has already gone.
+  // introUnitsPx keeps the shorter mobile budget, like every other intro stage.
+  //
+  // The DOM follows the same progress through two thresholds, at the moments
+  // the timed transition used to flip them: the gallery UI hides as soon as
+  // the flight starts, and the card's copy shows only once the can has landed
+  // (and hides the moment it leaves).
+  //
+  // Screen 2's rise now simply follows this window, so the old mobile-only
+  // easeToScreen2() jump (which skipped a viewport of static detail card) has
+  // nothing left to skip: that viewport is the flight itself now, and the
+  // rise starts SCREEN2_GAP_PX after the can lands.
+  //
+  // Snap finishes a flight the reader stopped part-way through, in the
+  // direction they were scrolling, so the can is never left hanging between
+  // the two: the page glides the rest of the window and the scrub turns that
+  // into the same flight a full scroll produces. It only acts once scrolling
+  // has stopped inside this window, so it can never overlap Screen 2's rise.
   useEffect(() => {
-    let locked = false;
-    function lock() {
-      locked = true;
-      setTimeout(() => (locked = false), GESTURE_LOCK_MS);
-    }
-    function isPinned() {
-      const el = introWrapRef.current;
-      if (!el) return false;
-      const rect = el.getBoundingClientRect();
-      return rect.top <= 0 && rect.bottom >= window.innerHeight;
-    }
-    // Scrolling DOWN out of the detail view used to have no handler at all: it
-    // fell through to native scroll, which then had to cross the rest of the
-    // interactive window before Screen 2's rise even began — the detail view is
-    // pinned and static for all of it, so it read as a dead zone of up to a
-    // full viewport plus SCREEN2_GAP_PX (measured from the pin geometry: the
-    // rise starts at ENTRANCE+INTERACTIVE units in, and detail is entered at
-    // ENTRANCE). This eases straight to that point instead, so the next thing
-    // the reader sees after letting go is Screen 2 climbing.
-    //
-    // The mirror of exitToSlider() for the upward direction, and reversible the
-    // same way: it lands while the intro is still pinned, so scrolling back up
-    // hits the existing detail -> slider branch below exactly as before.
-    //
-    // Mobile/tablet only, by request — both call sites are gated on isMobile.
-    // The dead zone is the same on desktop, but this is a scroll-feel change
-    // rather than a layout one and desktop is staying exactly as it was; there
-    // a downward wheel in the detail view keeps falling through to native
-    // scroll. The gate has to live on the branch conditions rather than in
-    // here: those branches preventDefault() before calling this, so a check at
-    // this level would swallow the event and leave desktop dead-stopped, which
-    // is worse than the fall-through it has today.
-    function easeToScreen2() {
-      const pinStart = ScrollTrigger.getById(INTRO_TRIGGER_ID)?.start ?? 0;
-      const y =
-        pinStart + introUnitsPx(ENTRANCE_UNITS + INTERACTIVE_UNITS) + SCREEN2_GAP_PX;
-      gsap.to(window, { duration: 0.7, ease: 'power2.inOut', scrollTo: { y } });
-    }
-
-    function onWheel(e) {
-      if (!entranceDoneRef.current || !isPinned()) return;
-      // While locked, freeze scroll entirely instead of just ignoring the
-      // event — a bare early return here left every wheel tick fired during
-      // the lock window (rapid trackpad swipes fire many in quick
-      // succession, well within GESTURE_LOCK_MS) completely unhandled, so
-      // the browser scrolled normally through them. That could burn through
-      // the whole interactive budget before React had even rendered the
-      // detail screen the first tick just triggered, so scrolling past the
-      // gallery would land straight on Screen2 with the flavor detail view
-      // never actually seen.
-      if (locked) {
-        e.preventDefault();
-        return;
+    function applyDetail(t) {
+      detailProgressRef.current = t;
+      sceneRef.current?.setDetailProgress(t);
+      const started = t > 0;
+      if (started !== detailStartedRef.current) {
+        detailStartedRef.current = started;
+        setScreen(started ? 'detail' : 'slider');
       }
-      if (screen === 'slider' && e.deltaY > WHEEL_THRESHOLD) {
-        e.preventDefault();
-        lock();
-        handleEnter();
-      } else if (isMobile && screen === 'detail' && e.deltaY > WHEEL_THRESHOLD) {
-        e.preventDefault();
-        lock();
-        easeToScreen2();
-      } else if (screen === 'detail' && e.deltaY < -WHEEL_THRESHOLD) {
-        e.preventDefault();
-        lock();
-        sceneRef.current?.exitToSlider();
+      const done = t >= 1;
+      if (done !== detailDoneRef.current) {
+        detailDoneRef.current = done;
+        if (done) setDisplayFlavor(activeFlavorRef.current);
+        setDetailTextVisible(done);
       }
     }
+    // Same speed limit as the entrance, at the old timed flight's own length:
+    // a normal scroll is followed 1:1, but the card can't pop in whole — which
+    // matters most when the entrance lands with the scroll already deep in
+    // this window and the card's progress is released all at once.
+    const detailProgress = createRateLimitedProgress(DETAIL_TRANSITION_DURATION, applyDetail);
+    applyDetailRef.current = (t) => detailProgress.set(t);
 
-    let touchStartY = null;
-    function onTouchStart(e) {
-      touchStartY = e.touches[0].clientY;
-    }
-    function onTouchEnd(e) {
-      if (touchStartY == null || locked || !entranceDoneRef.current || !isPinned()) return;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      touchStartY = null;
-      if (screen === 'slider' && dy < -SWIPE_THRESHOLD) {
-        lock();
-        handleEnter();
-      } else if (isMobile && screen === 'detail' && dy < -SWIPE_THRESHOLD) {
-        lock();
-        easeToScreen2();
-      } else if (screen === 'detail' && dy > SWIPE_THRESHOLD) {
-        lock();
-        sceneRef.current?.exitToSlider();
-      }
-    }
+    const trigger = ScrollTrigger.create({
+      trigger: introWrapRef.current,
+      start: () => `top+=${introUnitsPx(ENTRANCE_UNITS + GALLERY_SETTLE_GAP_UNITS)} top`,
+      end: () => `+=${introUnitsPx(INTERACTIVE_UNITS)}`,
+      scrub: true,
+      invalidateOnRefresh: true,
+      // A couple of pixels of dead band at each end: scroll positions come
+      // back fractional on scaled displays (and after a programmatic scroll),
+      // and landing 0.4px past the gallery must not already count as leaving.
+      onUpdate: (self) => {
+        const band = DETAIL_EDGE_PX / Math.max(1, self.end - self.start);
+        const p = self.progress;
+        detailScrollProgressRef.current = p <= band ? 0 : p >= 1 - band ? 1 : p;
+        detailProgress.set(entranceDoneRef.current ? detailScrollProgressRef.current : 0);
+      },
+      snap: {
+        snapTo: 1,
+        directional: true,
+        delay: 0.08,
+        duration: { min: 0.2, max: DETAIL_TRANSITION_DURATION },
+        ease: 'none',
+      },
+    });
+    detailTriggerRef.current = trigger;
 
-    window.addEventListener('wheel', onWheel, { passive: false });
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
     return () => {
-      window.removeEventListener('wheel', onWheel);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchend', onTouchEnd);
+      trigger.kill();
+      detailProgress.kill();
+      detailTriggerRef.current = null;
+      applyDetailRef.current = null;
     };
-  }, [screen, handleEnter, isMobile]);
+  }, []);
 
   const backgroundFlavor = FLAVORS[activeFlavor];
 
@@ -603,17 +666,13 @@ export default function HomePage() {
             <HeroWordmark />
 
             <Scene
-              ref={sceneRef}
-              screen={screen}
+              ref={attachScene}
               activeFlavor={activeFlavor}
               isMobile={isMobile}
               armed
               onEntranceStart={handleHeroEntranceStart}
-              onEnterDetailComplete={handleEnterDetailComplete}
               onFlavorMidSpin={handleFlavorMidSpin}
               onSettle={handleSettle}
-              onExitDetailStart={handleExitDetailStart}
-              onExitDetailComplete={handleExitDetailComplete}
             />
 
             <div className="ui-layer">

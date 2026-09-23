@@ -2,20 +2,26 @@ import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import gsap from 'gsap';
 import { SECTION_ABOUT, SECTION_FLAVORS } from '../data/navLinks';
+import { ENTRANCE_UNITS, introUnitsPx } from '../data/layout';
 
-// Sections whose document top is not where they visually begin, in viewports.
+// Sections whose document top is not where they visually begin, in pixels.
 //
-// Both are cases of this page's handover pattern, where a section is pulled up
-// by a viewport (margin-top: -100dvh) so the block above can travel across it
-// and uncover it. Aiming at their real top therefore lands a full screen early,
-// inside the previous block: measured at 1440, the element under the middle of
-// the screen at #about's own top is .faq-list, and only one viewport further
-// down does it become .about-brand-deck. #flavors is the same story for a
-// different reason — it is the second screen of the intro pin, not its start.
-const VIEWPORT_OFFSET = {
-  [SECTION_FLAVORS]: 1,
-  [SECTION_ABOUT]: 1,
-};
+// #about is a case of this page's handover pattern, where a section is pulled
+// up by a viewport (margin-top: -100dvh) so the block above can travel across
+// it and uncover it. Aiming at its real top therefore lands a full screen
+// early, inside the previous block: measured at 1440, the element under the
+// middle of the screen at #about's own top is .faq-list, and only one viewport
+// further down does it become .about-brand-deck.
+//
+// #flavors is the gallery, which sits at the end of the intro's scroll-scrubbed
+// entrance rather than at its start. That entrance is shorter below 1024
+// (introUnitsPx), and a short dead gap after it leads into the flavor card's
+// own scrubbed flight — so it is aimed at exactly the end of the entrance.
+function sectionOffsetPx(hash) {
+  if (hash === SECTION_FLAVORS) return introUnitsPx(ENTRANCE_UNITS);
+  if (hash === SECTION_ABOUT) return window.innerHeight;
+  return 0;
+}
 
 // Smooth-scrolls the homepage to a section, and reports whether it could.
 //
@@ -31,7 +37,7 @@ export function scrollToSection(hash) {
   if (!el) return false;
   const box = el.parentElement?.classList.contains('pin-spacer') ? el.parentElement : el;
   let y = box.getBoundingClientRect().top + window.scrollY;
-  y += (VIEWPORT_OFFSET[hash] ?? 0) * window.innerHeight;
+  y += sectionOffsetPx(hash);
   gsap.to(window, { duration: 1, ease: 'power2.inOut', scrollTo: { y } });
   return true;
 }

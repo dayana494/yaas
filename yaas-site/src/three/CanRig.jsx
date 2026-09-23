@@ -72,8 +72,13 @@ const LERP_SPEED = 6;
 // 0.8s they sit within e^-4.8 (~0.8%) of it, which on a 0.16rad tilt is well
 // under a tenth of a degree. See useRenderHold.
 const SETTLE_WINDOW = 0.8;
-const TRANSITION_DURATION = 1.1;
 const OFFSCREEN_PUSH = 3.2;
+// The curves of the timed gallery <-> detail timelines this scrub replaced,
+// now applied to scroll progress instead of elapsed time. Pushing the other
+// cans out with an ease-in means the way back reads as the ease-out the old
+// exit timeline used, without a second curve.
+const heroEase = gsap.parseEase('power3.inOut');
+const pushEase = gsap.parseEase('power2.in');
 // Extra repeat cycles of the 5 flavors shown further out in the arc, purely
 // decorative, so the slider reads as an endless loop (à la ciaoenergy.com)
 // instead of stopping dead after the 5th can.
@@ -91,18 +96,7 @@ const DIM = new THREE.Color(0.72, 0.72, 0.75);
 const tmpColor = new THREE.Color();
 
 const CanRig = forwardRef(function CanRig(
-  {
-    screen,
-    activeFlavor,
-    isMobile,
-    onEnterDetailComplete,
-    onFlavorMidSpin,
-    onSettle,
-    onExitDetailStart,
-    onExitDetailComplete,
-    armed = true,
-    onEntranceStart,
-  },
+  { activeFlavor, isMobile, onFlavorMidSpin, onSettle, armed = true, onEntranceStart },
   ref
 ) {
   const { camera } = useThree();
@@ -167,12 +161,15 @@ const CanRig = forwardRef(function CanRig(
 
   const continuousIndex = useRef(activeFlavor);
   const draggingRef = useRef(false);
-  const screenRef = useRef(screen);
   const heroIndexRef = useRef(activeFlavor);
-  const transitioningRef = useRef(false);
+  const activeFlavorRef = useRef(activeFlavor);
+  // 0 = gallery, 1 = detail card; scroll-scrubbed via setDetailProgress.
+  const detailProgressRef = useRef(0);
+  // Extra Y rotation of the hero can while a flavor switch spins it.
+  const spinAngleRef = useRef(0);
+  const spinTweenRef = useRef(null);
   const pointerTarget = useRef({ x: 0, y: 0 });
   const pointerCurrent = useRef({ x: 0, y: 0 });
-  const prevScreen = useRef(screen);
   const prevFlavor = useRef(activeFlavor);
   // Entrance progress lives in a ref (not applied directly from the ref API
   // below) and gets *read* every useFrame tick instead — CanRig mounts only
@@ -191,7 +188,7 @@ const CanRig = forwardRef(function CanRig(
   const posed = useRef(false);
   const started = useRef(false);
 
-  screenRef.current = screen;
+  activeFlavorRef.current = activeFlavor;
 
   // Pose the 3 hero-linked cans at their off-stage launch point the moment
   // their groups exist, so there's no visible jump from "wherever r3f
@@ -286,163 +283,111 @@ const CanRig = forwardRef(function CanRig(
     materials[index].color.copy(WHITE);
   }
 
-  function runEnterDetailTransition(heroIndex) {
-    heroIndexRef.current = heroIndex;
-    transitioningRef.current = true;
-    resetMaterialColor(heroIndex);
-    ghosts.forEach(({ ref }) => {
-      if (ref.current) ref.current.visible = false;
-    });
-
-    const heroGroup = groupRefs[heroIndex].current;
-    const anchor = detailAnchor(isMobile);
-    const target = ndcToWorldAtZ(camera, anchor.x, anchor.y, 0);
-
-    // onUpdate on the timeline rather than on each child tween: it fires once
-    // per rAF tick for as long as anything in the timeline is running, which is
-    // exactly the set of frames that need drawing. The children tween object
-    // properties directly and carry no onUpdate of their own.
-    const tl = gsap.timeline({
-      onUpdate: keepAlive,
-      onComplete: () => {
-        transitioningRef.current = false;
-        onEnterDetailComplete?.();
-        invalidate();
-      },
-    });
-
-    const detailScale = isMobile ? DETAIL_SCALE.mobile : DETAIL_SCALE.desktop;
-    tl.to(heroGroup.position, { x: target.x, y: target.y, z: 0, duration: TRANSITION_DURATION, ease: 'power3.inOut' }, 0);
-    tl.to(heroGroup.rotation, { y: 0, z: DETAIL_TILT_Z, duration: TRANSITION_DURATION, ease: 'power3.inOut' }, 0);
-    tl.to(
-      heroGroup.scale,
-      { x: detailScale, y: detailScale, z: detailScale, duration: TRANSITION_DURATION, ease: 'power3.inOut' },
-      0
-    );
-
-    // Everyone else slides sideways by the same amount, at the same time —
-    // a uniform push keeps their spacing constant in flight, instead of
-    // easing toward one shared endpoint (which closes the gaps between them
-    // as the nearer ones catch up to the farther ones).
-    FLAVORS.forEach((_, i) => {
-      if (i === heroIndex) return;
-      const group = groupRefs[i].current;
-      if (!group) return;
-      const d = wrappedDelta(i, continuousIndex.current);
-      const direction = Math.sign(d) || 1;
-      tl.to(
-        group.position,
-        {
-          x: group.position.x + direction * OFFSCREEN_PUSH,
-          duration: TRANSITION_DURATION,
-          ease: 'power2.in',
-          onComplete: () => (group.visible = false),
-        },
-        0
-      );
-    });
+  // Leaving the gallery: fixes which can flies out to the card (the active
+  // flavor) and makes sure the carousel is heading for that can's slot, so
+  // the pose below starts from where the gallery actually is and comes back
+  // to a settled carousel. A drag cut short by the scroll is dropped rather
+  // than committed — its settle would otherwise re-pick the flavor mid-flight.
+  function beginDetail() {
+    const hero = activeFlavorRef.current;
+    heroIndexRef.current = hero;
+    draggingRef.current = false;
+    resetMaterialColor(hero);
+    const target = nearestTarget(continuousIndex.current, hero);
+    if (Math.abs(target - continuousIndex.current) > 1e-3) {
+      gsap.killTweensOf(continuousIndex);
+      gsap.to(continuousIndex, { current: target, duration: 0.6, ease: 'power3.out', onUpdate: keepAlive });
+    }
   }
 
-  function runExitDetailTransition() {
-    transitioningRef.current = true;
-    onExitDetailStart?.();
-
+  // Gallery (t = 0) -> detail card (t = 1) as a pure function of t, so it can
+  // be scrubbed both ways. Same endpoints and curves as the timed timelines it
+  // replaced: the hero can flies to the card's anchor, and everyone else
+  // slides sideways by the same amount — a uniform push keeps their spacing
+  // constant in flight, instead of easing toward one shared endpoint (which
+  // closes the gaps between them as the nearer ones catch up to the farther
+  // ones). Every pose starts from the can's live arc slot, which is also
+  // exactly what the gallery branch of tick() draws at t = 0, so crossing
+  // between the two never snaps.
+  function applyDetailPose(t) {
     const heroIndex = heroIndexRef.current;
-    const heroGroup = groupRefs[heroIndex].current;
-    // Flavor spins wind rotation.y up by full turns; unwrap back into
-    // [0, 2π) first so the return trip doesn't visibly spin it back down.
-    heroGroup.rotation.y %= Math.PI * 2;
-
-    const tl = gsap.timeline({
-      onUpdate: keepAlive,
-      onComplete: () => {
-        transitioningRef.current = false;
-        // Flip the mutable ref immediately so useFrame treats this as the
-        // slider from the very next frame, closing the gap before the
-        // `screen` prop itself updates (which would otherwise let one frame
-        // through the detail-anchor branch and snap the can visibly).
-        screenRef.current = 'slider';
-        onExitDetailComplete?.();
-        // Hands over to the slider branch of useFrame, which poses every can
-        // from continuousIndex and lerps the focus dimming back in — motion
-        // that outlives the timeline that just finished.
-        hold(SETTLE_WINDOW);
-      },
-    });
-
-    // heroIndexRef always names whichever object currently displays the
-    // active flavor (runFlavorSpin hands the "hero" role to the correct
-    // flavor's own object instead of overwriting a texture), so it simply
-    // returns to its own slot — every other index is a plain revival.
-    const heroTarget = arcTransform(0, isMobile);
-    tl.to(heroGroup.position, { x: heroTarget.x, y: heroTarget.y, z: heroTarget.z, duration: TRANSITION_DURATION, ease: 'power3.inOut' }, 0);
-    tl.to(heroGroup.rotation, { y: heroTarget.rotY, z: 0, duration: TRANSITION_DURATION, ease: 'power3.inOut' }, 0);
-    tl.to(
-      heroGroup.scale,
-      { x: heroTarget.scale, y: heroTarget.scale, z: heroTarget.scale, duration: TRANSITION_DURATION, ease: 'power3.inOut' },
-      0
-    );
+    const ci = continuousIndex.current;
+    const heroT = heroEase(t);
+    const pushT = pushEase(t);
 
     FLAVORS.forEach((_, i) => {
       if (i === heroIndex) return;
       const group = groupRefs[i].current;
       if (!group) return;
-      const d = wrappedDelta(i, continuousIndex.current);
-      const t = arcTransform(d, isMobile);
+      const d = wrappedDelta(i, ci);
+      const from = arcTransform(d, isMobile);
       const direction = Math.sign(d) || 1;
+      group.visible = t < 1;
+      group.position.set(from.x + direction * OFFSCREEN_PUSH * pushT, from.y, from.z);
+      // Also clears DETAIL_TILT_Z off a can that was the hero before a
+      // flavor switch handed that role on.
+      group.rotation.set(0, from.rotY, 0);
+      group.scale.setScalar(from.scale);
+    });
 
-      // A group that was ever a hero (flavor switched away from it on the
-      // detail screen) keeps DETAIL_TILT_Z from that handoff — clear it so
-      // every can comes back to a plain upright arc pose.
+    const group = groupRefs[heroIndex].current;
+    if (group) {
+      const from = arcTransform(wrappedDelta(heroIndex, ci), isMobile);
+      const anchor = detailAnchor(isMobile);
+      const target = ndcToWorldAtZ(camera, anchor.x, anchor.y, 0);
+      const detailScale = isMobile ? DETAIL_SCALE.mobile : DETAIL_SCALE.desktop;
       group.visible = true;
-      group.position.set(t.x + direction * OFFSCREEN_PUSH, t.y, t.z);
-      group.rotation.set(0, t.rotY, 0);
-      group.scale.setScalar(t.scale);
-      tl.to(group.position, { x: t.x, duration: TRANSITION_DURATION, ease: 'power2.out' }, 0);
+      group.position.set(lerp(from.x, target.x, heroT), lerp(from.y, target.y, heroT), lerp(from.z, 0, heroT));
+      group.rotation.set(0, lerp(from.rotY, 0, heroT) + spinAngleRef.current, lerp(0, DETAIL_TILT_Z, heroT));
+      group.scale.setScalar(lerp(from.scale, detailScale, heroT));
+    }
+    const mesh = meshRefs[heroIndex].current;
+    if (mesh) {
+      mesh.rotation.y = pointerCurrent.current.x * PARALLAX_AMOUNT;
+      mesh.rotation.x = -pointerCurrent.current.y * PARALLAX_AMOUNT * 0.5;
+    }
+
+    ghosts.forEach(({ ref }) => {
+      if (ref.current) ref.current.visible = false;
     });
   }
 
   function runFlavorSpin(newIndex) {
     const oldIndex = heroIndexRef.current;
     if (newIndex === oldIndex) return;
-    const oldGroup = groupRefs[oldIndex].current;
-    const newGroup = groupRefs[newIndex].current;
-    if (!oldGroup || !newGroup) return;
-    continuousIndex.current = nearestTarget(continuousIndex.current, newIndex);
+    spinTweenRef.current?.progress(1);
 
     // Each object always shows its own intrinsic flavor's material (no
     // imperative texture-swapping to keep track of). The "spin" instead
     // hands the hero role to the target flavor's own object at the visual
-    // midpoint — it snaps into the outgoing object's exact current pose
-    // (mid-spin, facing away from camera) so the handoff is invisible, then
-    // finishes the turn itself, revealing its own label on the way back.
+    // midpoint — applyDetailPose poses whichever object is the hero, so the
+    // new one takes over the outgoing one's exact pose (mid-spin, facing away
+    // from camera) and the handoff is invisible; it then finishes the turn
+    // itself, revealing its own label on the way back.
     let handedOff = false;
-    const startY = oldGroup.rotation.y;
     const proxy = { t: 0 };
 
-    gsap.to(proxy, {
+    spinTweenRef.current = gsap.to(proxy, {
       t: 1,
       duration: 1.15,
       ease: 'power2.inOut',
       onUpdate: () => {
-        const y = startY + proxy.t * Math.PI * 2;
-        if (!handedOff) {
-          oldGroup.rotation.y = y;
-          if (proxy.t >= 0.5) {
-            handedOff = true;
-            newGroup.position.copy(oldGroup.position);
-            newGroup.rotation.copy(oldGroup.rotation);
-            newGroup.scale.copy(oldGroup.scale);
-            newGroup.visible = true;
-            resetMaterialColor(newIndex);
-            oldGroup.visible = false;
-            heroIndexRef.current = newIndex;
-            onFlavorMidSpin?.(newIndex);
-          }
-        } else {
-          newGroup.rotation.y = y;
+        spinAngleRef.current = proxy.t * Math.PI * 2;
+        if (!handedOff && proxy.t >= 0.5) {
+          handedOff = true;
+          gsap.killTweensOf(continuousIndex);
+          continuousIndex.current = nearestTarget(continuousIndex.current, newIndex);
+          resetMaterialColor(newIndex);
+          heroIndexRef.current = newIndex;
+          onFlavorMidSpin?.(newIndex);
         }
         keepAlive();
+      },
+      onComplete: () => {
+        // A full turn — back to 0 rather than 2π so nothing winds up.
+        spinAngleRef.current = 0;
+        spinTweenRef.current = null;
+        invalidate();
       },
     });
   }
@@ -530,7 +475,7 @@ const CanRig = forwardRef(function CanRig(
 
   useImperativeHandle(ref, () => ({
     dragBy(deltaSlots) {
-      if (screenRef.current !== 'slider') return;
+      if (detailProgressRef.current > 0) return;
       draggingRef.current = true;
       continuousIndex.current += deltaSlots;
       // A hold rather than a bare invalidate: the focus dimming the slider
@@ -538,7 +483,7 @@ const CanRig = forwardRef(function CanRig(
       hold(SETTLE_WINDOW);
     },
     endDrag(velocitySlotsPerSec = 0) {
-      if (screenRef.current !== 'slider') return;
+      if (detailProgressRef.current > 0) return;
       draggingRef.current = false;
       const projected = continuousIndex.current + THREE.MathUtils.clamp(velocitySlotsPerSec * 0.12, -1.2, 1.2);
       const target = Math.round(projected);
@@ -554,9 +499,25 @@ const CanRig = forwardRef(function CanRig(
         },
       });
     },
-    exitToSlider() {
-      if (screenRef.current !== 'detail' || transitioningRef.current) return;
-      runExitDetailTransition();
+    // Driven by HomePage's scroll-scrubbed gallery <-> detail ScrollTrigger,
+    // the same way setEntranceProgress below is: it only records t and asks
+    // for a frame, and tick() poses the cans from it.
+    setDetailProgress(t) {
+      const next = THREE.MathUtils.clamp(t, 0, 1);
+      const prev = detailProgressRef.current;
+      if (next === prev) return;
+      if (prev === 0) beginDetail();
+      detailProgressRef.current = next;
+      if (next === 0) {
+        // Back in the gallery mid-spin: finish the switch now, so the
+        // carousel settles on the flavor the page already shows.
+        spinTweenRef.current?.progress(1);
+        // The gallery lerps its focus dimming back in, which outlives this
+        // call — see SETTLE_WINDOW.
+        hold(SETTLE_WINDOW);
+      } else {
+        invalidate();
+      }
     },
     // Driven by App.jsx's scroll-scrubbed hero->gallery ScrollTrigger.
     // useFrame below reads entranceProgressRef every tick and applies the
@@ -580,17 +541,14 @@ const CanRig = forwardRef(function CanRig(
     },
   }));
 
-  // Discrete state transitions (screen flip, flavor pick) are driven from
-  // props so all click/tap entry points funnel through plain React state.
+  // Flavor picks are driven from props so all click/tap entry points funnel
+  // through plain React state.
   useEffect(() => {
-    const enteringDetail = prevScreen.current !== 'detail' && screen === 'detail';
     const flavorChanged = prevFlavor.current !== activeFlavor;
 
-    if (enteringDetail) {
-      runEnterDetailTransition(activeFlavor);
-    } else if (screen === 'detail' && flavorChanged) {
+    if (detailProgressRef.current > 0 && flavorChanged) {
       runFlavorSpin(activeFlavor);
-    } else if (screen === 'slider' && flavorChanged && !draggingRef.current) {
+    } else if (flavorChanged && !draggingRef.current) {
       const target = nearestTarget(continuousIndex.current, activeFlavor);
       gsap.to(continuousIndex, {
         current: target,
@@ -601,10 +559,9 @@ const CanRig = forwardRef(function CanRig(
       });
     }
 
-    prevScreen.current = screen;
     prevFlavor.current = activeFlavor;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, activeFlavor]);
+  }, [activeFlavor]);
 
   // Feeds pointerTarget, which the frame loop below smooths into
   // pointerCurrent and turns into the cans' tilt. Nothing wrote it before, so
@@ -680,52 +637,43 @@ const CanRig = forwardRef(function CanRig(
       return;
     }
 
-    if (screenRef.current === 'slider') {
-      if (transitioningRef.current) return;
-      FLAVORS.forEach((_, i) => {
-        const group = groupRefs[i].current;
-        const mesh = meshRefs[i].current;
-        if (!group || !mesh) return;
-        if (!group.visible) group.visible = true;
-
-        const d = wrappedDelta(i, continuousIndex.current);
-        const t = arcTransform(d, isMobile);
-        group.position.set(t.x, t.y, t.z);
-        group.rotation.y = t.rotY;
-        group.scale.setScalar(t.scale);
-
-        const focus = 1 - Math.min(1, Math.abs(d));
-        mesh.rotation.y = pointerCurrent.current.x * PARALLAX_AMOUNT * focus;
-        mesh.rotation.x = -pointerCurrent.current.y * PARALLAX_AMOUNT * 0.5 * focus;
-
-        tmpColor.copy(DIM).lerp(WHITE, focus);
-        materials[i].color.lerp(tmpColor, lerpF);
-      });
-
-      ghosts.forEach(({ flavorIndex, cycle, ref }) => {
-        const mesh = ref.current;
-        if (!mesh) return;
-        mesh.visible = true;
-        const d = wrappedDelta(flavorIndex, continuousIndex.current) + cycle * FLAVOR_N;
-        const t = arcTransform(d, isMobile);
-        mesh.position.set(t.x, t.y, t.z);
-        mesh.rotation.y = t.rotY;
-        mesh.scale.setScalar(t.scale);
-      });
-    } else if (!transitioningRef.current) {
-      const heroIndex = heroIndexRef.current;
-      const group = groupRefs[heroIndex].current;
-      const mesh = meshRefs[heroIndex].current;
-      if (group && camera) {
-        const anchor = detailAnchor(isMobile);
-        const target = ndcToWorldAtZ(camera, anchor.x, anchor.y, 0);
-        group.position.set(target.x, target.y, 0);
-      }
-      if (mesh) {
-        mesh.rotation.y = pointerCurrent.current.x * PARALLAX_AMOUNT;
-        mesh.rotation.x = -pointerCurrent.current.y * PARALLAX_AMOUNT * 0.5;
-      }
+    if (detailProgressRef.current > 0) {
+      applyDetailPose(detailProgressRef.current);
+      return;
     }
+
+    FLAVORS.forEach((_, i) => {
+      const group = groupRefs[i].current;
+      const mesh = meshRefs[i].current;
+      if (!group || !mesh) return;
+      if (!group.visible) group.visible = true;
+
+      const d = wrappedDelta(i, continuousIndex.current);
+      const t = arcTransform(d, isMobile);
+      group.position.set(t.x, t.y, t.z);
+      // Upright in full, not just rotY: a scroll that jumps straight from the
+      // card back to the gallery skips the scrub's own return to z = 0.
+      group.rotation.set(0, t.rotY, 0);
+      group.scale.setScalar(t.scale);
+
+      const focus = 1 - Math.min(1, Math.abs(d));
+      mesh.rotation.y = pointerCurrent.current.x * PARALLAX_AMOUNT * focus;
+      mesh.rotation.x = -pointerCurrent.current.y * PARALLAX_AMOUNT * 0.5 * focus;
+
+      tmpColor.copy(DIM).lerp(WHITE, focus);
+      materials[i].color.lerp(tmpColor, lerpF);
+    });
+
+    ghosts.forEach(({ flavorIndex, cycle, ref }) => {
+      const mesh = ref.current;
+      if (!mesh) return;
+      mesh.visible = true;
+      const d = wrappedDelta(flavorIndex, continuousIndex.current) + cycle * FLAVOR_N;
+      const t = arcTransform(d, isMobile);
+      mesh.position.set(t.x, t.y, t.z);
+      mesh.rotation.y = t.rotY;
+      mesh.scale.setScalar(t.scale);
+    });
   }
 
   // tick() above has three early returns; wrapping it keeps holding() on every
@@ -739,7 +687,7 @@ const CanRig = forwardRef(function CanRig(
 
   // Anything that re-renders this rig may have changed what a frame should
   // look like without going through a tween: a viewport crossing isMobile
-  // flips the whole arc layout, and screen/activeFlavor arrive as props. A
+  // flips the whole arc layout, and activeFlavor arrives as a prop. A
   // short hold after every render covers all of them at the cost of a handful
   // of frames, instead of enumerating them and missing one.
   useEffect(() => {

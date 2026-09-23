@@ -3,7 +3,7 @@ import { useDeferredMount } from './deferredLoad';
 
 // Drop-in replacement for a plain `import Scene from './Scene'` — same
 // forwardRef component, same props, same ref API (setEntranceProgress,
-// dragBy, endDrag, exitToSlider). The difference is entirely in when its
+// setDetailProgress, dragBy, endDrag). The difference is entirely in when its
 // code loads: React.lazy() makes the dynamic import() the only way Scene.jsx
 // and everything it pulls in (three.js, @react-three/fiber, drei, CanRig,
 // gsap's own imports from there) enter the bundle, splitting them into their
