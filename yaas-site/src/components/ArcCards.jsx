@@ -46,6 +46,9 @@ const CARD_HEIGHT_TRIM_RATIO = 25 / 420;
 // bottom" the brief describes, and it is a different proportion rather than a
 // bigger version of the same one — hence a separate ratio rather than a scale.
 const CARD_ASPECT_RATIO_NARROW = 375 / 303;
+// ...less a flat 30px: at the full 1.238 the cards did not fit a real phone's
+// height. Matched by the stage's own height in advantages.css — change both.
+const CARD_HEIGHT_TRIM_NARROW_PX = 30;
 const NARROW_MAX_WIDTH = 1024;
 
 function cardStyleForDelta(delta, slotOffset) {
@@ -126,7 +129,8 @@ const ArcCards = forwardRef(function ArcCards({ active }, ref) {
       const heightRatio = narrow
         ? CARD_ASPECT_RATIO_NARROW
         : CARD_ASPECT_RATIO - CARD_HEIGHT_TRIM_RATIO;
-      const desktopHeight = activeRef.current ? `${cardWidth * heightRatio}px` : '';
+      const trim = narrow ? CARD_HEIGHT_TRIM_NARROW_PX : 0;
+      const desktopHeight = activeRef.current ? `${cardWidth * heightRatio - trim}px` : '';
       cardRefs.current.forEach((el) => {
         if (el) el.style.height = desktopHeight;
       });

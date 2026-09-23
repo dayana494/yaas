@@ -35,9 +35,10 @@
 
      Both terms are the same px/frame-width conversion, not lifted pixels —
      80/1920 for the desktop frame, 40/390 for Figma's 390-wide mobile one
-     (344:359). The responsive cap lands at 44px, which is what the desktop
-     formula itself resolves to just past the 1024 handover (4.17vw of 1023 =
-     42.6), so the two meet at the breakpoint instead of stepping.
+     (344:359). The responsive cap is 40px — 4px under the frame's own 44, the
+     floor likewise 30 rather than 34: every block heading read too large on a
+     real phone. It sits a little under what the desktop formula resolves to
+     just past the 1024 handover (4.17vw of 1023 = 42.6).
 
      Product/flavor NAMES mostly keep their own sizes from their own Figma
      frames (.flavor-name, .flavor-story-flavorname) — except below 1024, where
@@ -67,7 +68,7 @@
 @media (max-width: 1023px) {
   :root {
     --block-gap: 80px;
-    --block-heading: clamp(34px, 10.26vw, 44px);
+    --block-heading: clamp(30px, 10.26vw, 40px);
   }
 }
 

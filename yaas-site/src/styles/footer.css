@@ -138,8 +138,9 @@
   }
 
   .site-footer-inner {
-    /* 10 of 390. */
-    padding: 0 2.56vw;
+    /* The site's one content gutter (index.css) — was the Figma frame's own
+       10 of 390, so the footer ran 20px a side wider than the blocks above. */
+    padding: 0 var(--content-gutter);
   }
 
   .site-footer-logo-row {

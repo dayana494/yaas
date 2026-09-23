@@ -264,7 +264,8 @@
      equal gaps the brief asks for, with the outer two flush to the padding. */
   .hero-nav {
     top: 2.59svh;
-    padding: 0 2.56vw;
+    /* The site's one content gutter (index.css), like every other block. */
+    padding: 0 var(--content-gutter);
     gap: 0;
     justify-content: space-between;
   }
@@ -282,17 +283,19 @@
      min-height stays at 44px for the touch target this file already committed
      to.
 
-     13 rather than the frame's 12 at the bottom, which is the "raise it a
-     point or two if the row can take it" the brief asks for, and 13 is as far
-     as it goes: measured on a 375-wide row, 13px leaves 8px between pills and
-     14px leaves 2px, which is no longer a gap. From there it grows to the
-     site's standard 16px pill (--text-body) and stops, so a tablet gets the
-     real thing rather than phone-sized type, and the handover to the desktop
-     rules at 1024 is seamless. */
+     From the frame's 12 it grows with the width to the site's standard 16px
+     pill (--text-body) and stops, so a tablet gets the real thing rather than
+     phone-sized type, and the handover to the desktop rules at 1024 is
+     seamless. See the padding note below for why the floor is 12. */
   .hero-pill {
-    font-size: clamp(13px, 3.33vw, 16px);
+    /* 12px floor (the frame's own size) and a 2vw side padding: with the row
+       now inside the 30px content gutter, the four pills at 13px and 3.1vw
+       padding came to 334px in a 330px row at 390 — touching, and over the
+       edge. These give about 10px between pills at 390 and 8 at 360. Both
+       still grow to the desktop pill (16px, 20px) and stop. */
+    font-size: clamp(12px, 3.33vw, 16px);
     letter-spacing: -0.24px;
-    padding: 8px clamp(12px, 3.1vw, 20px);
+    padding: 8px clamp(6px, 2vw, 20px);
     min-height: 44px;
   }
 
@@ -304,10 +307,31 @@
      (that is the line's own leading and ascent, which this wordmark does not
      use). 12.52% of the 42.71vw font-size is 5.35vw. Without it the letters
      sat that far below where the mock puts them. */
+  /* Placed so the gap above the letters (from the nav pills) equals the gap
+     under them (to the subhead), by construction rather than by eye — the
+     frame's own top plus hand-set margins only held at one screen height.
+       nav pills end at    2.59svh + 44px (their min-height)
+       subhead starts at   29.8svh + 60px (.hero-copy below)
+       midpoint            16.195svh + 52px
+     The letters are centred on that midpoint. On Soledago the ink starts
+     12.52% of the font-size below the box top and is 72.5% of it tall, so the
+     box top sits 48.77% of the font-size above the midpoint; with the
+     font-size below, that is 21.73vw - 13px. */
   .hero-mobile-banner-logo-row {
-    top: calc(12svh - 5.35vw);
-    left: 2.56vw;
-    right: 2.56vw;
+    top: calc(16.2svh + 65px - 21.73vw);
+    /* The shared content gutter rather than the frame's 10px — the wordmark
+       now spans the same width as every block below it. */
+    left: var(--content-gutter);
+    right: var(--content-gutter);
+  }
+
+  /* The size useFillWidth (HeroWordmark.jsx) would fit anyway — the row's
+     width over the 2.245 that "YAAS" advances per px of font-size in Soledago
+     — so the wordmark paints at its final size before any script runs and the
+     row above can be placed off it. The script then only corrects by a pixel
+     for rounding. */
+  .logo-text.hero-mobile-banner-logo {
+    font-size: calc((100vw - 2 * var(--content-gutter)) / 2.245);
   }
 
   /* Copy block: subhead top 253.37/850, left 10/390, 323/390 wide; the CTA
@@ -321,12 +345,12 @@
     justify-content: flex-start;
     align-items: flex-start;
     gap: 3.6svh;
-    padding: 0 2.56vw;
-    /* 20px more air under the wordmark than the frame's own 29.8svh leaves —
-       on a real phone the copy read as crowding the logo. A fixed margin on
-       top of the proportional top, so the extra gap is the same on every
-       screen height. */
-    margin-top: 20px;
+    padding: 0 var(--content-gutter);
+    /* More air under the wordmark than the frame's own 29.8svh leaves — on a
+       real phone the copy read as crowding the logo. A fixed margin on top of
+       the proportional top, so the extra gap is the same on every screen
+       height; tuned so the gap under the wordmark equals the one above it. */
+    margin-top: 60px;
   }
 
   .hero-subhead {

@@ -1,6 +1,7 @@
 import { Fragment, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { overlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -15,6 +16,9 @@ gsap.registerPlugin(ScrollTrigger);
 // Renders as `as` (default span) so it can drop straight into an existing
 // heading tag/className — the caller's own CSS still owns font, color, etc.
 const STAGGER_FROM_MAP = { left: 'start', right: 'end', center: 'center', random: 'random' };
+
+// The furthest a piece drops in below 1024 — see `drop` in the component.
+const NARROW_MAX_DROP_PX = 12;
 
 // Each segment also carries where it starts in the original string. That is
 // what lets ONE DropText render a heading whose second sentence is a different
@@ -95,12 +99,23 @@ const DropText = forwardRef(function DropText(
   const segments = useMemo(() => splitText(text, splitBy), [text, splitBy]);
   const reducedMotion = useReducedMotion();
 
+  // Below 1024 the pieces drop a short way, not the full yOffset. At -80px a
+  // word starts about two lines above its slot on a phone — the block heading
+  // is 40px there — and with the random stagger and the fade, a heading
+  // mid-reveal showed half-faded words sitting over the lines above them: what
+  // read on a real phone as the heading glitching into two overlapping
+  // states. 12px keeps the drop-in, inside the word's own line.
+  const drop =
+    typeof window !== 'undefined' && !overlapEnabled()
+      ? Math.sign(yOffset) * Math.min(Math.abs(yOffset), NARROW_MAX_DROP_PX)
+      : yOffset;
+
   const initialPieceStyle = reducedMotion
     ? undefined
     : {
         opacity: startOpacity,
         filter: `blur(${blur}px)`,
-        transform: `translate3d(${xOffset}px, ${yOffset}px, 0px) rotate(${rotate}deg) scale(${scaleFrom})`,
+        transform: `translate3d(${xOffset}px, ${drop}px, 0px) rotate(${rotate}deg) scale(${scaleFrom})`,
       };
 
   useEffect(() => {
@@ -116,7 +131,7 @@ const DropText = forwardRef(function DropText(
     function playPieces() {
       gsap.fromTo(
         pieces,
-        { x: xOffset, y: yOffset, rotate, scale: scaleFrom, opacity: startOpacity, filter: `blur(${blur}px)` },
+        { x: xOffset, y: drop, rotate, scale: scaleFrom, opacity: startOpacity, filter: `blur(${blur}px)` },
         {
           x: 0,
           y: 0,

@@ -23,10 +23,22 @@ export const INTRO_TOTAL_VH_UNITS = 1 + ENTRANCE_UNITS + INTERACTIVE_UNITS;
 export const DETAIL_TRANSITION_DURATION = 1.1;
 
 // Dead scroll between the hero -> gallery entrance and the gallery -> card
-// flight, in the same scaled units: nothing on the intro reacts to it, the page
-// just scrolls. It is what lets one scroll gesture finish the entrance and stop
-// on a usable gallery, instead of carrying straight on into the card.
+// flight: nothing on the intro reacts to it, the page just scrolls. It is what
+// lets one scroll gesture finish the entrance and stop on a usable gallery,
+// instead of carrying straight on into the card.
+//
+// In viewport heights, but NOT put through introUnitsPx's mobile scale — read
+// it through galleryGapPx() below. Scaled to 0.6 with everything else, it came
+// to a third of a phone screen, and a swipe's own momentum (which does not
+// shrink with the page) carried straight through it into the card.
 export const GALLERY_SETTLE_GAP_UNITS = 0.5;
+
+// The gap above in px, at full size on every width. The one place both users
+// of it — the intro's height and the card flight's start (HomePage.jsx) —
+// read it from, so the two windows can never drift apart.
+export function galleryGapPx() {
+  return GALLERY_SETTLE_GAP_UNITS * window.innerHeight;
+}
 
 // The shortest time the hero -> gallery entrance can play out in, however fast
 // the scroll. Its visible progress follows the scroll 1:1 up to that speed and

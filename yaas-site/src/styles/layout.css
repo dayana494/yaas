@@ -379,7 +379,12 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 7.53svh 22px;
+    /* 5svh, down from the frame's 7.53: with the CTA still falling below the
+       fold on a real phone, the outer margins were the space to give — the
+       three gaps between the items come out of space-between and shrink with
+       whatever is left. */
+    --detail-pad: 5svh;
+    padding: var(--detail-pad) 22px;
     max-width: none;
     text-align: center;
   }
@@ -400,13 +405,13 @@
      the canvas. Off this column's height — which fills the intro pin, the
      same box the canvas fills — so the stand-in is the can's height exactly,
      whatever the screen or the address bar is doing. A flex item's % resolves
-     against the column's CONTENT box, so its vertical padding (the 7.53svh
+     against the column's CONTENT box, so its vertical padding (--detail-pad
      above, both ends) is added back first. Change it with
      DETAIL_SCALE.mobile. */
   .detail-can-space {
     display: block;
     flex: none;
-    height: calc((100% + 2 * 7.53svh) * 0.2835);
+    height: calc((100% + 2 * var(--detail-pad)) * 0.2835);
   }
 
   .detail-description {

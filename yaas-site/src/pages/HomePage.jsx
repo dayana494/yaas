@@ -34,7 +34,7 @@ import {
   DETAIL_TRANSITION_DURATION,
   ENTRANCE_MIN_SECONDS,
   ENTRANCE_UNITS,
-  GALLERY_SETTLE_GAP_UNITS,
+  galleryGapPx,
   introUnitsPx,
   INTERACTIVE_UNITS,
   SCREEN2_GAP_PX,
@@ -53,6 +53,14 @@ enableTouchScrollNormalizer();
 const DetailScreen = lazy(() => import('../components/DetailScreen'));
 
 const DETAIL_EDGE_PX = 2;
+
+// How far into the gallery -> card flight the card's copy and CTA come in. Not
+// at 1: waiting for the can to land exactly made the copy trail the gesture
+// that opened the card, which read as needing a second scroll. The flight is
+// eased power3.inOut (CanRig.jsx's heroEase), so at 0.85 the can is already
+// 98.6% of the way there — close enough that the copy never lands on a can
+// still visibly moving.
+const DETAIL_TEXT_AT = 0.85;
 
 // Walks a shown 0..1 progress toward whatever set() last asked for, on the GSAP
 // ticker, at no more than one full sweep per `minSeconds`. Below that speed it
@@ -430,7 +438,7 @@ export default function HomePage() {
       entranceProgressRef.current = t;
       pin.style.setProperty('--h2g', String(t));
       pin.classList.toggle('is-entrance-active', t > 0.001);
-      const done = t >= 1;
+      const done = t >= DETAIL_TEXT_AT;
       sceneRef.current?.setEntranceProgress(t);
       if (done !== entranceDoneRef.current) {
         entranceDoneRef.current = done;
@@ -477,7 +485,7 @@ export default function HomePage() {
         ? SCREEN2_GAP_PX + SCREEN2_RISE_UNITS * window.innerHeight
         : 0;
       const extraPx =
-        introUnitsPx(ENTRANCE_UNITS + GALLERY_SETTLE_GAP_UNITS + INTERACTIVE_UNITS) + handoverPx;
+        introUnitsPx(ENTRANCE_UNITS + INTERACTIVE_UNITS) + galleryGapPx() + handoverPx;
       wrap.style.height = `calc(100vh + ${extraPx}px)`;
     };
     setIntroWrapHeight();
@@ -615,7 +623,7 @@ export default function HomePage() {
 
     const trigger = ScrollTrigger.create({
       trigger: introWrapRef.current,
-      start: () => `top+=${introUnitsPx(ENTRANCE_UNITS + GALLERY_SETTLE_GAP_UNITS)} top`,
+      start: () => `top+=${introUnitsPx(ENTRANCE_UNITS) + galleryGapPx()} top`,
       end: () => `+=${introUnitsPx(INTERACTIVE_UNITS)}`,
       scrub: true,
       invalidateOnRefresh: true,

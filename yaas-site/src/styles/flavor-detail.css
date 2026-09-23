@@ -455,7 +455,7 @@
    to the fixed 1200x650 stage and the rules at the bottom of this file take
    over. Here the stage wrappers are plain full-bleed layers, so the mock's
    grid is re-expressed in vw/svh against the site's own mobile gutter
-   (2.56vw, the same one .hero-nav and .hero-mobile-banner-logo-row use), and
+   (--content-gutter, the same one .hero-nav and .hero-mobile-banner-logo-row use), and
    the type drops onto the site's mobile scale rather than carrying desktop
    pixels down. The animation itself is unchanged at these widths. */
 @media (max-width: 1023px) {
@@ -465,8 +465,8 @@
      is what .hero-copy does with the subhead and CTA at this breakpoint. */
   .flavor-hero-row {
     bottom: 8svh;
-    left: 2.56vw;
-    right: 2.56vw;
+    left: var(--content-gutter);
+    right: var(--content-gutter);
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
@@ -482,15 +482,15 @@
   }
 
   .flavor-rotation-kicker {
-    left: 2.56vw;
-    right: 2.56vw;
+    left: var(--content-gutter);
+    right: var(--content-gutter);
     top: 9svh;
     font-size: clamp(38px, 13.5vw, 96px);
   }
 
   .flavor-rotation-line {
-    left: 2.56vw;
-    right: 2.56vw;
+    left: var(--content-gutter);
+    right: var(--content-gutter);
     bottom: 11svh;
     font-size: clamp(13px, 3.9vw, 19px);
   }

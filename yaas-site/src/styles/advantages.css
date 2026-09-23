@@ -423,8 +423,8 @@
      .screen2-arc-inner has no mobile override of its own, so giving this one
      would put the two headings on different lines below 768px. */
   .advantages-title-row {
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: var(--content-gutter);
+    padding-right: var(--content-gutter);
   }
 }
 
@@ -511,7 +511,7 @@
   }
 
   .advantages .faq-heading-grid {
-    padding: 0 20px clamp(32px, 6vh, 48px);
+    padding: 0 var(--content-gutter) clamp(32px, 6vh, 48px);
   }
 
   /* The stage reserves the card's real height. The card is 77.7vw wide at a
@@ -519,7 +519,9 @@
      width caps: 420 * 1.238 = 520. Mobile-scoped on purpose — the base rule
      keeps desktop exactly as it is. */
   .advantages-arc-cards.is-arc-active {
-    height: clamp(375px, 96.2vw, 520px);
+    /* Less 30px throughout — the cards' own height is trimmed by the same 30
+       in ArcCards.jsx (CARD_HEIGHT_TRIM_NARROW_PX) so they fit a real phone. */
+    height: clamp(345px, calc(96.2vw - 30px), 490px);
   }
 
   /* 25 of the mock's 303-wide card — 8.25% of it, and the card is 77.7vw, so

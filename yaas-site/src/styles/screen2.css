@@ -96,15 +96,25 @@
    subline. A real phone's visible height after the address bar is enough to
    get there. A minimum gap either side and a stage never shorter than the
    card plus those gaps keep all three apart; if a screen is too short for
-   that, the subline is what gives, not the spacing. The card is 240 x 171.5
-   below the arc card's clamp floor (screen2-arc-card below). */
+   that, the subline is what gives, not the spacing. The card's size is
+   --arc-card-w (set on .screen2-arc-card's own mobile rule below). */
 @media (max-width: 1023px) {
+  .screen2 {
+    /* The moving arc's card width below 1024: the desktop clamp (which sits on
+       its 240px floor on every phone) made 1.1x smaller, so the arc takes less
+       of the screen and leaves room around it. */
+    --arc-card-w: calc(clamp(240px, 19.9vw, 382px) / 1.1);
+  }
+
   .screen2-arc-inner {
-    gap: 24px;
+    /* The floor for the two gaps either side of the arc — raised from 24 so
+       the room the smaller card gives back shows up as space around it. The
+       card is centred in the stage, so the two come out equal. */
+    gap: 36px;
   }
 
   .screen2-arc-stage {
-    min-height: calc(clamp(240px, 19.9vw, 382px) * 273 / 382 + 16px);
+    min-height: calc(var(--arc-card-w) * 273 / 382 + 16px);
   }
 }
 
@@ -246,6 +256,14 @@
   transform: translate(-50%, -50%);
   backface-visibility: hidden;
   will-change: transform, opacity;
+}
+
+/* After the base rule above, so it wins. ScenarioArcGallery.jsx measures the
+   card's rendered width, so the whole arc's spread follows it. */
+@media (max-width: 1023px) {
+  .screen2-arc-card {
+    width: var(--arc-card-w);
+  }
 }
 
 /* Title/caption only exist on the card that expands, and only fade in over
@@ -425,7 +443,10 @@
 
 @media (max-width: 768px) {
   .scenario-card-iso {
-    width: calc(100% - 40px);
+    /* The content gutter either side, like every other block. Also the arc's
+       expand target (.screen2-arc-target carries this rule), so the hand-off
+       from the arc to the stack stays exact. */
+    width: calc(100% - 2 * var(--content-gutter));
     border-radius: 16px;
   }
 }

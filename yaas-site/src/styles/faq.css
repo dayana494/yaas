@@ -48,7 +48,7 @@
 @media (max-width: 1023px) {
   .faq-heading-grid {
     display: block;
-    padding: 0 20px clamp(32px, 6vh, 48px);
+    padding: 0 var(--content-gutter) clamp(32px, 6vh, 48px);
   }
 
   /* Matches the embedded copy's own mobile size (advantages.css) — this

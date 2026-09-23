@@ -337,11 +337,11 @@
     /* A floor under space-between, not a replacement for it: where there is
        height to spare the two gaps are still equal and larger than this, but
        on a real phone's visible height they used to reach 0 and the closing
-       paragraph ran into the bottom of the photos. 32 rather than a round 20
-       because the rotated cards' corners reach about 12px past the deck's own
-       box, and it is the ink that must not touch the text. */
-    gap: 32px;
-    padding: var(--block-gap) 20px;
+       paragraph ran into the bottom of the photos. 40, the gap asked for
+       either side of the stack (the rotated cards' corners reach about 12px
+       past the deck's own box, so the ink clears the text by a little less). */
+    gap: 40px;
+    padding: var(--block-gap) var(--content-gutter);
   }
 
   .about-brand-deck {
@@ -365,17 +365,17 @@
        content box, which is the thing it has to fit.
        Height comes from the aspect directly here — --about-card-h is derived
        from --about-card-w, and that cannot follow a percentage. */
-    /* 74 rather than the 84 the rotation allowance alone permits: at 84 the
-       stack took so much of a real phone's height that the paragraph under it
-       overlapped its bottom edge. Every card position is a share of this box,
-       so the stack just scales. */
+    /* 82, just under the 84 the rotation allowance permits — the stack reads as
+       the block's centrepiece. On a short screen the height cap below is what
+       binds instead. Every card position is a share of this box, so the stack
+       just scales. */
     /* ...and capped by the height as well: on a short screen (measured at
        375x667) even 74% left the column taller than the pin, so the gaps had
-       nothing to give. 430px is what the rest of the column needs — the stage's
-       two --block-gap paddings, both paragraphs, the two gaps above and the
-       cards' rotation overhang — so the stack takes whatever height is left and
-       its width follows through the aspect. svh: fixed for the page's life. */
-    width: min(74%, calc((100svh - 430px) * 0.7923));
+       nothing to give. 446px is what the rest of the column needs — the stage's
+       two --block-gap paddings, both paragraphs, the two 40px gaps above and
+       the cards' rotation overhang — so the stack takes whatever height is left
+       and its width follows through the aspect. svh: fixed for the page's life. */
+    width: min(82%, calc((100svh - 446px) * 0.7923));
     height: auto;
     aspect-ratio: 0.7923;
   }
