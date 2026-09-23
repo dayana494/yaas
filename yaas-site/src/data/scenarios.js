@@ -55,7 +55,7 @@ export const SCENARIOS = [
     caption: "When the professor's on hour three and you're somehow still with it",
     flavor: 'apple',
     href: '/flavors/apple',
-    photo: asset('/photos/scenarios/univer.webp'),
+    photo: asset('/photos/scenarios/study.webp'),
   },
   {
     id: 'workout',
