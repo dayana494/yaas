@@ -8,8 +8,11 @@ import FlavorGallery from '../components/FlavorGallery';
 import { FLAVORS } from '../data/flavors';
 import { getFlavorStory } from '../data/flavorStories';
 import { attachRiseDriver, createRiseDriver } from '../scroll/riseTransition';
+import { enableTouchScrollNormalizer } from '../scroll/normalizeScroll';
 
 gsap.registerPlugin(ScrollTrigger);
+// Before any trigger is created — see scroll/normalizeScroll.js.
+enableTouchScrollNormalizer();
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(

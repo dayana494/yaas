@@ -29,6 +29,7 @@ import {
 } from '../scroll/riseTransition';
 import { SCROLL_TO_STATE, scrollToSection } from '../scroll/sectionNav';
 import { onRealResize, whenScrollIdle } from '../scroll/onRealResize';
+import { enableTouchScrollNormalizer } from '../scroll/normalizeScroll';
 import {
   DETAIL_TRANSITION_DURATION,
   ENTRANCE_MIN_SECONDS,
@@ -46,6 +47,8 @@ import {
 } from '../data/layout';
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+// Before any trigger is created — see scroll/normalizeScroll.js.
+enableTouchScrollNormalizer();
 
 const DetailScreen = lazy(() => import('../components/DetailScreen'));
 
