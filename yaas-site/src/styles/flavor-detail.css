@@ -372,13 +372,26 @@
    A bare glyph, no disc behind it. arrow-*.svg draws its stroke in a hardcoded
    white — right for the flavor backgrounds it was drawn for, invisible on this
    block's paper — so brightness(0) crushes it to black rather than forking the
-   shared icon into a second, near-identical file. */
+   shared icon into a second, near-identical file.
+
+   z-index: 1 is load-bearing, not decorative. Both arrows and .flavor-gallery-
+   track are position:absolute/relative siblings with no other z-index between
+   them, so without one they paint in plain DOM order — and .arrow-gallery-prev
+   comes BEFORE the track in the markup, .arrow-gallery-next AFTER it. Track
+   (and its cards) then paints on top of prev but under next: confirmed live
+   with elementFromPoint at prev's own centre — it hit the leftmost card's own
+   .background-texture, not the button, which also means prev wasn't just
+   invisible but unclickable (the card's own <Link> ate the click). Giving both
+   the same explicit stack level fixes both at once, symmetrically, rather than
+   patching prev's position in the markup and leaving the arrangement fragile
+   to the next reorder. */
 .arrow-gallery {
   --ox: 0px;
   --arrow-scale: 1;
   position: absolute;
   top: 50%;
   left: auto;
+  z-index: 1;
   transform: translateY(-50%) scale(var(--arrow-scale));
   width: clamp(40px, 3.6vw, 56px);
   height: clamp(40px, 3.6vw, 56px);
