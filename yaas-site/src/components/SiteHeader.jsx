@@ -1,9 +1,8 @@
-import { Link } from 'react-router-dom';
 import {
-  FLAVORS_ROUTE,
   SECTION_ABOUT,
   SECTION_CONTACT,
   SECTION_FAQ,
+  SECTION_FLAVORS,
   sectionHref,
 } from '../data/navLinks';
 import { useSectionNav } from '../scroll/sectionNav';
@@ -18,13 +17,15 @@ import { useSectionNav } from '../scroll/sectionNav';
 // hooks/useHeroScale) — the pills' sizing in hero.css is unchanged and still
 // keyed off .hero-nav/.hero-pill.
 //
-// Flavors is a route, not an anchor: the gallery has its own page, and the
-// footer has always linked there. The rest are sections of the homepage, eased
-// to by useSectionNav — which also handles being clicked from another page
-// (the flavor pages included), where a bare fragment would otherwise do
-// nothing at all. The hrefs come from data/navLinks so this menu and the
-// footer's can never disagree about where a label points.
+// Every item is a section of the homepage, eased to by useSectionNav — which
+// also handles being clicked from another page (the flavor pages included),
+// where a bare fragment would otherwise do nothing at all. Flavors used to be
+// the exception, pointing at a page of its own; that page is gone and it now
+// goes to the gallery the page was built from. The hrefs come from
+// data/navLinks so this menu and the footer's can never disagree about where a
+// label points.
 const NAV_LINKS_LEFT = [
+  { label: 'Flavors', href: sectionHref(SECTION_FLAVORS) },
   { label: 'About us', href: sectionHref(SECTION_ABOUT) },
   { label: 'FAQ', href: sectionHref(SECTION_FAQ) },
 ];
@@ -36,9 +37,6 @@ export default function SiteHeader() {
   return (
     <nav className="hero-nav">
       <div className="hero-nav-left">
-        <Link className="hero-pill" to={FLAVORS_ROUTE} data-interactive>
-          Flavors
-        </Link>
         {NAV_LINKS_LEFT.map((link) => (
           <a key={link.label} className="hero-pill" href={link.href} data-interactive onClick={handleNavClick}>
             {link.label}

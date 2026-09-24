@@ -1,8 +1,8 @@
 import { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 
 // One chunk per route rather than one bundle for the whole site. Without this,
-// landing straight on /contacts or /flavors downloads and parses the homepage's
+// landing straight on /contacts downloads and parses the homepage's
 // entire three.js + GSAP scroll machinery before rendering anything, none of
 // which that route needs.
 //
@@ -17,7 +17,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 // lazy DetailScreen split inside HomePage already uses the same empty fallback.
 const HomePage = lazy(() => import('./pages/HomePage'));
 const ContactsPage = lazy(() => import('./pages/ContactsPage'));
-const FlavorsPage = lazy(() => import('./pages/FlavorsPage'));
 const FlavorDetailPage = lazy(() => import('./pages/FlavorDetailPage'));
 
 export default function App() {
@@ -31,7 +30,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/contacts" element={<ContactsPage />} />
-          <Route path="/flavors" element={<FlavorsPage />} />
+          {/* The flavor listing page is gone — its gallery is the homepage's
+              own, which is where both menus now point. The URL was public, so
+              it redirects rather than 404s. */}
+          <Route path="/flavors" element={<Navigate to="/" replace />} />
           <Route path="/flavors/:slug" element={<FlavorDetailPage />} />
         </Routes>
       </Suspense>

@@ -7,10 +7,10 @@ import Logo from './Logo';
 import { FOOTER_TRIGGER_ID } from '../data/layout';
 import { RISE_UNITS, overlapEnabled, useOverlapEnabled } from '../scroll/riseTransition';
 import {
-  FLAVORS_ROUTE,
   SECTION_ABOUT,
   SECTION_CONTACT,
   SECTION_FAQ,
+  SECTION_FLAVORS,
   SECTION_WHY_YAAS,
   sectionHref,
 } from '../data/navLinks';
@@ -115,14 +115,15 @@ function useWordmarkFit(ref) {
 // as the header menu and from the same module — see data/navLinks.js for how
 // the two had drifted apart.
 //
-// "Flavors" is the one real route: a standalone page built from the homepage's
-// own gallery and flavor cards (pages/FlavorsPage.jsx). The rest are sections
-// of the homepage, and sectionHref resolves each against BASE_URL so the link
-// is a correct URL on its own — '/yaas/#faq' under GitHub Pages, where the
-// hand-written '/#faq' these used to carry walked off the deploy root.
-// useSectionNav then takes over an ordinary click for the smooth version.
+// Every one is a section of the homepage — "Flavors" included, since the
+// standalone page it used to point at is gone and the gallery that page was
+// built from is on the homepage anyway. sectionHref resolves each against
+// BASE_URL so the link is a correct URL on its own — '/yaas/#faq' under GitHub
+// Pages, where the hand-written '/#faq' these used to carry walked off the
+// deploy root. useSectionNav then takes over an ordinary click for the smooth
+// version.
 const FOOTER_LINKS = [
-  { label: 'Flavors', href: FLAVORS_ROUTE, isRoute: true },
+  { label: 'Flavors', href: sectionHref(SECTION_FLAVORS) },
   { label: 'Why YAAS', href: sectionHref(SECTION_WHY_YAAS) },
   { label: 'About Us', href: sectionHref(SECTION_ABOUT) },
   { label: 'FAQ', href: sectionHref(SECTION_FAQ) },
@@ -188,22 +189,16 @@ export default function Footer({ reveal = false }) {
         </div>
 
         <nav className="site-footer-nav" aria-label="Site">
-          {FOOTER_LINKS.map((link) =>
-            link.isRoute ? (
-              <Link key={link.label} className="hero-pill site-footer-pill" to={link.href}>
-                {link.label}
-              </Link>
-            ) : (
-              <a
-                key={link.label}
-                className="hero-pill site-footer-pill"
-                href={link.href}
-                onClick={handleNavClick}
-              >
-                {link.label}
-              </a>
-            )
-          )}
+          {FOOTER_LINKS.map((link) => (
+            <a
+              key={link.label}
+              className="hero-pill site-footer-pill"
+              href={link.href}
+              onClick={handleNavClick}
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
         <div className="site-footer-bottom">

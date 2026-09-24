@@ -32,8 +32,8 @@
    Tied to --h2g, the hero->gallery entrance's own progress, and with the same
    curve the gallery's UI layer uses (index.css) — so it arrives exactly when
    the gallery does instead of being on before it.
-   FlavorsPage drives --h2g to 1 on mount as well, so the glow behaves there
-   exactly as it does on the homepage's own gallery. */
+   The gallery is the homepage's alone now — the standalone flavors page that
+   also drove --h2g to 1 on mount is gone. */
 .center-glow.is-visible {
   opacity: clamp(0, calc((var(--h2g, 0) - 0.7) * 3.3333), 1);
 }

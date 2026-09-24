@@ -1,0 +1,75 @@
+/* Shared page shell (.page / .page-light, used by every route) and the
+   flavor detail page's not-found placeholder. Was flavors-page.css, when the
+   /flavors listing had a page of its own; that page is gone and its gallery is
+   the homepage's, so what is left here is what the other routes were always
+   borrowing from it. */
+.page {
+  background: #0b0a09;
+  min-height: 100vh;
+}
+
+.page-light {
+  background: #ffffff;
+}
+
+/* ---------- /flavors/:slug placeholder ---------- */
+.flavor-detail-placeholder {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  padding: clamp(80px, 14vh, 140px) 0;
+  color: var(--ink);
+  text-align: center;
+}
+
+.flavor-detail-placeholder .site-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 640px;
+}
+
+.flavor-detail-eyebrow {
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.flavor-detail-heading {
+  margin: 0 0 20px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(40px, 6vw, 72px);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.flavor-detail-copy {
+  margin: 0 0 12px;
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: clamp(16px, 1.6vw, 19px);
+  color: var(--ink-soft);
+}
+
+.flavor-detail-description {
+  margin: 0 0 32px;
+  max-width: 50ch;
+  font-family: var(--font-beiruti);
+  font-size: clamp(15px, 1.4vw, 17px);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.flavor-detail-back {
+  font-family: var(--font-beiruti);
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+}

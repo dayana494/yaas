@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Footer from '../components/Footer';
@@ -7,7 +7,9 @@ import FlavorStorySection from '../components/FlavorStorySection';
 import FlavorGallery from '../components/FlavorGallery';
 import { FLAVORS } from '../data/flavors';
 import { getFlavorStory } from '../data/flavorStories';
+import { SECTION_FLAVORS, sectionHref } from '../data/navLinks';
 import { attachRiseDriver, createRiseDriver } from '../scroll/riseTransition';
+import { useSectionNav } from '../scroll/sectionNav';
 import { enableTouchScrollNormalizer } from '../scroll/normalizeScroll';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -38,6 +40,8 @@ function useMediaQuery(query) {
 export default function FlavorDetailPage() {
   const { slug } = useParams();
   const flavor = FLAVORS.find((f) => f.id === slug);
+  // Unconditionally, above the not-found early return below: it is a hook.
+  const handleNavClick = useSectionNav();
   // Memoized because the story section keys its scroll timeline off
   // rotationBlocks' identity: for the four flavors without an entry of their
   // own, getFlavorStory builds a fresh fallback object on every call, which
@@ -87,9 +91,9 @@ export default function FlavorDetailPage() {
             <p className="flavor-detail-copy">
               We couldn&rsquo;t find that one — check out the full lineup instead.
             </p>
-            <Link className="flavor-detail-back" to="/flavors">
+            <a className="flavor-detail-back" href={sectionHref(SECTION_FLAVORS)} onClick={handleNavClick}>
               ← Back to Flavors
-            </Link>
+            </a>
           </div>
         </section>
         <Footer />

@@ -8,9 +8,9 @@ import { asset } from './assetUrl';
 // (an absolute path off the deploy root) while the header's were plain '#faq'.
 // Same labels, four different behaviours. Both surfaces now read these.
 //
-// Flavors is the one entry that is a route rather than a section: the gallery
-// has its own page, and both surfaces link to it.
-export const FLAVORS_ROUTE = '/flavors';
+// Flavors is a section like the rest now. It had a page of its own, built from
+// this same gallery, and that page is gone — the menu and the footer point at
+// the gallery on the homepage instead.
 
 // Section anchors on the homepage. The ids live on the sections themselves —
 // #why-yaas on AdvantagesScreen, #about on BrandTeaserScreen, #faq on
@@ -32,6 +32,6 @@ export function sectionHref(hash) {
   return asset(`/${hash}`);
 }
 
-// The homepage's own flavor gallery. Not in either menu any more (Flavors goes
-// to the page instead) — the hero's "See the Flavors" CTA still scrolls to it.
+// The homepage's own flavor gallery — what both menus' "Flavors" points at,
+// and where the hero's "See the Flavors" CTA goes.
 export const SECTION_FLAVORS = '#flavors';

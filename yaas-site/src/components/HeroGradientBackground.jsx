@@ -4,8 +4,8 @@ import { asset } from '../data/assetUrl';
 // createGradient.js) below 1024px only, falling back to a static image
 // above it. Now static everywhere, at every width.
 //
-// This component renders in five places — the hero, the flavors-page
-// gallery, the advantages/FAQ block, contacts and the footer — and each one
+// This component renders in four places — the hero, the advantages/FAQ
+// block, contacts and the footer — and each one
 // used to be its own WebGL context compiling its own shader and running its
 // own render loop from the moment it mounted, regardless of whether it was
 // ever on screen. There's a pause-when-off-screen guard inside

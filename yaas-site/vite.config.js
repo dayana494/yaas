@@ -48,6 +48,8 @@ function staticRoutes() {
       // Mirrors the <Route path> list in src/App.jsx, minus '/' (index.html
       // itself). A route added there but not here still works; it just falls
       // back to 404.html and answers with a 404 status.
+      // 'flavors' is still here with no page behind it: App.jsx redirects it to
+      // the homepage, and that only runs if Pages serves the app at all.
       const routes = ['flavors', 'contacts', ...slugs.map((s) => `flavors/${s}`)];
 
       for (const route of routes) {
