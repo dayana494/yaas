@@ -35,6 +35,13 @@
      stack has the whole viewport to be centred in. */
   --about-card-w: clamp(180px, min(29vw, calc((100dvh - 140px) * 0.7923)), 560px);
   --about-card-h: calc(var(--about-card-w) / 0.7923);
+  /* How far the fanned stack reaches either side of the screen's centre, in
+     card widths: rotation and skew swing the back cards' corners out to 0.61
+     of a card width from the middle (measured at 1920), not the flat 0.5. */
+  --about-deck-reach: calc(var(--about-card-w) * 0.61);
+  /* Clear space between each text column and the nearest photo edge — about
+     a fifth of a card, the proportion the layout reference keeps. */
+  --about-text-clearance: calc(var(--about-card-w) * 0.2);
 
   position: relative;
   /* Below .advantages (z-index: 3), which is what makes the handover read as
@@ -219,10 +226,14 @@
 /* Was the site's body size plus 4px — the one exception an earlier spec
    carved out. Both side blocks read at the same size now, on tablet and
    desktop alike, so this is --text-body like its opposite number. */
+/* Both columns stay flush to the content column's edges (the stage padding)
+   and end --about-text-clearance short of the photos: 50% of the stage's
+   content box is the distance from that edge to the screen's centre, minus
+   the stack's reach. Was a flat 440/435px (capped at 28vw), which ran both
+   columns under the fanned cards. */
 .about-brand-text-lead {
   flex: none;
-  width: 440px;
-  max-width: 28vw;
+  width: calc(50% - var(--about-deck-reach) - var(--about-text-clearance));
   font-size: var(--text-body);
 }
 
@@ -231,8 +242,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  width: 435px;
-  max-width: 28vw;
+  width: calc(50% - var(--about-deck-reach) - var(--about-text-clearance));
   /* 46px between the paragraph and the button in the mock. */
   gap: clamp(24px, 4vh, 46px);
 }
