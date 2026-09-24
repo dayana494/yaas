@@ -13,6 +13,28 @@
          already means nothing is render-blocked on either of them. -->
     <link rel="preload" href="%BASE_URL%fonts/Soledago.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="%BASE_URL%fonts/Bounded-Medium.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- The can model, 147KB, is the last link in a four-deep chain the browser
+         can only discover by running it: index.js has to load and execute
+         before HomePage.js is asked for, which brings in Scene.js, which brings
+         in the chunk that finally calls useGLTF. Measured on PageSpeed, the
+         model did not start downloading until 1-2.5s in. The preload takes it
+         off that chain — it starts with the first bytes of the document and
+         downloads alongside the JS instead of after it.
+         `as="fetch"` with an anonymous crossorigin is what three's own
+         FileLoader ends up requesting, so the two match and the browser serves
+         the loader from this response rather than fetching the file twice
+         (checked in the network log: one request, not two).
+
+         The media query is not a formality. Preloading 147KB puts it in front
+         of the JS that actually paints the page, and on a phone's bandwidth
+         that is a straight loss: measured unconditionally, mobile LCP went
+         2330ms -> 3155ms and the score dropped 4 points, and fetchpriority="low"
+         did not buy it back. A preload only pays for itself where there is
+         bandwidth to spare, so it is asked for at the widths where the model
+         is also drawn largest. Below 1024 the link does not match, nothing is
+         preloaded, and the loader fetches the model exactly as it did before
+         (verified: same ~175ms start as with no preload at all). -->
+    <link rel="preload" href="%BASE_URL%models/can.glb" as="fetch" crossorigin media="(min-width: 1024px)" />
     <!-- The two @font-face rules live here rather than in styles/index.css, and
          for the same reason the preloads above do: %BASE_URL% is substituted at
          build time, so one source serves both the root deploy (Vercel) and the
@@ -85,9 +107,22 @@
          one frame px, min'd against 100svh so the whole frame always fits above
          a phone's bottom address bar, centred vertically. Title 80/1.1 on two
          lines, can ink 319.4 tall at a 268.45 pitch, counter ink bottom 761.5.
-         'Soledago PL' is the same preloaded file with font-display: block, so
-         the title is first painted in its real face: a swap from the fallback
-         moved its lines a few px (a layout shift) on slow connections.
+         'Soledago PL' carries font-display: block so the title is first
+         painted in its real face: a swap from the fallback moved its lines a
+         few px (a layout shift) on slow connections. But "block" also means
+         the browser holds the text INVISIBLE until the face arrives, up to
+         ~3s — and this title is the page's Largest Contentful Paint on a
+         phone, so on a real 4G connection PageSpeed measured 2.36s of it
+         sitting blank waiting for a 28.8KB download.
+         So the face below no longer points at that download. The build swaps
+         its src for a base64 subset of the very same file carrying only the
+         glyphs this one line needs (see criticalPath() in vite.config.js) —
+         ~4KB, inside the HTML, so it is there in the first frame no matter how
+         slow the connection is, and "block" costs nothing. The full
+         Soledago.woff2 preloaded above is untouched and still serves the rest
+         of the site (the wordmark, section headings) with font-display: swap.
+         In `vite dev` this stays a plain url() — the swap is a build step. -->
+    <!--
          The cans in the marquee are WebP (quality 85, alpha kept at 100) rather
          than the PNGs they were captured as: same pixels to the eye at the
          ~151px they are drawn at, 67KB for the whole strip instead of 121KB,

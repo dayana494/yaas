@@ -413,7 +413,13 @@ export default function BrandTeaserScreen() {
           <div className="about-brand-deck" ref={deckRef}>
             {ABOUT_PHOTOS.map((photo, i) => (
               <div className="about-brand-card" key={`${photo.src}-${i}`}>
-                <img src={photo.src} alt={photo.alt} loading="lazy" />
+                {/* loading="lazy" already keeps these two (271KB between them)
+                    out of the first load — checked in the network log, neither
+                    is requested before the reader scrolls. fetchpriority="low"
+                    is belt and braces: a lazy image whose container a browser
+                    decides to treat as near-visible is still fetched, and when
+                    that happens it should not be competing with the bundle. */}
+                <img src={photo.src} alt={photo.alt} loading="lazy" fetchPriority="low" />
               </div>
             ))}
           </div>
