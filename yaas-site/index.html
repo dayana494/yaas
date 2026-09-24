@@ -81,23 +81,40 @@
          font-size (same idea as hero.css's 2.245 for "YAAS"). The line-heights
          put the ink edges on the box edges: .7575 is Soledago's cap top, .636
          Bounded's baseline, so both gaps read as exactly --pl-edge.
+         Below 1024 it follows the 390x850 phone frame (429:70) instead: --u is
+         one frame px, min'd against 100svh so the whole frame always fits above
+         a phone's bottom address bar, centred vertically. Title 80/1.1 on two
+         lines, can ink 319.4 tall at a 268.45 pitch, counter ink bottom 761.5.
+         'Soledago PL' is the same preloaded file with font-display: block, so
+         the title is first painted in its real face: a swap from the fallback
+         moved its lines a few px (a layout shift) on slow connections.
 
          React waits on window.__yaasPreloader.done before the hero entrance
          (HomePage) and calls .ready() once the hero scene has drawn a frame with
          its label textures (CanRig onReady). Other routes: fonts + window load.
          Either way the fade starts no later than 2s after navigation start. -->
     <style>
+      @font-face{font-family:'Soledago PL';src:url('%BASE_URL%fonts/Soledago.woff2') format('woff2');font-display:block}
       #pl{--s:var(--hero-scale,1);--pl-edge:calc(33.56px*var(--s));position:fixed;inset:0;width:100vw;z-index:9999;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:var(--pl-edge) 0;box-sizing:border-box;overflow:hidden;container-type:inline-size;color:#fff;background:#f0907a url('%BASE_URL%images/gradient-still.webp') 50%/cover;transition:opacity .4s}
-      #pl .t{font:400 calc((100vw - 2*var(--content-gutter,30px))/7.444)/.7575 Soledago,'Arial Narrow',sans-serif;font-size:calc((100cqw - 2*var(--content-gutter,30px))/7.444);text-transform:uppercase;white-space:nowrap;align-self:stretch;padding:0 var(--content-gutter,30px)}
+      #pl .t{font:400 calc((100vw - 2*var(--content-gutter,30px))/7.444)/.7575 'Soledago PL',Soledago,'Arial Narrow',sans-serif;font-size:calc((100cqw - 2*var(--content-gutter,30px))/7.444);text-transform:uppercase;white-space:nowrap;align-self:stretch;padding:0 var(--content-gutter,30px)}
       #pl-r{align-self:stretch}
       #pl-t{display:flex;width:max-content;animation:pl 30s linear infinite;will-change:transform}
       #pl-t img{height:calc(276.2px*var(--s));width:auto;margin-right:calc(87.6px*var(--s))}
       #pl-c{font:500 max(16px,calc(19.9px*var(--s)))/.636 Bounded,sans-serif;font-variant-numeric:tabular-nums;width:4em;height:.636em;text-align:center}
       #pl-c i{font-style:normal;display:inline-block;width:.78em;text-align:center}
+      #pl .t br{display:none}
+      @media (max-width:1023px){
+        #pl{--u:min(calc(100vw/390),calc(100svh/850));justify-content:flex-start;padding:0}
+        #pl .t{margin-top:calc((100svh - 850*var(--u))/2 + 80*var(--u));font-size:calc(80*var(--u));line-height:1.1;text-align:center;padding:0}
+        #pl .t br{display:inline}
+        #pl-r{margin-top:calc(80.3*var(--u))}
+        #pl-t img{height:calc(319.4*var(--u));margin-right:calc(93.6*var(--u))}
+        #pl-c{margin-top:calc(86.7*var(--u));font-size:calc(30*var(--u))}
+      }
       @keyframes pl{to{transform:translate3d(-50%,0,0)}}
       @media (prefers-reduced-motion:reduce){#pl-t{animation:none}}
     </style>
-    <div id="pl"><div class="t" aria-hidden="true">loading energy</div><div id="pl-r" aria-hidden="true"><div id="pl-t"></div></div><div id="pl-c" role="status" aria-live="polite"><i>0</i>%</div></div>
+    <div id="pl"><div class="t" aria-hidden="true">loading<br> energy</div><div id="pl-r" aria-hidden="true"><div id="pl-t"></div></div><div id="pl-c" role="status" aria-live="polite"><i>0</i>%</div></div>
     <script>
       (function(){var w=window,d=document,o=d.getElementById('pl'),c=d.getElementById('pl-c'),B='%BASE_URL%',
       s=Math.min((innerWidth-60)/1200,innerHeight/650),F=['lemon','blueberry','strawberry','orange','apple'],
@@ -106,7 +123,7 @@
       EV=['wheel','touchmove','keydown'],now=function(){return performance.now()};
       d.documentElement.style.setProperty('--hero-scale',s);
       w.__yaasPreloader={done:new Promise(function(r){res=r}),ready:function(){hr=1;chk()}};
-      for(i=0;i<2*n;i++){k=B+'images/preloader/'+F[i%5];x+='<img src="'+k+'.png" srcset="'+k+'-sm.png 98w,'+k+'.png 196w" sizes="'+Math.ceil(151.2*s)+'px" width="196" height="358" decoding="async" fetchpriority="low" alt="">'}
+      for(i=0;i<2*n;i++){k=B+'images/preloader/'+F[i%5];x+='<img src="'+k+'.png" srcset="'+k+'-sm.png 98w,'+k+'.png 196w" sizes="(max-width:1023px) 196px,'+Math.ceil(151.2*s)+'px" width="196" height="358" decoding="async" fetchpriority="low" alt="">'}
       d.getElementById('pl-t').innerHTML=x;
       for(i=0;i<7;i++){ST[i]=t;DU[i]=.9-.08*i;t+=1.7-.12*i}q=1500/(ST[6]+DU[6]);
       function pre(t){var v=0,i,p;for(i=0;i<7;i++){p=(t/q-ST[i])/DU[i];if(p<=0)break;v=(i?S[i-1]:0)+(S[i]-(i?S[i-1]:0))*Math.pow(2,10*Math.min(p,1)-10)}return v}
@@ -118,7 +135,7 @@
       if(p<1)return requestAnimationFrame(f);o.style.opacity=0;
       setTimeout(function(){o.remove();EV.forEach(function(e){w.removeEventListener(e,blk,true)});res()},400)}
       EV.forEach(function(e){w.addEventListener(e,blk,{passive:false,capture:true})});
-      Promise.all([d.fonts.load('1em Soledago'),d.fonts.load('500 1em Bounded')]).then(function(){return d.fonts.ready}).then(function(){fr=1;chk()},function(){fr=1;chk()});
+      Promise.all([d.fonts.load('1em "Soledago PL"'),d.fonts.load('500 1em Bounded')]).then(function(){return d.fonts.ready}).then(function(){fr=1;chk()},function(){fr=1;chk()});
       k=new Image;k.onload=k.onerror=function(){bg=1;chk()};k.src=B+'images/gradient-still.webp';
       w.addEventListener('load',function(){ld=1;chk()});
       setTimeout(go,1700-now());requestAnimationFrame(f)})();
