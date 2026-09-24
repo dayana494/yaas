@@ -30,14 +30,32 @@ import { onRealResize } from './onRealResize';
 // that could drift out of sync. A trigger's onUpdate also doesn't fire on
 // every tick of a pin with no scrub of its own, which left the radius
 // updating in visible steps.
+// Both halves of the transition are split into a read and a write, and every
+// driver below runs all its reads before any of its writes.
+//
+// They used to be one function per element: read the rect, write --rise, then
+// read offsetWidth for the radius — and that last read, taken after a write to
+// the very same element, forces the browser to lay the page out again on the
+// spot. Once per element per frame, on a driver that runs on every frame for
+// the whole life of the page. Across the two rise sections, the two fall
+// sections and the ticker's 60Hz that was the single most frequent piece of
+// work on the page; Lighthouse attributed 411ms of style+layout to it on a
+// throttled phone. Reading first costs nothing and the numbers written are
+// identical.
+function readRise(el) {
+  const vh = window.innerHeight;
+  const covered = Math.min(1, Math.max(0, 1 - el.getBoundingClientRect().top / vh));
+  return { rise: 1 - covered, width: el.offsetWidth };
+}
+
+function writeRise(el, { rise, width }) {
+  el.style.setProperty('--rise', String(rise));
+  el.style.setProperty('--rise-radius', `${(rise * width) / 2}px`);
+}
+
 export function applyRise(el) {
   if (!el) return;
-  const vh = window.innerHeight;
-  const top = el.getBoundingClientRect().top;
-  const covered = Math.min(1, Math.max(0, 1 - top / vh));
-  const rise = 1 - covered;
-  el.style.setProperty('--rise', String(rise));
-  el.style.setProperty('--rise-radius', `${(rise * el.offsetWidth) / 2}px`);
+  writeRise(el, readRise(el));
 }
 
 // One callback driving every rising section on the page. Returned so the
@@ -64,11 +82,35 @@ export function applyRise(el) {
 // which fire regardless of GSAP's state, and — importantly — runs once
 // immediately, so a driver that starts late still corrects whatever the last
 // one left behind rather than inheriting it.
-export function createRiseDriver(selectors) {
-  function driveRise() {
+// Resolves a selector at most once per element lifetime instead of on every
+// frame. The drivers below run 60 times a second for the whole life of the
+// page, and a querySelector per selector per frame was pure overhead — but the
+// node genuinely can be swapped out under us (React remounting a section, a hot
+// module swap), so a plain one-off lookup is not safe either. `isConnected` is
+// the cheap check that tells the two apart.
+function createElementCache(selectors) {
+  const cache = new Map();
+  return function resolve() {
+    const out = [];
     for (const selector of selectors) {
-      applyRise(document.querySelector(selector));
+      let el = cache.get(selector);
+      if (!el || !el.isConnected) {
+        el = document.querySelector(selector);
+        cache.set(selector, el);
+      }
+      if (el) out.push(el);
     }
+    return out;
+  };
+}
+
+export function createRiseDriver(selectors) {
+  const resolve = createElementCache(selectors);
+  function driveRise() {
+    const els = resolve();
+    // Every read, then every write — see readRise.
+    const values = els.map(readRise);
+    for (let i = 0; i < els.length; i++) writeRise(els[i], values[i]);
   }
   driveRise.reset = () => clearProps(selectors, ['--rise', '--rise-radius']);
   return driveRise;
@@ -182,9 +224,22 @@ export function riseUnits() {
 //   - section's bottom above the viewport bottom: absolute again, parked at
 //     the section's bottom, so its last viewport stays covered.
 export function createViewportBackdropDriver(sectionSelector, backdropSelector) {
+  // Same reasoning as createElementCache above — this driver is on the ticker
+  // at every width, phones included, so two querySelectors per frame are two
+  // too many. The only write here is a classList.toggle with an explicit force
+  // argument, which is a no-op when the class is already in that state, so
+  // nothing is invalidated on the frames where nothing changed and the rect
+  // read below stays free.
+  let section = null;
+  let backdrop = null;
   function driveBackdrop() {
-    const section = document.querySelector(sectionSelector);
-    const backdrop = section?.querySelector(backdropSelector);
+    if (!section || !section.isConnected) {
+      section = document.querySelector(sectionSelector);
+      backdrop = null;
+    }
+    if (section && (!backdrop || !backdrop.isConnected)) {
+      backdrop = section.querySelector(backdropSelector);
+    }
     if (!section || !backdrop) return;
     const rect = section.getBoundingClientRect();
     const covering = rect.top <= 0 && rect.bottom >= window.innerHeight;
@@ -213,22 +268,30 @@ export function createViewportBackdropDriver(sectionSelector, backdropSelector) 
 // `fall` is 0 while the section's bottom edge is still at or below the bottom
 // of the viewport, and 1 once it has reached the top — i.e. exactly the window
 // in which the section is being uncovered.
+function readFall(el) {
+  const vh = window.innerHeight;
+  const fall = Math.min(1, Math.max(0, 1 - el.getBoundingClientRect().bottom / vh));
+  return { fall, width: el.offsetWidth };
+}
+
+function writeFall(el, { fall, width }) {
+  el.style.setProperty('--fall', String(fall));
+  el.style.setProperty('--fall-radius', `${(fall * width) / 2}px`);
+}
+
 export function applyFall(el) {
   if (!el) return;
-  const vh = window.innerHeight;
-  const bottom = el.getBoundingClientRect().bottom;
-  const fall = Math.min(1, Math.max(0, 1 - bottom / vh));
-  el.style.setProperty('--fall', String(fall));
-  el.style.setProperty('--fall-radius', `${(fall * el.offsetWidth) / 2}px`);
+  writeFall(el, readFall(el));
 }
 
 // Same shape as createRiseDriver — hand the result to attachRiseDriver, which
 // covers the ticker plus scroll and resize for the reasons above.
 export function createFallDriver(selectors) {
+  const resolve = createElementCache(selectors);
   function driveFall() {
-    for (const selector of selectors) {
-      applyFall(document.querySelector(selector));
-    }
+    const els = resolve();
+    const values = els.map(readFall);
+    for (let i = 0; i < els.length; i++) writeFall(els[i], values[i]);
   }
   driveFall.reset = () => clearProps(selectors, ['--fall', '--fall-radius']);
   return driveFall;

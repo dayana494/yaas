@@ -88,6 +88,13 @@
          'Soledago PL' is the same preloaded file with font-display: block, so
          the title is first painted in its real face: a swap from the fallback
          moved its lines a few px (a layout shift) on slow connections.
+         The cans in the marquee are WebP (quality 85, alpha kept at 100) rather
+         than the PNGs they were captured as: same pixels to the eye at the
+         ~151px they are drawn at, 67KB for the whole strip instead of 121KB,
+         and this is the one image set that is on the critical path — it is the
+         first thing the visitor sees. The .png files are still in
+         public/images/preloader/ as the capture originals; nothing fetches
+         them.
 
          React waits on window.__yaasPreloader.done before the hero entrance
          (HomePage) and calls .ready() once the hero scene has drawn a frame with
@@ -123,7 +130,7 @@
       EV=['wheel','touchmove','keydown'],now=function(){return performance.now()};
       d.documentElement.style.setProperty('--hero-scale',s);
       w.__yaasPreloader={done:new Promise(function(r){res=r}),ready:function(){hr=1;chk()}};
-      for(i=0;i<2*n;i++){k=B+'images/preloader/'+F[i%5];x+='<img src="'+k+'.png" srcset="'+k+'-sm.png 98w,'+k+'.png 196w" sizes="(max-width:1023px) 196px,'+Math.ceil(151.2*s)+'px" width="196" height="358" decoding="async" fetchpriority="low" alt="">'}
+      for(i=0;i<2*n;i++){k=B+'images/preloader/'+F[i%5];x+='<img src="'+k+'.webp" srcset="'+k+'-sm.webp 98w,'+k+'.webp 196w" sizes="(max-width:1023px) 196px,'+Math.ceil(151.2*s)+'px" width="196" height="358" decoding="async" fetchpriority="low" alt="">'}
       d.getElementById('pl-t').innerHTML=x;
       for(i=0;i<7;i++){ST[i]=t;DU[i]=.9-.08*i;t+=1.7-.12*i}q=1500/(ST[6]+DU[6]);
       function pre(t){var v=0,i,p;for(i=0;i<7;i++){p=(t/q-ST[i])/DU[i];if(p<=0)break;v=(i?S[i-1]:0)+(S[i]-(i?S[i-1]:0))*Math.pow(2,10*Math.min(p,1)-10)}return v}

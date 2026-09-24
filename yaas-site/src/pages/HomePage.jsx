@@ -29,6 +29,7 @@ import {
 } from '../scroll/riseTransition';
 import { SCROLL_TO_STATE, scrollToSection } from '../scroll/sectionNav';
 import { onRealResize, whenScrollIdle } from '../scroll/onRealResize';
+import { runStepsWhenIdle } from '../scroll/idleChain';
 import { enableTouchScrollNormalizer } from '../scroll/normalizeScroll';
 import {
   DETAIL_TRANSITION_DURATION,
@@ -196,11 +197,24 @@ export default function HomePage() {
   // *after* cards' trigger has been rebuilt (not before) matters too: cards'
   // corrected spacer has a different height than its placeholder one, which
   // shifts everything below it, .advantages included.
+  //
+  // The pass runs as a chain of one-step-per-task slices rather than as one
+  // function call (see scroll/idleChain.js), started once the first-load
+  // preloader has finished. The steps, their order and every number they
+  // compute are unchanged — only the scheduling is. Measured on a throttled
+  // phone it was a single ~500ms task, the longest on the page by a wide
+  // margin and most of its Total Blocking Time; the same work in six tasks
+  // costs a fraction of that, because TBT only counts what a task spends past
+  // 50ms. The per-instance refresh()es stay: each one settles the pin-spacer
+  // that the NEXT step measures against, so they are what makes the chain
+  // correct, not an extra (a single global refresh at the end cannot
+  // retroactively fix a measurement already taken against a stale spacer).
   useEffect(() => {
     let raf = 0;
     let resizeTimer = 0;
+    let chain = null;
 
-    const correctPinStarts = () => {
+    const pinStartSteps = () => {
       // Each correction below is now gated on *only* its own trigger/element
       // existing, not on every other one too. They used to share one
       // all-or-nothing guard requiring cards, advantages *and* brand-teaser
@@ -235,112 +249,174 @@ export default function HomePage() {
       // entrance effect below), not a GSAP pin, so there is no spacer above
       // arcEl to settle first — its measurement is already correct.
 
-      // Screen 2's arc gallery is now the first pin after .intro-wrap, so it
-      // inherits the same unreliable 'top top' resolution and gets corrected
-      // first — everything below measures against its settled spacer.
-      const arcTrigger = ScrollTrigger.getById(SCREEN2_ARC_TRIGGER_ID);
-      const arcEl = document.querySelector('.screen2-arc');
-      if (arcTrigger && arcEl) {
-        const arcVars = { ...arcTrigger.vars, start: slotTop(arcEl), animation: arcTrigger.animation };
-        arcTrigger.kill(true, true);
-        const newArcTrigger = ScrollTrigger.create(arcVars);
-        newArcTrigger.refresh();
-      }
+      // One step per pin, in the order they appear down the page. The list is
+      // the same straight-line code it used to be — each entry still measures
+      // against whatever the entry before it left behind, so the order is not
+      // negotiable and the chain that runs them never reorders or skips.
+      return [
+        // Screen 2's arc gallery is now the first pin after .intro-wrap, so it
+        // inherits the same unreliable 'top top' resolution and gets corrected
+        // first — everything below measures against its settled spacer.
+        () => {
+          const arcTrigger = ScrollTrigger.getById(SCREEN2_ARC_TRIGGER_ID);
+          const arcEl = document.querySelector('.screen2-arc');
+          if (arcTrigger && arcEl) {
+            const arcVars = { ...arcTrigger.vars, start: slotTop(arcEl), animation: arcTrigger.animation };
+            arcTrigger.kill(true, true);
+            const newArcTrigger = ScrollTrigger.create(arcVars);
+            newArcTrigger.refresh();
+          }
+        },
 
-      const cardsTrigger = ScrollTrigger.getById(SCENARIO_CARDS_TRIGGER_ID);
-      const cardsIsoEl = document.querySelector('.scenario-cards-iso');
-      if (cardsTrigger && cardsIsoEl) {
-        // Mutating `.vars.start` on an already-created trigger and calling
-        // `.refresh()` (its own instance's, or even one single *global*
-        // ScrollTrigger.refresh() once every number above was final) does
-        // update the trigger's own public `.start`/`.end` correctly, but not
-        // some other internal state GSAP uses to compute the *pinned
-        // element's actual on-screen transform* — the section stayed visibly
-        // pinned to the wrong offset even though `.start`/`.end` read back
-        // exactly right. Killing each trigger and recreating it fresh (same
-        // `animation`, so the linked timeline keeps driving it) rebuilds that
-        // internal state from scratch instead of trying to patch it.
-        // kill(revert, allowAnimation): without explicit `true, true` this
-        // both leaves the old pin's inline styles/spacer only *partially*
-        // reverted (the new trigger's fresh pin then measures against that
-        // stale residue instead of clean natural flow) and, for cards
-        // specifically, kills its linked flip-card timeline too (passed back
-        // in via `animation` below — it needs to keep running).
-        const cardsStart = slotTop(cardsIsoEl);
-        const cardsVars = { ...cardsTrigger.vars, start: cardsStart, animation: cardsTrigger.animation };
-        cardsTrigger.kill(true, true);
-        const newCardsTrigger = ScrollTrigger.create(cardsVars);
-        // Its pin-spacer's final height isn't necessarily sized synchronously
-        // inside create() itself — an explicit per-instance refresh() (not the
-        // global one, which is what caused the original mid-remeasurement
-        // reads) forces it to settle *before* .advantages gets measured below,
-        // so that measurement reflects cards' real (new) spacer size instead
-        // of a stale one and doesn't land the two pins overlapping.
-        newCardsTrigger.refresh();
-      }
+        () => {
+          const cardsTrigger = ScrollTrigger.getById(SCENARIO_CARDS_TRIGGER_ID);
+          const cardsIsoEl = document.querySelector('.scenario-cards-iso');
+          if (cardsTrigger && cardsIsoEl) {
+            // Mutating `.vars.start` on an already-created trigger and calling
+            // `.refresh()` (its own instance's, or even one single *global*
+            // ScrollTrigger.refresh() once every number above was final) does
+            // update the trigger's own public `.start`/`.end` correctly, but not
+            // some other internal state GSAP uses to compute the *pinned
+            // element's actual on-screen transform* — the section stayed visibly
+            // pinned to the wrong offset even though `.start`/`.end` read back
+            // exactly right. Killing each trigger and recreating it fresh (same
+            // `animation`, so the linked timeline keeps driving it) rebuilds that
+            // internal state from scratch instead of trying to patch it.
+            // kill(revert, allowAnimation): without explicit `true, true` this
+            // both leaves the old pin's inline styles/spacer only *partially*
+            // reverted (the new trigger's fresh pin then measures against that
+            // stale residue instead of clean natural flow) and, for cards
+            // specifically, kills its linked flip-card timeline too (passed back
+            // in via `animation` below — it needs to keep running).
+            const cardsStart = slotTop(cardsIsoEl);
+            const cardsVars = { ...cardsTrigger.vars, start: cardsStart, animation: cardsTrigger.animation };
+            cardsTrigger.kill(true, true);
+            const newCardsTrigger = ScrollTrigger.create(cardsVars);
+            // Its pin-spacer's final height isn't necessarily sized synchronously
+            // inside create() itself — an explicit per-instance refresh() (not the
+            // global one, which is what caused the original mid-remeasurement
+            // reads) forces it to settle *before* .advantages gets measured below,
+            // so that measurement reflects cards' real (new) spacer size instead
+            // of a stale one and doesn't land the two pins overlapping.
+            newCardsTrigger.refresh();
+          }
+        },
 
-      // Either Screen 3 variant may be mounted here, and each pins a
-      // different box: the hover-stack version pins .advantages-pin (the
-      // full-viewport box nested inside the rise container — the container
-      // itself must stay in flow, since GSAP folds a pinned element's margins
-      // into its spacer and that negative margin *is* the rise), the legacy
-      // arc version pins .advantages itself. Under prefers-reduced-motion the
-      // legacy version creates no ADVANTAGES_TRIGGER_ID at all and there's
-      // nothing here to correct — that's fine, its fallback uses a plain
-      // self-relative 'top 85%' fade with no dependency on a previous pin.
-      const advantagesTrigger = ScrollTrigger.getById(ADVANTAGES_TRIGGER_ID);
-      const advantagesEl = document.querySelector('.advantages-pin') || document.querySelector('.advantages');
-      if (advantagesTrigger && advantagesEl) {
-        // Reading .advantages only *after* cards' trigger has been rebuilt
-        // (not before) matters: cards' corrected spacer has a different
-        // height than its placeholder one, which shifts everything below it,
-        // .advantages included.
-        const advantagesStart = slotTop(advantagesEl);
-        const advantagesVars = { ...advantagesTrigger.vars, start: advantagesStart, animation: advantagesTrigger.animation };
-        advantagesTrigger.kill(true, true);
-        const newAdvantagesTrigger = ScrollTrigger.create(advantagesVars);
-        newAdvantagesTrigger.refresh();
-      }
+        () => {
+          // Either Screen 3 variant may be mounted here, and each pins a
+          // different box: the hover-stack version pins .advantages-pin (the
+          // full-viewport box nested inside the rise container — the container
+          // itself must stay in flow, since GSAP folds a pinned element's margins
+          // into its spacer and that negative margin *is* the rise), the legacy
+          // arc version pins .advantages itself. Under prefers-reduced-motion the
+          // legacy version creates no ADVANTAGES_TRIGGER_ID at all and there's
+          // nothing here to correct — that's fine, its fallback uses a plain
+          // self-relative 'top 85%' fade with no dependency on a previous pin.
+          const advantagesTrigger = ScrollTrigger.getById(ADVANTAGES_TRIGGER_ID);
+          const advantagesEl = document.querySelector('.advantages-pin') || document.querySelector('.advantages');
+          if (advantagesTrigger && advantagesEl) {
+            // Reading .advantages only *after* cards' trigger has been rebuilt
+            // (not before) matters: cards' corrected spacer has a different
+            // height than its placeholder one, which shifts everything below it,
+            // .advantages included.
+            const advantagesStart = slotTop(advantagesEl);
+            const advantagesVars = { ...advantagesTrigger.vars, start: advantagesStart, animation: advantagesTrigger.animation };
+            advantagesTrigger.kill(true, true);
+            const newAdvantagesTrigger = ScrollTrigger.create(advantagesVars);
+            newAdvantagesTrigger.refresh();
+          }
+        },
 
-      // About the Brand is chained after Advantages' own pin and inherits the
-      // same unreliable 'top top' resolution, so it gets the same treatment,
-      // measured last of all — every spacer above it is settled by this point.
-      // Under prefers-reduced-motion it creates no trigger at all (the section
-      // renders in its assembled state instead), hence the guard.
-      const aboutTrigger = ScrollTrigger.getById(ABOUT_TRIGGER_ID);
-      const aboutEl = document.querySelector('.about-brand-pin');
-      if (aboutTrigger && aboutEl) {
-        const aboutVars = { ...aboutTrigger.vars, start: slotTop(aboutEl), animation: aboutTrigger.animation };
-        aboutTrigger.kill(true, true);
-        const newAboutTrigger = ScrollTrigger.create(aboutVars);
-        newAboutTrigger.refresh();
-      }
+        () => {
+          // About the Brand is chained after Advantages' own pin and inherits the
+          // same unreliable 'top top' resolution, so it gets the same treatment,
+          // measured last of all — every spacer above it is settled by this point.
+          // Under prefers-reduced-motion it creates no trigger at all (the section
+          // renders in its assembled state instead), hence the guard.
+          const aboutTrigger = ScrollTrigger.getById(ABOUT_TRIGGER_ID);
+          const aboutEl = document.querySelector('.about-brand-pin');
+          if (aboutTrigger && aboutEl) {
+            const aboutVars = { ...aboutTrigger.vars, start: slotTop(aboutEl), animation: aboutTrigger.animation };
+            aboutTrigger.kill(true, true);
+            const newAboutTrigger = ScrollTrigger.create(aboutVars);
+            newAboutTrigger.refresh();
+          }
+        },
 
-      // Last of all, the footer's own reveal pin — measured after everything
-      // above it has settled, same as each step before it.
-      const footerTrigger = ScrollTrigger.getById(FOOTER_TRIGGER_ID);
-      const footerEl = document.querySelector('.site-footer.is-reveal');
-      if (footerTrigger && footerEl) {
-        const footerVars = { ...footerTrigger.vars, start: slotTop(footerEl) };
-        footerTrigger.kill(true, true);
-        ScrollTrigger.create(footerVars).refresh();
-      }
+        () => {
+          // Last of all, the footer's own reveal pin — measured after everything
+          // above it has settled, same as each step before it.
+          const footerTrigger = ScrollTrigger.getById(FOOTER_TRIGGER_ID);
+          const footerEl = document.querySelector('.site-footer.is-reveal');
+          if (footerTrigger && footerEl) {
+            const footerVars = { ...footerTrigger.vars, start: slotTop(footerEl) };
+            footerTrigger.kill(true, true);
+            ScrollTrigger.create(footerVars).refresh();
+          }
+        },
 
-      ScrollTrigger.refresh();
+        () => {
+          ScrollTrigger.refresh();
 
-      // A section link clicked from another page lands here. It has to wait for
-      // exactly this moment: every pinned section's scroll window was just
-      // recomputed above, and a scroll fired any earlier aims at a document
-      // that is about to change height under it. Consumed once — the flag is
-      // cleared so the resize re-run below doesn't yank the reader back.
-      if (pendingScrollRef.current) {
-        const hash = pendingScrollRef.current;
-        pendingScrollRef.current = null;
-        scrollToSection(hash);
-      }
+          // A section link clicked from another page lands here. It has to wait for
+          // exactly this moment: every pinned section's scroll window was just
+          // recomputed above, and a scroll fired any earlier aims at a document
+          // that is about to change height under it. Consumed once — the flag is
+          // cleared so the resize re-run below doesn't yank the reader back.
+          if (pendingScrollRef.current) {
+            const hash = pendingScrollRef.current;
+            pendingScrollRef.current = null;
+            scrollToSection(hash);
+          }
+        },
+      ];
     };
 
-    raf = requestAnimationFrame(correctPinStarts);
+    // Kicks the chain off and wires the two things that can make it stop
+    // waiting for idle time. Nothing about the steps changes — see the note
+    // above the effect.
+    const startCorrection = () => {
+      chain?.cancel();
+      chain = runStepsWhenIdle(pinStartSteps());
+    };
+
+    // The reader scrolling means the corrected pins are now on their way to
+    // mattering. Every section this pass touches sits at least a full intro
+    // (four viewports of scroll) below the fold, so hurrying the chain along
+    // one task at a time gets there with room to spare and keeps every task
+    // short; flush() is the backstop for the case that assumption does not
+    // hold — a restored scroll position, a very fast flick — and runs whatever
+    // is left in one go rather than let a section reach the viewport on an
+    // uncorrected pin.
+    const FLUSH_MARGIN_PX = 2;
+    const onFirstScroll = () => {
+      if (!chain || chain.done) return;
+      // A viewport and a half of headroom in front of the first pin that has
+      // not been rebuilt yet. Reading `.start` of whichever trigger still
+      // holds its placeholder is enough: the placeholder always resolves
+      // EARLIER than the real start (see ScenarioCardsIsometric's comment), so
+      // this can only ever flush too soon, never too late.
+      const first = ScrollTrigger.getById(SCREEN2_ARC_TRIGGER_ID);
+      const guard = (first?.start ?? 0) - window.innerHeight * 1.5 - FLUSH_MARGIN_PX;
+      if (window.scrollY >= guard) chain.flush();
+      else chain.hurry();
+    };
+    window.addEventListener('scroll', onFirstScroll, { passive: true });
+
+    // Held until the first-load preloader is out of the way. Its overlay
+    // blocks wheel/touch/keys for as long as it is up, so nothing can reach a
+    // still-uncorrected pin before this resolves, and the browser has no idle
+    // time to give while it is still bringing the page in anyway. `done` is
+    // already resolved on an SPA navigation, so that path only costs a tick.
+    let released = false;
+    (window.__yaasPreloader?.done ?? Promise.resolve()).then(() => {
+      if (released) return;
+      released = true;
+      // One frame of margin, as before: anything still Suspense-gated (the 3D
+      // scene's assets, a webfont) can resolve a tick after the initial commit
+      // and nudge layout.
+      raf = requestAnimationFrame(startCorrection);
+    });
 
     // Those corrected starts are plain numbers, so — unlike the string
     // starts GSAP resolves itself — they don't re-resolve when the viewport
@@ -364,13 +440,16 @@ export default function HomePage() {
         cancelIdle();
         cancelIdle = whenScrollIdle(() => {
           cancelAnimationFrame(raf);
-          raf = requestAnimationFrame(correctPinStarts);
+          raf = requestAnimationFrame(startCorrection);
         });
       }, 250);
     };
     const offResize = onRealResize(onResize);
 
     return () => {
+      window.removeEventListener('scroll', onFirstScroll);
+      released = true;
+      chain?.cancel();
       cancelAnimationFrame(raf);
       clearTimeout(resizeTimer);
       cancelIdle();

@@ -36,10 +36,6 @@ export const STACK_SLOTS = [
   { rotate: -3, skewX: 2.37, y: 8 },
 ];
 
-// Card aspect ratio, 560 / 706.796 in the mock. The card's own width is derived
-// from this in CSS, so the two can never drift apart.
-export const CARD_ASPECT = 0.7923;
-
 // Where each card flies in from, as a fraction of the viewport measured from
 // its resting place — scattered around the four corners, each with a different
 // amount of extra spin so they don't read as one rigid object coming apart.

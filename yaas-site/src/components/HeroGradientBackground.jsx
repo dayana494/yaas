@@ -23,9 +23,6 @@ import { asset } from '../data/assetUrl';
 // mobile fallback below 1024px, verified visually indistinguishable from the
 // live shader (mean difference under 1 of 255 per channel across the full
 // frame, worst pixel 6). This just makes that the only version, everywhere.
-//
-// gradient/createGradient.js and its config are left in place, unused, in
-// case the animation is ever wanted back for a specific spot.
 const STILL_URL = asset('/images/gradient-still.webp');
 
 export default function HeroGradientBackground() {

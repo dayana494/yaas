@@ -31,33 +31,3 @@ export function useDeferredMount() {
   return ready;
 }
 
-// True once `ref`'s element has intersected the viewport at least once — the
-// same mechanism the gradient background already uses to pause rendering
-// (createGradient.js), applied here one layer earlier to defer even
-// requesting a Canvas's own chunk until its section is actually about to be
-// seen. A positive `rootMargin` gives it a head start so the fetch is
-// already underway before the section reaches the viewport, rather than
-// popping in empty for a frame once it does.
-export function useLazyOnVisible(ref, rootMargin = '600px 0px') {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (visible || !el) return undefined;
-    if (typeof IntersectionObserver === 'undefined') {
-      setVisible(true);
-      return undefined;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref, visible, rootMargin]);
-  return visible;
-}

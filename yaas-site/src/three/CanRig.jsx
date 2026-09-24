@@ -109,10 +109,23 @@ const DIM = new THREE.Color(0.72, 0.72, 0.75);
 const tmpColor = new THREE.Color();
 
 const CanRig = forwardRef(function CanRig(
-  { activeFlavor, isMobile, onFlavorMidSpin, onSettle, armed = true, onEntranceStart, onReady },
+  {
+    activeFlavor,
+    isMobile,
+    onFlavorMidSpin,
+    onSettle,
+    armed = true,
+    onEntranceStart,
+    onReady,
+    // Bracket the mount flight so Scene.jsx can drop the canvas's device pixel
+    // ratio for its duration — see REST_DPR/FLIGHT_DPR there. Fired only around
+    // the real tween, never on the already-scrolled shortcut below.
+    onFlightStart,
+    onFlightEnd,
+  },
   ref
 ) {
-  const { camera, gl } = useThree();
+  const { camera, gl, scene } = useThree();
   const { invalidate, hold, keepAlive, holding } = useRenderHold();
   const geometry = useCanGeometry();
   const materials = useCanMaterials();
@@ -228,18 +241,35 @@ const CanRig = forwardRef(function CanRig(
   useEffect(() => {
     if (!onReady) return undefined;
     let cancelled = false;
-    whenTexturesLoaded(heroCans.map((can) => can.flavorIndex)).then(() => {
-      if (cancelled) return;
-      heroCans.forEach((can) => {
-        const map = materials[can.flavorIndex].map;
-        if (map) gl.initTexture(map);
+    // Shader programs and label textures are both put on the GPU here, while
+    // the preloader is still up, rather than being paid for by the flight's
+    // first frame — which is where they landed before, as a single ~380ms task
+    // in a Lighthouse trace. compileAsync walks the whole scene (scene.traverse,
+    // so the cans still parked off-stage and invisible are included) and
+    // resolves once every program reports ready, yielding between checks
+    // instead of blocking on the link. Older three versions have only the
+    // synchronous compile(); the preloader's own 2s cap means neither path can
+    // hold the page back.
+    const compiled = () =>
+      gl.compileAsync ? gl.compileAsync(scene, camera) : Promise.resolve(gl.compile(scene, camera));
+
+    whenTexturesLoaded(heroCans.map((can) => can.flavorIndex))
+      .then(() => {
+        if (cancelled) return undefined;
+        heroCans.forEach((can) => {
+          const map = materials[can.flavorIndex].map;
+          if (map) gl.initTexture(map);
+        });
+        return compiled();
+      })
+      .then(() => {
+        if (cancelled) return;
+        const off = addAfterEffect(() => {
+          off();
+          if (!cancelled) onReady();
+        });
+        invalidate();
       });
-      const off = addAfterEffect(() => {
-        off();
-        if (!cancelled) onReady();
-      });
-      invalidate();
-    });
     return () => {
       cancelled = true;
     };
@@ -285,6 +315,8 @@ const CanRig = forwardRef(function CanRig(
       return undefined;
     }
 
+    onFlightStart?.();
+
     const flightPos = { x: 0, y: 0, z: 0 };
     let doneCount = 0;
     heroCans.forEach((can) => {
@@ -308,7 +340,13 @@ const CanRig = forwardRef(function CanRig(
         },
         onComplete: () => {
           doneCount += 1;
-          if (doneCount === heroCans.length) flightDoneRef.current = true;
+          if (doneCount === heroCans.length) {
+            flightDoneRef.current = true;
+            // Back to full resolution for the frame the cans come to rest on.
+            // r3f redraws by itself on a dpr change, and the invalidate below
+            // covers the case where it does not.
+            onFlightEnd?.();
+          }
           // flightDoneRef opens applyEntrancePose's first branch below, so the
           // scene has new work to do on the very next frame even though the
           // tween that was driving it has just stopped.

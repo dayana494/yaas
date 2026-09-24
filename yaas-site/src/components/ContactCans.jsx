@@ -164,7 +164,22 @@ export default function ContactCans({ panelRef }) {
   return (
     <div className="contact-cans" ref={layerRef} aria-hidden="true">
       {CONTACT_CANS.map((can, i) => (
-        <img key={can.id} className="contact-can" ref={setCanRef[i]} src={SRC[can.id]} alt="" />
+        <img
+          key={can.id}
+          className="contact-can"
+          ref={setCanRef[i]}
+          src={SRC[can.id]}
+          alt=""
+          // 290KB of can, at the very bottom of the page, fetched on load
+          // before this change. Nothing here depends on the image having
+          // arrived: the box is sized and placed from the panel's rect by the
+          // effect above, so a can that lands late lands in a slot that was
+          // already the right shape and there is no layout shift to pay for.
+          // The captures keep their native resolution — see NATURAL above for
+          // why they are not resampled.
+          loading="lazy"
+          decoding="async"
+        />
       ))}
     </div>
   );

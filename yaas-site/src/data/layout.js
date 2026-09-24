@@ -13,7 +13,6 @@
 // correctly here even after an explicit ScrollTrigger.refresh().
 export const ENTRANCE_UNITS = 1;
 export const INTERACTIVE_UNITS = 1;
-export const INTRO_TOTAL_VH_UNITS = 1 + ENTRANCE_UNITS + INTERACTIVE_UNITS;
 
 // The gallery -> detail card flight is scrubbed across INTERACTIVE_UNITS of
 // scroll, but it still plays out in real time whenever the page scrolls itself
@@ -60,19 +59,11 @@ export const ENTRANCE_MIN_SECONDS = 1;
 export const SCREEN2_GAP_PX = 120; // 120px, matching .screen2's own padding (was 150)
 export const SCREEN2_RISE_UNITS = 1;
 
-// Gap between the end of the scenario-card stack and the start of
-// AdvantagesScreen — must match .screen2's own padding-bottom in
-// screen2.css exactly (AdvantagesScreen's own scroll-trigger start adds
-// this on top of a live DOM measurement — see its own comment for why it
-// can't just measure the gap directly).
-export const SCREEN2_BOTTOM_GAP = 120;
-
 // Scroll-trigger IDs shared between the section that owns each pin and
 // whatever comes after it — see ScenarioCardsIsometric.jsx's and
 // AdvantagesScreen.jsx's own comments for why chaining off the *previous*
 // trigger's resolved `.end` (a real GSAP-tracked number) instead of a plain
 // 'top top' string is necessary here.
-export const INTRO_TRIGGER_ID = 'introPin';
 export const SCREEN2_ARC_TRIGGER_ID = 'screen2ArcGallery';
 export const SCENARIO_CARDS_TRIGGER_ID = 'scenarioCardsIso';
 export const ADVANTAGES_TRIGGER_ID = 'advantagesPin';

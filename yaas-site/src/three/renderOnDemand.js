@@ -30,6 +30,7 @@ const KEEP_ALIVE = 0.1;
 export function useRenderHold() {
   const invalidate = useThree((s) => s.invalidate);
   const untilRef = useRef(0);
+  const askedThisFrameRef = useRef(false);
 
   // Ask for frames continuously for `seconds`. Used for two kinds of motion:
   //
@@ -40,10 +41,26 @@ export function useRenderHold() {
   //    exp(-LERP_SPEED*t) lerps toward a target, so they have no completion to
   //    hang a final frame on — they just get close enough to stop mattering.
   //    Those hold for a fixed settle window instead (see SETTLE_WINDOW).
+  // At most one invalidate() per frame. The hero flight runs one GSAP tween per
+  // can and each one calls keepAlive() from its own onUpdate, so a single frame
+  // asked three times over; r3f's invalidate() is additive (state.frames +=
+  // 1, capped at 60), so those extra calls bought nothing but a couple of
+  // redundant frames drawn after every tween ended. The window itself is still
+  // extended by every call — only the request for a frame is coalesced.
+  //
+  // holding() below deliberately does NOT go through this: it is the one call
+  // that must land inside useFrame on every frame to keep the loop alive (see
+  // the note above), and coalescing it would stall the loop it exists to
+  // sustain.
   const hold = useCallback(
     (seconds) => {
       const until = performance.now() + seconds * 1000;
       if (until > untilRef.current) untilRef.current = until;
+      if (askedThisFrameRef.current) return;
+      askedThisFrameRef.current = true;
+      requestAnimationFrame(() => {
+        askedThisFrameRef.current = false;
+      });
       invalidate();
     },
     [invalidate]

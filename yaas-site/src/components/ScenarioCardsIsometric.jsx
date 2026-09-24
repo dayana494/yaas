@@ -2,18 +2,12 @@ import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SCENARIOS } from '../data/scenarios';
-import { FLAVORS } from '../data/flavors';
+import ScenarioCardBg from './ScenarioCardBg';
 import { SCENARIO_CARDS_TRIGGER_ID } from '../data/layout';
 import { mobilePinType, riseUnits, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const flavorById = Object.fromEntries(FLAVORS.map((f) => [f.id, f]));
-
-// Earlier build's card-stack transition, restored alongside (not instead
-// of) the current clip-path wipe in ScenarioCards.jsx — swap which one
-// Screen2 renders to compare; nothing here touches that file.
-//
 // Cards sit stacked at the exact same rect (card 0 on top, z-index
 // descending), each already at its own resting pose. On scroll, the front
 // card lifts off and slides up and away at a slight tilt — like flipping
@@ -135,23 +129,19 @@ export default function ScenarioCardsIsometric() {
   return (
     <section className="scenario-cards-iso" ref={pinRef}>
       <div className="scenario-cards-iso-stage">
-        {SCENARIOS.map((scenario) => {
-          const flavor = flavorById[scenario.flavor];
-          const bgStyle = scenario.photo
-            ? { backgroundImage: `url(${scenario.photo})` }
-            : /* TODO: заменить на финальное фото сценария — сейчас плейсхолдер из фирменных цветов вкуса */
-              { background: `linear-gradient(160deg, ${flavor.color} 0%, ${flavor.colorDark} 100%)` };
-          return (
-            <article className="scenario-card-iso" ref={addCardRef} key={scenario.id}>
-              <div className="scenario-card-bg" style={bgStyle} />
-              <div className="scenario-card-shade" />
-              <div className="scenario-card-copy">
-                <h3 className="scenario-card-title">{scenario.title}</h3>
-                <p className="scenario-card-caption">{scenario.caption}</p>
-              </div>
-            </article>
-          );
-        })}
+        {SCENARIOS.map((scenario) => (
+          <article className="scenario-card-iso" ref={addCardRef} key={scenario.id}>
+            {/* Photo (lazily, at the size this card needs) over the flavor
+                gradient that used to be the placeholder for a scenario with no
+                photo yet — see ScenarioCardBg. */}
+            <ScenarioCardBg scenario={scenario} />
+            <div className="scenario-card-shade" />
+            <div className="scenario-card-copy">
+              <h3 className="scenario-card-title">{scenario.title}</h3>
+              <p className="scenario-card-caption">{scenario.caption}</p>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );

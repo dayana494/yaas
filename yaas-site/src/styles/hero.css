@@ -6,12 +6,6 @@
   z-index: 0;
 }
 
-.hero-gradient-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
 /* The same wrap below 1024, painting a still gradient instead of running the
    shader — see HeroGradientBackground.jsx. The url is set inline there so it
    can resolve against BASE_URL; everything about how it fills the box is here.

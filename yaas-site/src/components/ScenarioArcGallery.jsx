@@ -11,6 +11,7 @@ import {
   SCREEN2_SUBLINE,
 } from '../data/scenarios';
 import { SCREEN2_ARC_TRIGGER_ID } from '../data/layout';
+import ScenarioCardBg from './ScenarioCardBg';
 import { mobilePinType, useOverlapEnabled } from '../scroll/riseTransition';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -422,7 +423,7 @@ export default function ScenarioArcGallery() {
               key={`${scenario.id}-${i}`}
               ref={setCardRef(i)}
             >
-              <div className="scenario-card-bg" style={{ backgroundImage: `url(${scenario.photo})` }} />
+              <ScenarioCardBg scenario={scenario} />
               {i === STOP_INDEX && (
                 <>
                   <div className="scenario-card-shade" />

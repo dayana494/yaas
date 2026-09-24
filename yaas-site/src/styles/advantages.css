@@ -19,21 +19,6 @@
   color: var(--ink);
 }
 
-/* Top padding — same recipe as .screen2-headline's own
-   clamp(170px, 21vh, 260px) top padding (src/styles/screen2.css) — plus a
-   bottom gap down to the card carousel below (was a flex `gap` between
-   heading and cards when both lived in .advantages-content together; the
-   heading has since moved out into its own .section-heading-grid above
-   this, off-center, per spec). */
-.advantages-heading-grid {
-  /* Nudged down from the original (-55px) reduction — heading now reads
-     "Why YAAS" alone (was a 3-line-wrapping full sentence), so it needs
-     less top clearance to sit comfortably lower in the pinned viewport. */
-  padding-top: calc(clamp(170px, 21vh, 260px) - 25px);
-  /* Exact 50px gap to the cards below, per spec (was 63px). */
-  padding-bottom: 50px;
-}
-
 .advantages-content {
   position: relative;
   z-index: 1;
@@ -45,44 +30,6 @@
   margin: 0 auto;
   padding: 0 20px clamp(64px, 10vh, 100px);
   text-align: center;
-}
-
-/* Off-center now (see .section-heading-grid, index.css) — starts at
-   column 3, left-aligned, instead of centered on the page; content below
-   (ArcCards) keeps its own separate centered layout.
-   DEVIATES from the site's shared .slider-heading scale (88px cap) on
-   purpose: at the full 88px cap, "Why YAAS Beats Whatever's" no longer
-   fits this column's own width at any common desktop size, so it wrapped
-   into 5 lines instead of 2 — inside this section's *pinned* 100vh
-   viewport, that pushed the heading tall enough to overlap the ArcCards
-   carousel below it (unlike the other headings this task unified, this
-   one doesn't get to just take more vertical space when it wraps more).
-   76px keeps the original break after "Whatever's" at typical desktop
-   widths while still landing meaningfully larger than the 64px this used
-   to cap at. */
-.advantages-heading {
-  grid-column: 3 / -1;
-  margin: 0;
-  max-width: 1080px;
-  text-align: left;
-  font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(32px, 5.4vw, 76px);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-
-@media (max-width: 768px) {
-  .advantages-heading-grid {
-    display: block;
-    padding: calc(clamp(170px, 21vh, 260px) - 55px) 20px 40px;
-  }
-
-  .advantages-heading {
-    max-width: none;
-    text-align: center;
-  }
 }
 
 /* ---------- Cards ----------

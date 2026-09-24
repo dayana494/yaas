@@ -7,14 +7,6 @@ export const HERO = {
   cta: 'See the Flavors →',
 };
 
-// Screen 3 heading/subhead (yaas-homepage.md) — the homepage's own 3D
-// gallery (SliderScreen.jsx) doesn't render this copy itself; reused here
-// as the /flavors page's own heading instead.
-export const FLAVOR_GALLERY = {
-  h2: '5 Flavors. One Energy.',
-  subhead: "Spin the cans, find your match — everybody's chill, just in their own way.",
-};
-
 export const BRAND_TEASER = {
   h2Lines: ['Not For Everyone.', 'For Our People.'],
   // Split into the same two sentences/paragraphs Figma node 173:2 shows —

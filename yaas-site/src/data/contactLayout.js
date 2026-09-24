@@ -78,9 +78,6 @@ export const CONTACT_CANS_NARROW = [
 // 2D spin in the image plane.
 export const CAN_TILT_SCALE_NARROW = 0.5;
 
-// Straight at the camera, so the label reads flat like the mock's render.
-export const CAN_Z = 0;
-
 // The endless hover. Amplitude in px so it stays the same visual drift at any
 // canvas size; sine easing both ways, no pause at either end.
 export const FLOAT_AMPLITUDE_PX = 16;

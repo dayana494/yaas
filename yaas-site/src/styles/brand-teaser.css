@@ -247,13 +247,6 @@
   gap: clamp(24px, 4vh, 46px);
 }
 
-/* The CTA is the site's existing one, reused as-is per spec — .brand-teaser-cta
-   below is unchanged. Only its grid-era spacing is neutralised here, since it
-   is a flex child now and the column's own gap already spaces it. */
-.about-brand-aside .brand-teaser-cta {
-  margin-top: 0;
-}
-
 /* ---------- The photo stack ----------
    Four identical cards on one centre. In the mock the fan is made out of
    rotation alone (6.58deg / 2.5deg / -1.08deg / -3deg back-to-front, with a
@@ -420,28 +413,3 @@
   }
 }
 
-/* ---------- CTA ----------
-   White fill / black outline, inverting on hover — the same interactive
-   language as .hero-cta and .detail-cta, and unchanged from the previous
-   version of this section. */
-.brand-teaser-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: var(--font-beiruti);
-  font-weight: 500;
-  font-size: 18px;
-  color: var(--ink-on-light);
-  text-decoration: none;
-  background: #ffffff;
-  border: 1px solid var(--ink-on-light);
-  border-radius: 100px;
-  padding: 13px 26px;
-  transition: background 200ms ease, color 200ms ease, transform 200ms ease;
-}
-
-.brand-teaser-cta:hover {
-  background: var(--ink-on-light);
-  color: #ffffff;
-}

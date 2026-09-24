@@ -12,8 +12,7 @@ import { mobilePinType, useOverlapEnabled } from '../scroll/riseTransition';
 gsap.registerPlugin(ScrollTrigger);
 
 // Extra scroll distance the scrub travels across, on top of the pinned
-// section's own 100vh — same "+=Npx, scrub, pin" shape as ScenarioCards.jsx
-// (see src/components/ScenarioCards.jsx), just driving a continuous
+// section's own 100vh, driving a continuous
 // active-card progress instead of a discrete per-card timeline.
 const SCROLL_LENGTH_MULTIPLIER = 2.2;
 
