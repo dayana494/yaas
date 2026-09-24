@@ -7,13 +7,17 @@ import { Link } from 'react-router-dom';
 // A <Link>, not a raw <a>: this app is already on react-router, and a plain
 // anchor would tear the whole SPA down and refetch the .glb and every label
 // texture just to move between two flavor pages.
-export default function FlavorStripCard({ flavor, isActive }) {
+//
+// No `isActive`/`aria-current` here — this card is only ever rendered for the
+// four OTHER flavors (FlavorGallery filters the current page's own flavor out
+// of the list before mapping), so "is this the page you're on" can never be
+// true for a card that exists.
+export default function FlavorStripCard({ flavor }) {
   return (
     <Link
-      className={`flavor-gallery-card${isActive ? ' is-active' : ''}`}
+      className="flavor-gallery-card"
       to={`/flavors/${flavor.id}`}
       style={{ '--card-color': flavor.color }}
-      aria-current={isActive ? 'page' : undefined}
     >
       {/* Same brand line-art overlay the flavor backgrounds carry, reused as
           a plain child rather than a second implementation of it. */}

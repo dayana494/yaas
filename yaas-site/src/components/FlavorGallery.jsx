@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DropText from './DropText';
 import FlavorStripCard from './FlavorStripCard';
 import { FLAVORS } from '../data/flavors';
@@ -15,6 +15,15 @@ export default function FlavorGallery({ activeFlavorId, simpleMode }) {
   const trackRef = useRef(null);
   const [atStart, setAtStart] = useState(true);
   const [atEnd, setAtEnd] = useState(false);
+
+  // 'Try the OTHER Flavors' — the flavor you're already reading isn't one of
+  // them. Filtering here, not just skipping it in the render below, is what
+  // keeps arrow-scroll math (card count, scrollByCard's width * count) and
+  // atStart/atEnd in sync with what's actually in the track.
+  const otherFlavors = useMemo(
+    () => FLAVORS.filter((flavor) => flavor.id !== activeFlavorId),
+    [activeFlavorId]
+  );
 
   const syncEdges = useCallback(() => {
     const track = trackRef.current;
@@ -75,8 +84,8 @@ export default function FlavorGallery({ activeFlavorId, simpleMode }) {
           </button>
 
           <div className="flavor-gallery-track" ref={trackRef}>
-            {FLAVORS.map((flavor) => (
-              <FlavorStripCard key={flavor.id} flavor={flavor} isActive={flavor.id === activeFlavorId} />
+            {otherFlavors.map((flavor) => (
+              <FlavorStripCard key={flavor.id} flavor={flavor} />
             ))}
           </div>
 

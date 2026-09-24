@@ -28,7 +28,7 @@ const TURN = Math.PI * 2;
 //      it, so the can stands back on its base, cap up, with a slight lean.
 //   2. "zero sugar. zero panic." — a second roll, and square to the camera:
 //      y on a whole multiple of 2π puts the label to the front.
-//   3. "0g sugar · 5 cal…" — still rolling, and turned to its back (y on an
+//   3. "0 g sugar · 5 cal…" — still rolling, and turned to its back (y on an
 //      ODD multiple of π), which is where the nutrition panel reads.
 //   4. the finale — a third roll completes and the can settles upright and
 //      front-on again, exactly as it began.
@@ -89,7 +89,7 @@ const HERO_UNITS = 0.5;
 // apart for the two gaps to come out the same.
 const BLOCK_SPACING = 1.689;
 // Taken off every gap except the first — so "sweet-tart…" sits 100px closer to
-// "0g sugar…", and that 100px closer again to the finale. In pixels rather
+// "0 g sugar…", and that 100px closer again to the finale. In pixels rather
 // than viewports because that is how the trim was specified, and it is
 // converted against the live innerHeight where the timeline is built.
 const SHORTEN_LATE_GAPS_PX = 100;
@@ -175,6 +175,65 @@ function measureCanAnchor(nameEl, boxEl) {
   return { mode: 'foot', at: (name.bottom - box.top) / box.height };
 }
 
+// How many visual lines an element's text currently wraps into. transform:
+// scale() on an ancestor (the 1200x650 stage) doesn't change this: the
+// number of line boxes is a layout fact, unaffected by how big the result is
+// painted — so this works the same at every --hero-scale, unlike a height
+// comparison would (a scaled box's rendered height isn't the raw layout
+// height any tolerance could be checked against).
+function countLines(el) {
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  const tops = new Set([...range.getClientRects()].map((r) => Math.round(r.top)));
+  return tops.size;
+}
+
+// Shrinks one kicker's font-size, if it has to, so its headline never runs
+// past `maxLines`.
+//
+// Every screen's kicker sits in a box sized from the Figma mock at one fixed
+// font-size — right for "STILL NOT RATTLED", but "NEVER IN A RUSH, NEVER
+// BEHIND" (blueberry) or "SHARP TASTE, SHARPER FOCUS" (lemon, split layout)
+// run a line or two past it at that same size, at almost every width:
+// confirmed live, both screens' kickers wrap 3-4 lines instead of 2 on
+// several flavors, from phones up through desktop. Only strawberry's own
+// copy happens to fit the box it was sized for.
+//
+// Widening the box instead of shrinking the font was the first idea, and it
+// works for the centred screen — but the split screen's kicker and caption
+// share the stage's width down the middle (0-809 / 809-1200), so widening
+// one runs straight into the other; a general fix has to work for both
+// layouts the same way, and font-size is the one knob that does. The floor
+// (55% of the box's own nominal size) is well under the worst case actually
+// measured (lemon's split kicker needed 82%), so it is a backstop, not a
+// value anything is expected to hit.
+//
+// Binary search, not a step-down loop: the box's nominal font-size is
+// authored per breakpoint (a clamp() on mobile, a fixed px on desktop), so
+// this has no fixed starting point to count down from — only a known range
+// (the nominal size itself, down to the floor) to search within. 20 steps
+// settles to a fraction of a pixel, well inside anything a reader could see.
+function fitKickerLines(el, maxLines = 2, minRatio = 0.55) {
+  if (!el || !el.textContent.trim()) return;
+  el.style.fontSize = '';
+  const nominal = parseFloat(getComputedStyle(el).fontSize);
+  if (!(nominal > 0) || countLines(el) <= maxLines) return;
+
+  const floor = nominal * minRatio;
+  el.style.fontSize = `${floor}px`;
+  if (countLines(el) > maxLines) return; // best effort — floor is still too wide for this text
+
+  let lo = floor;
+  let hi = nominal;
+  for (let i = 0; i < 20; i++) {
+    const mid = (lo + hi) / 2;
+    el.style.fontSize = `${mid}px`;
+    if (countLines(el) <= maxLines) lo = mid;
+    else hi = mid;
+  }
+  el.style.fontSize = `${lo}px`;
+}
+
 // Section A of the flavor detail page: the hero read and the scroll-driven
 // tumble, as one continuous pinned block.
 //
@@ -196,6 +255,10 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
   // centred for that frame, then drops onto the line.
   const [canAnchor, setCanAnchor] = useState(null);
   const blockRefs = useRef([]);
+  // Each block that has a kicker gets a slot here (index-aligned with blocks,
+  // holes where a block has none — the caption-only screen). fitKickerLines
+  // reads and writes these directly; nothing else needs to re-render off it.
+  const kickerRefs = useRef([]);
   // Stable across renders and mutated in place by the timeline below — the
   // can rig reads it every frame. See FlavorStoryCanRig for why the rotation
   // travels as a plain object rather than as a ref to the THREE.Group.
@@ -232,6 +295,27 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
       offRemeasure();
     };
   }, [flavor.title]);
+
+  // Caps every kicker at 2 lines (see fitKickerLines) — depends on `blocks`
+  // because navigating between flavor pages (the gallery's own <Link>s) swaps
+  // this component's props without remounting it, so a flavor with different,
+  // longer copy needs this to run again rather than keeping the previous
+  // flavor's fit.
+  useEffect(() => {
+    let cancelled = false;
+    const refit = () => {
+      if (cancelled) return;
+      kickerRefs.current.forEach((el) => fitKickerLines(el));
+    };
+    const fonts = 'fonts' in document ? document.fonts.ready : Promise.resolve();
+    fonts.finally(refit);
+    refit();
+    const offRefit = onRealResize(refit);
+    return () => {
+      cancelled = true;
+      offRefit();
+    };
+  }, [blocks]);
 
   useEffect(() => {
     if (simpleMode) return undefined;
@@ -415,7 +499,16 @@ export default function FlavorStorySection({ flavor, story, simpleMode }) {
                 blockRefs.current[i] = el;
               }}
             >
-              {block.kicker ? <p className="flavor-rotation-kicker">{block.kicker}</p> : null}
+              {block.kicker ? (
+                <p
+                  className="flavor-rotation-kicker"
+                  ref={(el) => {
+                    kickerRefs.current[i] = el;
+                  }}
+                >
+                  {block.kicker}
+                </p>
+              ) : null}
               {block.line ? <p className="flavor-rotation-line">{block.line}</p> : null}
             </div>
           ))}

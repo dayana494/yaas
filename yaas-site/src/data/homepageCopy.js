@@ -3,7 +3,7 @@
 export const HERO = {
   h1: 'YAAS. That feeling when everything just hits different.',
   subhead: 'Zero-sugar energy for people who move at their own speed. Flavor maxed out, sugar at zero.',
-  badges: ['0g sugar', '5 cal', '11.2 FL OZ', '5 flavors'],
+  badges: ['0 g sugar', '5 cal', '11.2 FL OZ', '5 flavors'],
   cta: 'See the Flavors →',
 };
 

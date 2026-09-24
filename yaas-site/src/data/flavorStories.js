@@ -5,7 +5,7 @@
 
 // Same can, same spec across the whole line — so it's a constant here rather
 // than repeated per flavor, and the fallback story can use it too.
-export const DEFAULT_BADGES = '0g sugar · 5 cal · 330 ml';
+export const DEFAULT_BADGES = '0 g sugar · 5 cal · 330 ml';
 
 // Every entry is four screens, matching Figma 389-2 one for one — including
 // the two that carry only half a block: the third is a caption with no
@@ -50,7 +50,7 @@ export const FLAVOR_STORIES = {
       },
       {
         layout: 'caption',
-        line: '0g sugar · 5 cal · 330 ml — same calm, every single can.',
+        line: '0 g sugar · 5 cal · 330 ml — same calm, every single can.',
       },
       {
         layout: 'finale',
@@ -77,7 +77,7 @@ export const FLAVOR_STORIES = {
       },
       {
         layout: 'caption',
-        line: '0g sugar · 5 cal · 330 ml — same quiet strength, every single can.',
+        line: '0 g sugar · 5 cal · 330 ml — same quiet strength, every single can.',
       },
       {
         layout: 'finale',
@@ -104,7 +104,7 @@ export const FLAVOR_STORIES = {
       },
       {
         layout: 'caption',
-        line: '0g sugar · 5 cal · 330 ml — same warm glow, every single can.',
+        line: '0 g sugar · 5 cal · 330 ml — same warm glow, every single can.',
       },
       {
         layout: 'finale',
@@ -131,7 +131,7 @@ export const FLAVOR_STORIES = {
       },
       {
         layout: 'caption',
-        line: '0g sugar · 5 cal · 330 ml — same sharp focus, every single can.',
+        line: '0 g sugar · 5 cal · 330 ml — same sharp focus, every single can.',
       },
       {
         layout: 'finale',
@@ -158,7 +158,7 @@ export const FLAVOR_STORIES = {
       },
       {
         layout: 'caption',
-        line: '0g sugar · 5 cal · 330 ml — same crisp calm, every single can.',
+        line: '0 g sugar · 5 cal · 330 ml — same crisp calm, every single can.',
       },
       {
         layout: 'finale',

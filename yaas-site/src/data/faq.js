@@ -11,7 +11,7 @@ export const FAQ_ITEMS = [
   {
     id: 'zero-sugar',
     question: 'Is it really zero sugar?',
-    answer: 'For real. 0g sugar, 5 calories a can — the sweetness comes from the flavor, not syrup.',
+    answer: 'For real. 0 g sugar, 5 calories a can — the sweetness comes from the flavor, not syrup.',
   },
   {
     id: 'caffeine',
