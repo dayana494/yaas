@@ -57,17 +57,21 @@ const DetailScreen = lazy(() => import('../components/DetailScreen'));
 
 const DETAIL_EDGE_PX = 2;
 
-// How far into a scrubbed flight its copy comes in. Desktop: at 1, once the
-// can has landed — as it always was. Below 1024: at 0.85, where waiting for
-// the exact landing made the copy trail the gesture that opened the card. The
-// flight is eased power3.inOut (CanRig.jsx's heroEase), so at 0.85 the can is
-// already 98.6% of the way there — close enough that the copy never lands on a
-// can still visibly moving.
+// How far into a scrubbed flight its copy comes in.
+//
+// Desktop used to wait for exactly 1 — the can fully landed — before showing
+// anything, no lead at all; mobile already led by a little (0.85). Both read
+// as the copy trailing the can rather than arriving with it: the flight is
+// eased power3.inOut (CanRig.jsx's heroEase), which front-loads its motion,
+// so by 0.85 the can is already 98.6% of the way there and by 0.7 it's 89.2%
+// — both comfortably past "still visibly moving," so there was room to pull
+// both forward rather than only adding a lead to the one surface that had
+// none. Desktop now gets mobile's old number; mobile moves again from there.
 //
 // Read by both scrubs: the hero -> gallery entrance, for when the gallery's UI
 // layer goes live, and the gallery -> card flight, for the card's own copy and
 // CTA.
-const DETAIL_TEXT_AT = { desktop: 1, narrow: 0.85 };
+const DETAIL_TEXT_AT = { desktop: 0.85, narrow: 0.7 };
 
 // Walks a shown 0..1 progress toward whatever set() last asked for, on the GSAP
 // ticker, at no more than one full sweep per `minSeconds`. Below that speed it
@@ -148,6 +152,32 @@ export default function HomePage() {
   // that consuming it cannot re-run that whole correction pass.
   const { state: routerState } = useLocation();
   const pendingScrollRef = useRef(routerState?.[SCROLL_TO_STATE] ?? null);
+
+  // React Router doesn't reset window.scrollY on a client-side navigation —
+  // only a full page load or an explicit call does that. Nothing on this page
+  // ever called it: FlavorDetailPage resets between flavors (its own
+  // useEffect, keyed on `slug`), but landing HERE — the logo's <Link to="/">
+  // (HeroWordmark.jsx) included — carried over whatever scrollY the PREVIOUS
+  // page left behind. .intro-pin is plain `position: sticky`, so it renders
+  // whatever the intro looks like at that leftover scroll position: a reader
+  // who had scrolled halfway down a flavor page and tapped the logo landed on
+  // a homepage that opened already past the hero, into the gallery or the
+  // card, not on screen one.
+  //
+  // Same fix as FlavorDetailPage's own, and deliberately unconditional on
+  // *how far* scrollY was — a plain arrival at "/" always means "start at the
+  // top". The one exception is a section link clicked from another page
+  // (useSectionNav routes those through navigate('/', { state: { scrollTo }
+  // }) rather than a bare <Link>): pendingScrollRef holds that hash, and the
+  // pin-correction chain below scrolls to it once every trigger has been
+  // remeasured — resetting to 0 here first only sharpens that later
+  // calculation (it reads window.scrollY as its own baseline), so the guard
+  // exists to document the case, not because skipping it would help.
+  useEffect(() => {
+    if (pendingScrollRef.current) return;
+    window.scrollTo(0, 0);
+    ScrollTrigger.refresh();
+  }, []);
 
   const [screen, setScreen] = useState('slider');
   const [activeFlavor, setActiveFlavor] = useState(DEFAULT_FLAVOR_INDEX);

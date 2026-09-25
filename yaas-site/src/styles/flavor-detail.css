@@ -447,7 +447,19 @@
    bottom. */
 @media (max-width: 768px) {
   .flavor-gallery {
-    padding: calc(clamp(170px, 21vh, 260px) - 55px) 0 clamp(64px, 10vh, 100px);
+    /* -155 now, not -55. Measured live (a real scroll, not a jump, through
+       .flavor-gallery's own --rise custom property — see riseTransition.js):
+       the story section's finale hold is exactly RISE_UNITS worth of scroll
+       (844px at an 844-tall viewport) and the gallery visibly climbs, at 1:1
+       scroll speed, for every pixel of it — there is no idle stretch in that
+       hold to trim, only the climb itself, and shortening it would speed the
+       climb up rather than cut anything dead.
+       The actual static gap — still there once scrolling stops, after the
+       gallery has fully risen — is this top padding, between the section's
+       own top edge and "Try the Other Flavors": 122px at 844-tall (21vh -
+       55px), which read as the "empty space before the next block" in the
+       screenshot. Trimmed by the requested 100px. */
+    padding: calc(clamp(170px, 21vh, 260px) - 155px) 0 clamp(64px, 10vh, 100px);
   }
 
   .flavor-gallery-heading {
@@ -530,14 +542,45 @@
     bottom: auto;
     transform: translateY(-50%);
   }
+
+  /* The split screen's own `text-align: left` (stated outside every
+     breakpoint, above, because it holds at every width on desktop's split
+     layout) is a desktop-only call: there the headline sits flush to the
+     left gutter with the caption at the opposite edge, so its lines have to
+     rag from that same left edge to read as one composition. Below 1024 the
+     kicker is centred between the two gutters like every other layout's
+     (the base `.flavor-rotation-kicker { text-align: center; }` above), and
+     a left-ragged block in a centred box reads as neither — it wants the
+     same centring the other three layouts already get here. */
+  .is-layout-split .flavor-rotation-kicker {
+    text-align: center;
+  }
 }
 
-/* ---------- Desktop: the mock's grid, mapped onto the 1200x650 stage ---------- */
-@media (min-width: 1024px) {
-  /* Mock y=817 of 980 -> 542 of 650; .hero-copy-row sits at 549, and the two
-     rows are the same slot. */
+/* ---------- The masthead: desktop's grid, and landscape tablet with it ----------
+   Split out from the rotation-story's own desktop block below (min-width:
+   1024px only) rather than sharing its condition: this masthead is the same
+   Section A first screen hero.css's own tablet-landscape rule now folds into
+   the homepage's scaled stage (see the comment there), and this page's own
+   .hero-stage.flavor-hero-stage row picks that up automatically since it's
+   the same class — but the rotation-story's screens 2-5 (the scroll-driven
+   tumble, further below) are a separate concern task-scoped to phone/tablet
+   staying on their own existing mobile treatment, not this one. */
+@media (min-width: 1024px), (min-width: 769px) and (max-width: 1023px) and (orientation: landscape) {
+  /* Undoes the max-width: 1023px block's own row — that one is still in
+     effect here too (it only tests width, and landscape tablet is still
+     ≤1023 wide), stacking the name above the product line and shifting the
+     row down to bottom: 8svh. This puts it back on the base rule's single
+     row (align-items: baseline, justify-content: space-between, gap: 24px —
+     all already correct here, just re-anchored) at the mock's own slot. */
   .flavor-hero-row {
     top: 558px;
+    bottom: auto;
+    left: 0;
+    right: 0;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 24px;
   }
 
   /* Mock 64px on its 1920 frame -> 42px of stage. */
@@ -546,11 +589,17 @@
   }
 
   /* Mock 24px -> 16px of stage, which is also the site's own body size and
-     what .hero-subhead uses in this very slot on the homepage. */
+     what .hero-subhead uses in this very slot on the homepage. Text-align
+     goes back to the base rule's `right` too, undone the same way the row's
+     own direction is. */
   .flavor-hero-badges {
     font-size: 16px;
+    text-align: right;
   }
+}
 
+/* ---------- Desktop: the mock's grid, mapped onto the 1200x650 stage ---------- */
+@media (min-width: 1024px) {
   /* Mock: every screen's headline starts 103 below its own top edge (-> 68)
      and is set at 217.555px (-> 143).
      Sitting 46 lower than that 68 on purpose — see --caption-top below for why
@@ -704,4 +753,26 @@
   width: auto;
   transform: none;
   text-align: center;
+}
+
+/* ---------- Tablet portrait: "Try the Other Flavors" padding ----------
+   .flavor-gallery's padding is vh-based (clamp(170px, 21vh, 260px), the base
+   rule above) — a viewport HEIGHT share, not a width one. A tablet's height
+   swaps with its width when it's rotated, so the same physical device gives
+   this rule a much bigger number held upright than held sideways (measured:
+   an 820-wide/1180-tall tablet resolves 21vh to 247.8px in portrait against
+   163px at 1180x820 in landscape) — and 769-1023 has no max-width: 768px
+   override to shrink it the way a phone gets, so portrait tablet was drawing
+   the full, uncapped desktop-scale padding on both top and bottom.
+
+   The fix reuses the same rotation this bucket already leans on elsewhere
+   (see hero.css's landscape block): a device's portrait WIDTH is its own
+   landscape HEIGHT, so swapping vh for vw here reproduces exactly the
+   pixel value 21vh would give that same device turned sideways, not just an
+   approximation of it — the two numbers are the same physical quantity
+   viewed through whichever dimension happens to be "up" at the moment. */
+@media (min-width: 769px) and (max-width: 1023px) and (orientation: portrait) {
+  .flavor-gallery {
+    padding: clamp(170px, 21vw, 260px) 0;
+  }
 }

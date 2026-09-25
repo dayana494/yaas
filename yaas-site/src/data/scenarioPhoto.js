@@ -24,22 +24,51 @@ function variant(photo, suffix) {
 // The widest the small variant can serve without ever being upscaled.
 const SMALL_WIDTH = 1280;
 
-// Picks by the device pixels the card will actually cover, rather than by a
-// media query on viewport width.
+// Every scenario photo's own width:height — measured off the five source
+// files directly (2560x1446 for three of them, ~1920x1072/2560x1429 for the
+// other two, all within a percent of each other), so one shared constant
+// stands in for all of them rather than fetching each one's real metadata
+// before the first request can even go out.
+//
+// This is what turns cssWidth alone into the wrong number below: a card
+// taller (relative to its width) than this ratio forces `background-size:
+// cover` to scale the photo up to the card's HEIGHT, not its width — cropping
+// the sides rather than the top/bottom — and the resolution that scale
+// actually consumes is driven by whichever edge is doing the stretching.
+const PHOTO_ASPECT = 1.78;
+
+// Picks by the device pixels `cover` will actually stretch the photo to fill,
+// rather than by a media query on viewport width or the card's width alone.
 //
 // A query on width alone gets both ends wrong: a 390px phone at a device pixel
 // ratio of 3 needs ~990px of image for a card that is nearly screen-wide, and
 // a 1280px laptop at 1x needs ~1220px for one that is not. Measuring the box
 // and multiplying by the pixel ratio is the same number the browser itself
-// would compute from `sizes`, and it is exact here because the card is laid
-// out by the time this runs.
+// would compute from `sizes` — for a card whose own aspect ratio is close to
+// the photo's. It stops being exact the moment it isn't: `cover` fits the
+// LARGER of a width-driven and a height-driven scale, and width alone only
+// ever checks the first of those. The isometric stack's mobile cards are
+// tall and narrow (roughly 330 x 764 at 390px wide, since the card runs
+// nearly the full viewport height less its own inset) against photos shot
+// landcape — cover has to blow the image up to cover 764px of HEIGHT there,
+// which at a real phone's pixel ratio calls for well over 1280px of source
+// width even though the card's own CSS width is under 400 — and the
+// width-only formula picked the small variant every time, which is what
+// actually read as blurry.
+//
+// Both edges are converted to the same unit — the source pixels `cover`
+// would need along the photo's own width to satisfy THAT edge — and the
+// larger of the two wins, same as `cover` itself does.
 //
 // The rule only ever rounds UP to the larger file, so no card is ever handed
 // an image smaller than the pixels it has to fill — the one exception being a
 // full-width card on a 2x screen (2800 device px), which asks for more than
 // 2560 and gets the same 2560 it got before this change.
-export function photoForBox(photo, cssWidth) {
-  const needed = cssWidth * (window.devicePixelRatio || 1);
+export function photoForBox(photo, cssWidth, cssHeight = 0) {
+  const dpr = window.devicePixelRatio || 1;
+  const widthNeed = cssWidth * dpr;
+  const heightNeed = cssHeight * dpr * PHOTO_ASPECT;
+  const needed = Math.max(widthNeed, heightNeed);
   return variant(photo, needed > SMALL_WIDTH ? '-2560' : '-1280');
 }
 
@@ -75,7 +104,7 @@ export function lazyPhotoBackground(el, photo, fallback) {
   // No IntersectionObserver (or no layout to measure yet): fetch it the old
   // way rather than leave the card on its placeholder forever.
   if (typeof IntersectionObserver === 'undefined') {
-    el.style.backgroundImage = `url(${photoForBox(photo, el.clientWidth || window.innerWidth)}), ${fallback}`;
+    el.style.backgroundImage = `url(${photoForBox(photo, el.clientWidth || window.innerWidth, el.clientHeight)}), ${fallback}`;
     return () => {};
   }
 
@@ -84,7 +113,7 @@ export function lazyPhotoBackground(el, photo, fallback) {
     (entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return;
       observer.disconnect();
-      const url = photoForBox(photo, el.clientWidth || window.innerWidth);
+      const url = photoForBox(photo, el.clientWidth || window.innerWidth, el.clientHeight);
       // Decode first, then swap. Assigning the url straight to backgroundImage
       // would replace the gradient with an image that has not arrived yet, and
       // the card would show through to whatever is behind it until it did.

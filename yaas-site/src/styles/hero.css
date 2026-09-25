@@ -468,8 +468,31 @@
   transform: translateY(-1px);
 }
 
-/* ---------- Desktop: fixed 1200x650 stage (Figma frame 47:21), contain-scaled ---------- */
-@media (min-width: 1024px) {
+/* ---------- Desktop: fixed 1200x650 stage (Figma frame 47:21), contain-scaled ----------
+   Also landscape tablet (769-1023), as of this rule's second condition —
+   folded in here rather than hand-converted into a third copy of these
+   numbers in svh/vw, which is what the tablet-landscape block used to do (see
+   its own history: nav top, logo size/position and the copy row's bottom gap
+   were each re-derived by hand against the 650-tall stage's proportions).
+   That approach kept drifting from the real thing it was approximating: this
+   stage's own letterboxing means desktop's copy-to-viewport-bottom gap is NOT
+   a fixed % of the viewport (it varies with the window's own aspect — measured
+   116px of 900 at 1440x900, 12.9%, not the 8.6% the old rule assumed, because
+   window height there exceeds what the width-bound stage actually fills), so
+   a hand-picked svh number could only ever coincidentally match it at one
+   aspect ratio.
+   useHeroScale (hooks/useHeroScale.js) already computes --hero-scale purely
+   from window.innerWidth/innerHeight, with no gate on the CSS breakpoint that
+   reads it — a tablet was already being handed a correct scale value the
+   whole time, just never let inside the rule that uses it. Routing tablet
+   through the exact same scaled stage as desktop makes the nav's offset, the
+   logo's centring and the copy row's bottom gap identical *by construction*
+   instead of by three separate approximations, and the only real difference
+   between the two surfaces — a touch device wants a taller tap target than a
+   pointer does — is carried by the two small call-outs right after this block
+   (.hero-nav-left's display and .hero-pill's min-height), not by duplicating
+   position math a second time. */
+@media (min-width: 1024px), (min-width: 769px) and (max-width: 1023px) and (orientation: landscape) {
   .hero-stage {
     top: 50%;
     left: 50%;
@@ -505,7 +528,15 @@
     padding: 0;
   }
 
+  /* Overrides the shared max-width: 1023px rule's `display: contents` — needed
+     for landscape tablet, which now falls inside this block too and would
+     otherwise dissolve this group and let .hero-nav's own space-between put an
+     even gap between all four pills instead of desktop's tight group of three
+     plus Contacts pushed to the far edge. A no-op restatement of the base
+     (unconditional, top of file) rule's own value on real desktop, since
+     nothing between here and there ever turns it off outside 1023px. */
   .hero-nav-left {
+    display: flex;
     flex-wrap: nowrap;
     gap: 15px;
   }
@@ -517,12 +548,21 @@
     /* Trimmed along with the type: at 20px the pill needed this much room,
        at 16px the same padding left the label adrift in the middle of it. */
     padding: 8px 20px;
-    min-height: 0;
   }
 
+  /* Every one of these except `display`/`padding` undoes the max-width: 1023px
+     block's own .hero-copy (top/margin-top/etc, still in effect here too since
+     that rule only tests width) — without the reset, .hero-copy-row's own
+     top: 549px below would land 29.8svh + 53px further down than it should,
+     compounding with rather than replacing the mobile position. */
   .hero-copy {
     display: block;
+    inset: 0;
+    justify-content: normal;
+    align-items: normal;
+    gap: normal;
     padding: 0;
+    margin-top: 0;
   }
 
   /* Row sits at the grid position the headline's second line ("everything
@@ -544,6 +584,11 @@
 
   .hero-subhead {
     width: 380px;
+    /* Undoes the max-width: 1023px block's own 82.8vw — moot at every
+       landscape-tablet width in practice (82.8vw is always well past 380px
+       there), but stated so this box's size never quietly depends on that
+       coincidence holding. */
+    max-width: none;
     /* Site-wide body-copy size: 16px desktop / 14px mobile (see the base
        rule above) — was its own one-off 20px. */
     font-size: 16px;
@@ -556,11 +601,31 @@
      inverting hover stay the CTA's own, which is what keeps it reading as the
      primary action rather than a fourth pill. Its place in the row is
      unchanged: .hero-copy-row centres it against the subhead on the left and
-     space-between holds it against the stage's right edge. */
+     space-between holds it against the stage's right edge.
+     width/min-width undo the max-width: 1023px block's own 51.3vw/190px —
+     unlike .hero-subhead's max-width above, this one is NOT moot: 51.3vw at
+     a landscape tablet's own width is 394-525px, which would have forced the
+     button to that width instead of the content-sized pill desktop draws. */
   .hero-cta {
     flex: none;
+    width: auto;
+    min-width: 0;
     font-size: 16px;
     padding: 10px 20px;
+  }
+}
+
+/* The two touch-target min-heights (.hero-pill's, .hero-cta's — both 44px in
+   the unconditional base rules further up) stay in effect for landscape
+   tablet now that it shares the block above with desktop: a tablet is a touch
+   surface same as a phone is, and the block above only trims type/padding to
+   desktop's numbers, not this. True desktop (pointer input, no minimum tap
+   size to hit) is the one surface that actually wants them collapsed back to
+   their natural, content-driven height — carved out here on its own,
+   unreachable from a touch device by definition. */
+@media (min-width: 1024px) {
+  .hero-pill,
+  .hero-cta {
     min-height: 0;
   }
 }
@@ -577,42 +642,56 @@
        the rules above are it. The can rig follows through
        MOBILE_COMPOSITION_QUERY (data/layout.js), which this range's portrait
        half is part of.
-     LANDSCAPE follows desktop: the nav at the same offset, the wordmark on
-       desktop's own line, and the subhead sitting as far off the bottom edge
-       as desktop's copy row does.
+     LANDSCAPE follows desktop — literally, now: the "Desktop: fixed 1200x650
+       stage" block above this comment carries landscape tablet as a second
+       condition on its own selector rather than a hand-converted copy of its
+       numbers. That used to be three separate svh/vw approximations here
+       (nav top, logo size/position, copy row's bottom gap), each re-deriving
+       a piece of the same 650-tall stage's proportions by hand — and the
+       middle one was measurably wrong: desktop's own copy-to-viewport-bottom
+       gap isn't a fixed % of the viewport (it moves with the window's own
+       aspect, because the stage is letterboxed whenever width is the binding
+       constraint on --hero-scale), so an svh number picked to match it at one
+       window size quietly stopped matching at another. Feeding tablet through
+       the real scaled stage — which useHeroScale was already computing for it
+       correctly, just never applied — makes all three exact by construction
+       instead of by three separate approximations. The touch-target sizing
+       that tablet still needs and desktop doesn't lives right above, in its
+       own small carve-out, rather than back in this comment's old numbers.
 
-   Only the placement crosses over, never the type scale: --block-heading stays
-   on the mobile/tablet clamp at both orientations (index.css), so a heading is
-   the same size whichever way the tablet is turned.
+   Mostly placement, not type scale: --block-heading stayed on the same
+   mobile/tablet clamp at both orientations when this was first written, and
+   still does for landscape — index.css now carries one explicit, deliberate
+   exception for portrait (5px over the shared ceiling), not a second scale
+   for the whole bucket.
 
    After the max-width: 1023px block on purpose — these are overrides on top of
    it, not a second composition written out in full. */
-@media (min-width: 769px) and (max-width: 1023px) and (orientation: landscape) {
-  /* Desktop's own 20, against the 2.59svh (~16px) this range inherits. */
+
+/* Portrait tablet keeps the mobile hero's composition (see the section intro
+   above) — this is the one deliberate exception inside it. The nav row's
+   `justify-content: space-between` (the max-width: 1023px block) only raises
+   the GAP between pills as the screen widens; the pills themselves stay
+   their own content width, which on a wide portrait tablet reads as four
+   small chips adrift in a mostly-empty row instead of a filled one. */
+@media (min-width: 769px) and (max-width: 1023px) and (orientation: portrait) {
   .hero-nav {
-    top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: normal;
   }
 
-  /* Desktop's rule, with its two numbers taken off the 650-tall stage they are
-     written against and re-applied to the viewport: 46/650 and 539/650. The
-     ink fit (HeroWordmark.jsx) then scales the wordmark down to this width
-     about the box's own centre — and since that centre lands on 48.5% of the
-     screen either way, the letters sit exactly where desktop puts them. */
-  .hero-logo-giant .logo-text {
-    position: absolute;
-    left: 0;
-    top: 7.08svh;
-    width: 100%;
-    font-size: 82.9svh;
-  }
-
-  /* Desktop's copy row ends 56 above the bottom of its 650-tall stage — 8.6%.
-     The mobile rules hang this block off the TOP instead (29.8svh + 53px),
-     which on a short landscape screen leaves it stranded in the middle. */
-  .hero-copy {
-    top: auto;
-    bottom: 8.6svh;
-    margin-top: 0;
-    gap: 16px;
+  /* Scoped to the nav specifically, not a bare .hero-pill — that class is
+     shared with the footer's own links (.site-footer-pill), which are also a
+     flex row at this width (.site-footer-nav) and would have picked up
+     `flex: 1 1 0` too, stretching five footer pills to fill its width the
+     same way. Nothing here asked for that. */
+  .hero-nav .hero-pill {
+    flex: 1 1 0;
+    /* The pill's own width no longer comes from its text, so centring the
+       label inside whatever width flex hands it is what keeps four
+       differently-worded pills ("Flavors" vs "Contacts") looking like one
+       matched set instead of ragging left. */
+    justify-content: center;
   }
 }

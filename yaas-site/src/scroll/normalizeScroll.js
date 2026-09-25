@@ -31,6 +31,27 @@ export function enableTouchScrollNormalizer() {
   if (enabled || typeof window === 'undefined') return;
   enabled = true;
   if (ScrollTrigger.isTouch === 1) {
-    ScrollTrigger.normalizeScroll({ allowNestedScroll: true });
+    // normalizeScroll is built on Observer, which captures every touch
+    // sequence on the page to drive the scroll itself — including one that
+    // starts on a button or a link. A real finger almost never lands
+    // perfectly still: a tap that drifts a pixel or two while the Observer is
+    // watching gets read as the start of a scroll drag rather than a tap, and
+    // the eventual pointerup's click is swallowed instead of reaching the
+    // element under it. This is the documented reason Observer/normalizeScroll
+    // ship an `ignore` option — elements matching it get left to native
+    // pointer handling, click included, instead of being captured.
+    //
+    // `[data-interactive]` is already this codebase's one marker for "this is
+    // a real control" (every nav pill, the hero CTA, every arrow, the flavor
+    // switcher's thumbnails, the slider's own drag stage) — reusing it here
+    // rather than inventing a second list keeps the two from drifting apart.
+    // .slider-stage carries it too: its own drag is already disabled below
+    // 1024 (see SliderScreen.jsx — useCarouselDrag's `enabled` is desktop-only)
+    // and it already tells the browser to let native panning through there
+    // (touch-action: pan-y, layout.css), so excluding it from the Observer's
+    // capture doesn't take anything away on a phone — it only stops the
+    // Observer from being a second thing standing between a tap and the
+    // "open this flavor's card" it's supposed to trigger.
+    ScrollTrigger.normalizeScroll({ allowNestedScroll: true, ignore: '[data-interactive]' });
   }
 }

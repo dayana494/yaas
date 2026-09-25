@@ -83,6 +83,23 @@
   }
 }
 
+/* Portrait tablet only, 5px over the ceiling above (40 -> 45) — a deliberate,
+   explicit exception to the "same size whichever way the tablet is turned"
+   call made when the landscape/portrait split was first added (see the
+   comment on the (orientation: landscape) block in hero.css, which still
+   holds for that block's own concern: nav/logo/subhead PLACEMENT, not this
+   number). This is the one place asked to diverge from it.
+   A flat px, not a rewritten clamp(): at 769-1023px wide, 10.26vw is
+   78.9-104.9px, already so far past either ceiling that the clamp has been
+   resolving to its flat maximum for the whole bucket regardless — so there is
+   no curve here to preserve, and writing a new one would only imply a
+   precision this rule never actually had. */
+@media (min-width: 769px) and (max-width: 1023px) and (orientation: portrait) {
+  :root {
+    --block-heading: 45px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
