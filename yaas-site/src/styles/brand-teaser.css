@@ -321,7 +321,10 @@
   }
 }
 
-@media (max-width: 899px) {
+/* The stacked composition — and a tablet held upright reads as this rather
+   than as three columns, same as its hero does (see the orientation split at
+   the foot of hero.css). Held sideways it keeps the columns above. */
+@media (max-width: 899px), (min-width: 769px) and (max-width: 1023px) and (orientation: portrait) {
   .about-brand {
     /* Not used at this width — the deck is sized as a share of the stage
        instead, see .about-brand-deck below. Left pointing at the container so
@@ -410,6 +413,23 @@
 
   .about-brand-aside {
     gap: clamp(14px, 2.4vh, 22px);
+  }
+}
+
+/* A tablet's screen is not just a tall phone's: left to fill the height the
+   two paragraphs leave, the stack came out around 1.2x larger than the
+   composition wants — the photos dominated the block instead of sitting
+   between the copy.
+   A cap, not a fixed height: the deck stays flex: 1 1 0, so on a short screen
+   it still gives way to the copy rather than overflowing. And nothing here
+   touches the gaps — .about-brand-stage's space-between divides whatever the
+   stack does not take into the two around it, so the stack stays equidistant
+   from the text above and below whatever this resolves to.
+   Measured on an 820x1180 tablet, the unconstrained stack comes out 898 tall;
+   63svh is that over 1.2. */
+@media (min-width: 769px) and (max-width: 1023px) and (orientation: portrait) {
+  .about-brand-deck {
+    max-height: 63svh;
   }
 }
 

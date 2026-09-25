@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Logo from './Logo';
-import YaasWordmarkSvg from './YaasWordmarkSvg';
+import { MOBILE_COMPOSITION_QUERY } from '../data/layout';
 import { onRealResize } from '../scroll/onRealResize';
 
 function useMediaQuery(query) {
@@ -29,7 +30,14 @@ function useMediaQuery(query) {
 // the inked extents of the string, independent of the advance width the layout
 // engine reports. The ratio of container to ink is applied as a scaleX about
 // the centre, so the wordmark still starts and ends flush with the stage.
-function useInkFitWidth(ref, enabled) {
+//
+// `centreInk` additionally puts the ink's vertical centre on the element's
+// own: the mobile banner's box IS the ink (it replaced an SVG whose viewBox
+// was the letters), so the text has to sit in it the way that SVG did rather
+// than wherever Soledago's leading drops a line box. Off by default, so the
+// desktop wordmark and the flavor-page masthead keep the vertical placement
+// their own CSS gives them.
+function useInkFitWidth(ref, enabled, centreInk = false) {
   useEffect(() => {
     const el = ref.current;
     if (!el || !enabled) return undefined;
@@ -65,7 +73,25 @@ function useInkFitWidth(ref, enabled) {
       // right edge then lands on exactly W — flush to both, clipped by
       // neither.
       const shift = -(boxWidth / 2 + (inkLeft - boxWidth / 2) * scale);
-      el.style.transform = `translateX(${shift}px) scale(${scale})`;
+
+      let shiftY = 0;
+      if (centreInk) {
+        const boxHeight = parseFloat(style.height);
+        const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize);
+        // Where the baseline falls inside the line box, and the line box sits
+        // at the top of the content box — so this is the baseline's distance
+        // from the element's own top edge.
+        const baseline =
+          (lineHeight - (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent)) / 2 +
+          metrics.fontBoundingBoxAscent;
+        const inkCentre =
+          baseline + (metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent) / 2;
+        // Same solve as `shift` above, on the other axis: with the origin at
+        // the centre, y maps to H/2 + t + (y - H/2)*s.
+        if (boxHeight > 0) shiftY = -(inkCentre - boxHeight / 2) * scale;
+      }
+
+      el.style.transform = `translate(${shift}px, ${shiftY}px) scale(${scale})`;
     }
 
     let cancelled = false;
@@ -79,7 +105,7 @@ function useInkFitWidth(ref, enabled) {
       offFit();
       if (el) el.style.transform = '';
     };
-  }, [ref, enabled]);
+  }, [ref, enabled, centreInk]);
 }
 
 // The giant background wordmark from the hero — split out of HeroScreen so
@@ -96,29 +122,35 @@ function useInkFitWidth(ref, enabled) {
 // logo sitting whole, at the top, not cropped — a directly opposite intent
 // from the desktop giant-wordmark treatment, not just a smaller version of
 // it.
-// `fitToContainer` is the flavor detail pages' variant: there the wordmark is
-// the page's own masthead with the flavor name set directly under it, so the
-// desktop edge-bleed reads as a mistake rather than a treatment — it is fitted
-// to the stage instead. The homepage passes nothing and keeps the bleed it was
-// designed with.
+//
+// One component, one wordmark, at every width. The mobile branch used to draw
+// a separate SVG of the letters while the other drew live text, and
+// `fitToContainer` was opt-in — which the homepage never did, so its Logo
+// rendered at the deliberate full intrinsic size it is given (1742px of ink in
+// a 1698px container at 1920x920) and .hero-logo-giant's overflow cut the right
+// edge off. Both branches render Logo now, and both ink-fit to their own
+// container.
 export default function HeroWordmark({ fitToContainer = false }) {
-  const isMobile = useMediaQuery('(max-width: 768px)');
-  const desktopLogoRef = useRef(null);
-  useInkFitWidth(desktopLogoRef, fitToContainer && !isMobile);
+  const isMobile = useMediaQuery(MOBILE_COMPOSITION_QUERY);
+  const logoRef = useRef(null);
+  useInkFitWidth(logoRef, fitToContainer, isMobile);
 
   if (isMobile) {
     return (
-      <div className="hero-mobile-banner-logo-row" aria-hidden="true">
-        {/* Vector outlines rather than live text — see YaasWordmarkSvg. */}
-        <YaasWordmarkSvg className="hero-mobile-banner-logo" />
+      <div className="hero-mobile-banner-logo-row">
+        <Link className="hero-logo-home" to="/" aria-label="YAAS — home">
+          <Logo ref={logoRef} className="hero-mobile-banner-logo" />
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="hero-stage hero-stage-back" aria-hidden="true">
+    <div className="hero-stage hero-stage-back">
       <div className="hero-logo-giant">
-        <Logo ref={desktopLogoRef} />
+        <Link className="hero-logo-home" to="/" aria-label="YAAS — home">
+          <Logo ref={logoRef} />
+        </Link>
       </div>
     </div>
   );

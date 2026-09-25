@@ -66,10 +66,14 @@
   pointer-events: none;
 }
 
+/* A layer with holes, like the homepage's own front stage (see .hero-screen in
+   hero.css): it covers the wordmark below it, whose home link has to stay
+   reachable. The menu pills inside name themselves back in. */
 .flavor-hero-copy-layer {
   position: absolute;
   inset: 0;
   z-index: 3;
+  pointer-events: none;
 }
 
 /* Behind the can, not over it — the reference this is modelled on paints its
@@ -451,27 +455,22 @@
   }
 }
 
-/* On a phone the arrows cost more than they give: flanking the track they
-   took 96px of a 330px row, leaving a 234px card on a 390px screen. They go
-   away and the track becomes a swipeable scroll-snap carousel instead — the
-   same way .advantages-arc-cards carries the homepage's own card row at this
-   breakpoint — so the card gets the full width back. Tablet and desktop keep
-   the arrows, where there is room for them beside the cards. */
+/* On a phone the cards stack, one under another, and the strip becomes an
+   ordinary vertical list: a horizontal carousel here asked the reader to swipe
+   sideways inside a page they are already swiping down, and the four other
+   flavors are worth showing all at once rather than one at a time. The arrows
+   and the scroll-snap machinery go with it — there is nothing left to page
+   through. Tablet and desktop keep the row. */
 @media (max-width: 767px) {
   .flavor-gallery-track {
-    --gallery-visible: 1;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .flavor-gallery-track::-webkit-scrollbar {
-    display: none;
+    flex-direction: column;
+    row-gap: 15px;
+    overflow-x: visible;
   }
 
   .flavor-gallery-card {
-    scroll-snap-align: center;
+    flex: none;
+    width: 100%;
   }
 
   .arrow-gallery {

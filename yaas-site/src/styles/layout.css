@@ -346,11 +346,17 @@
   }
 
   .flavor-name {
-    /* Was 9dvh, the frame's own 91%-down. Lifted with the gallery above it so
-       the space under the name matches the space between the heading and the
-       can: measured at 390x850 those were 46px and 113px, and moving the pair
-       up 4dvh (34px) brings both to about 80. */
-    bottom: 13svh;
+    /* 30px of air under the name, and 30 exactly — the can was raised in
+       178119d and the 13svh this used to carry (chosen to balance against
+       where it sat before) left the label floating well up the screen.
+
+       Two corrections on top of that 30. .slider-screen is translated 30px
+       down as a whole, which this offset is measured before; and `bottom` is
+       measured off .intro-pin, which is 100vh — the LARGE viewport, so its
+       bottom edge is under the address bar rather than on the visible edge
+       this is supposed to clear. Both are added back, so the gap is 30px of
+       actually-visible screen at any address-bar state. */
+    bottom: calc(100vh - 100svh + 60px);
     /* 32px on the frame's 390 width -> 8.2vw. A flavor NAME, so it keeps its
        own scale rather than the shared block-heading size. */
     font-size: clamp(24px, 8.2vw, 38px);
@@ -413,6 +419,22 @@
     flex: none;
     height: calc((100% + var(--detail-pad) + var(--detail-bottom, var(--detail-pad))) * 0.2835);
     margin-block: auto;
+    /* The containing block for the prev/next arrows inside it — see below. */
+    position: relative;
+  }
+
+  /* Prev/next on the card itself. The flavor can only be changed from the
+     gallery screen otherwise: the thumbnail switcher under this card is
+     desktop's control and is hidden here (see .detail-switcher-wrap below),
+     so having arrived at a flavor's card there was no way on to the next one
+     without scrolling back out.
+     Same buttons as the gallery's, same wraparound, and the same --ox offsets
+     (.arrow-left / .arrow-right above), so they sit on the same two lines
+     across both screens. Only `top` differs: theirs is centred on the gallery's
+     can by a percentage of the pin, these on the stand-in box that IS the
+     card's can. */
+  .detail-arrow {
+    top: 50%;
   }
 
   .detail-description {
@@ -457,5 +479,58 @@
   .flavor-thumb {
     width: 48px;
     height: 64px;
+  }
+}
+
+/* ---------- Tablet landscape: the card goes back to desktop's composition ----------
+   See the orientation split at the foot of hero.css. A tablet held sideways
+   follows desktop, and on this screen that is not just a matter of offsets:
+   the copy sits in a left-hand column with the can beside it, which is also
+   what the can rig draws there (MOBILE_COMPOSITION_QUERY excludes this range,
+   so CanRig keeps DETAIL_ANCHOR/DETAIL_SCALE's desktop pair). The rules above
+   would leave the DOM laid out one way and the can drawn the other.
+
+   So the switcher comes back here — the control desktop changes flavor with —
+   and the card's arrows go with the stand-in they are centred on. Type scale
+   is untouched: --block-heading stays on the mobile/tablet clamp at both
+   orientations. */
+@media (min-width: 769px) and (max-width: 1023px) and (orientation: landscape) {
+  .detail-copy {
+    inset: clamp(28px, 8vh, 88px) auto auto clamp(24px, 6vw, 80px);
+    display: block;
+    padding: 0;
+    max-width: 560px;
+    text-align: left;
+  }
+
+  .detail-title {
+    margin: 0 0 20px;
+  }
+
+  .detail-can-space {
+    display: none;
+  }
+
+  .detail-description {
+    margin: 0 0 24px;
+  }
+
+  .detail-cta {
+    margin-top: 0;
+  }
+
+  .detail-switcher-wrap {
+    display: block;
+    left: clamp(24px, 6vw, 80px);
+    right: auto;
+    bottom: clamp(18px, 3.5vh, 30px);
+  }
+
+  .choose-label {
+    text-align: left;
+  }
+
+  .flavor-switcher {
+    justify-content: flex-start;
   }
 }

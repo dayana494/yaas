@@ -193,7 +193,11 @@ button {
    rule on .hero-stage, hero.css) — pointer-events only switch off once
    that's actually under way (`.is-entrance-active`, toggled in App.jsx), so
    the CTA/nav stay clickable at rest (--h2g: 0). */
-.intro-pin.is-entrance-active .hero-screen {
+/* The controls themselves, not the layer: .hero-screen is pointer-events: none
+   at every moment now (hero.css), and its pills and CTA name themselves back
+   in — so switching the layer off no longer reaches them. */
+.intro-pin.is-entrance-active .hero-screen .hero-pill,
+.intro-pin.is-entrance-active .hero-screen .hero-cta {
   pointer-events: none;
 }
 

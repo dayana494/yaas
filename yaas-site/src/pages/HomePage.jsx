@@ -36,6 +36,7 @@ import {
   ENTRANCE_MIN_SECONDS,
   ENTRANCE_UNITS,
   galleryGapPx,
+  MOBILE_COMPOSITION_QUERY,
   MOBILE_DETAIL_HOLD_UNITS,
   introUnitsPx,
   INTERACTIVE_UNITS,
@@ -56,12 +57,16 @@ const DetailScreen = lazy(() => import('../components/DetailScreen'));
 
 const DETAIL_EDGE_PX = 2;
 
-// How far into the gallery -> card flight the card's copy and CTA come in.
-// Desktop: at 1, once the can has landed — as it always was. Below 1024: at
-// 0.85, where waiting for the exact landing made the copy trail the gesture
-// that opened the card. The flight is eased power3.inOut (CanRig.jsx's
-// heroEase), so at 0.85 the can is already 98.6% of the way there — close
-// enough that the copy never lands on a can still visibly moving.
+// How far into a scrubbed flight its copy comes in. Desktop: at 1, once the
+// can has landed — as it always was. Below 1024: at 0.85, where waiting for
+// the exact landing made the copy trail the gesture that opened the card. The
+// flight is eased power3.inOut (CanRig.jsx's heroEase), so at 0.85 the can is
+// already 98.6% of the way there — close enough that the copy never lands on a
+// can still visibly moving.
+//
+// Read by both scrubs: the hero -> gallery entrance, for when the gallery's UI
+// layer goes live, and the gallery -> card flight, for the card's own copy and
+// CTA.
 const DETAIL_TEXT_AT = { desktop: 1, narrow: 0.85 };
 
 // Walks a shown 0..1 progress toward whatever set() last asked for, on the GSAP
@@ -98,10 +103,10 @@ function createRateLimitedProgress(minSeconds, apply) {
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+    () => typeof window !== 'undefined' && window.matchMedia(MOBILE_COMPOSITION_QUERY).matches
   );
   useEffect(() => {
-    const mql = window.matchMedia('(max-width: 768px)');
+    const mql = window.matchMedia(MOBILE_COMPOSITION_QUERY);
     const handler = (e) => setIsMobile(e.matches);
     mql.addEventListener('change', handler);
     return () => mql.removeEventListener('change', handler);
@@ -127,6 +132,9 @@ export default function HomePage() {
   const detailProgressRef = useRef(0);
   const detailStartedRef = useRef(false);
   const detailDoneRef = useRef(false);
+  // Mirrors the detailTextVisible state, so the per-frame scrub below can tell
+  // whether it actually needs to re-render.
+  const detailTextVisibleRef = useRef(false);
   const detailTriggerRef = useRef(null);
   // The detail window's own scroll progress, and the function that applies
   // it — held back at 0 until the entrance has visibly finished, since the
@@ -495,7 +503,10 @@ export default function HomePage() {
 
   const handleFlavorMidSpin = useCallback((i) => {
     setDisplayFlavor(i);
-    if (detailDoneRef.current) setDetailTextVisible(true);
+    if (detailDoneRef.current) {
+      detailTextVisibleRef.current = true;
+      setDetailTextVisible(true);
+    }
   }, []);
 
   const handleSettle = useCallback((i) => {
@@ -712,7 +723,18 @@ export default function HomePage() {
       if (done !== detailDoneRef.current) {
         detailDoneRef.current = done;
         if (done) setDisplayFlavor(activeFlavorRef.current);
-        setDetailTextVisible(done);
+      }
+      // The can is scrubbed continuously off this same t, but the copy used to
+      // be a step at t === 1 followed by a 550ms CSS fade (.detail-copy,
+      // layout.css) — so on a phone the can arrived and the text and button
+      // turned up half a second behind it. They come in on the scrub instead,
+      // far enough ahead that the fade finishes as the can lands: the flight
+      // is eased power3.inOut (CanRig's heroEase), so at 0.85 the can is
+      // already 98.6% of the way there and the two settle together.
+      const visible = t >= (overlapEnabled() ? DETAIL_TEXT_AT.desktop : DETAIL_TEXT_AT.narrow);
+      if (visible !== detailTextVisibleRef.current) {
+        detailTextVisibleRef.current = visible;
+        setDetailTextVisible(visible);
       }
     }
     // Same speed limit as the entrance, at the old timed flight's own length:
@@ -785,7 +807,7 @@ export default function HomePage() {
             {/* Sits between the flavor background and the can canvas below
                 (see .app-root's z-index stack in index.css) — the giant
                 wordmark stays behind the cans, same as before the merge. */}
-            <HeroWordmark />
+            <HeroWordmark fitToContainer />
 
             <Scene
               ref={attachScene}

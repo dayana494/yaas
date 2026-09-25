@@ -6,6 +6,7 @@ import HeroWordmark from './HeroWordmark';
 import SiteHeader from './SiteHeader';
 import FlavorStoryScene from '../three/FlavorStoryScene';
 import { useHeroScale } from '../hooks/useHeroScale';
+import { MOBILE_COMPOSITION_QUERY } from '../data/layout';
 import { RISE_UNITS, mobilePinType, useOverlapEnabled } from '../scroll/riseTransition';
 import { onRealResize } from '../scroll/onRealResize';
 
@@ -119,10 +120,6 @@ function viewportTravel() {
   return window.innerHeight / stageScale();
 }
 
-// The breakpoint HeroWordmark itself switches on: above it the giant desktop
-// wordmark, below it the contained mobile banner.
-const MOBILE_QUERY = '(max-width: 768px)';
-
 // Ink top and bottom of a run of text, in screen px.
 //
 // Read off the rendered text rather than computed from the CSS, because the
@@ -165,8 +162,13 @@ function measureCanAnchor(nameEl, boxEl) {
   if (!(box.height > 0)) return null;
   const name = textInk(nameEl);
 
-  if (window.matchMedia(MOBILE_QUERY).matches) {
-    const logo = boxEl.querySelector('.hero-mobile-banner-logo');
+  // The breakpoint HeroWordmark itself switches on: above it the giant desktop
+  // wordmark, below it the contained mobile banner.
+  if (window.matchMedia(MOBILE_COMPOSITION_QUERY).matches) {
+    // The ROW, not the wordmark inside it: the row's box is the ink's, by
+    // construction (aspect-ratio 3.105, hero.css), and it carries none of the
+    // fitting transform the wordmark itself does.
+    const logo = boxEl.querySelector('.hero-mobile-banner-logo-row');
     if (!logo) return null;
     const centre = (logo.getBoundingClientRect().bottom + name.top) / 2;
     return { mode: 'centre', at: (centre - box.top) / box.height };

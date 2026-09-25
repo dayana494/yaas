@@ -14,6 +14,20 @@
 export const ENTRANCE_UNITS = 1;
 export const INTERACTIVE_UNITS = 1;
 
+// "Is this the mobile composition?" — read by everything that has to agree on
+// the answer: the hero wordmark's own branch (HeroWordmark.jsx), the flavor
+// page's can anchor, which measures that wordmark (FlavorStorySection.jsx),
+// and the can rig's mobile/desktop layout split (HomePage.jsx -> CanRig).
+// They each carried their own '(max-width: 768px)' before, which was fine
+// while that was the only line anywhere — it is not any more.
+//
+// A tablet in PORTRAIT is on the mobile composition (see the orientation split
+// at the foot of hero.css): the hero reads top to bottom, nav -> wordmark ->
+// subhead -> CTA -> cans. In LANDSCAPE it follows desktop, so it is not in
+// here. The range itself is the one the rest of the CSS already calls tablet.
+export const MOBILE_COMPOSITION_QUERY =
+  '(max-width: 768px), (max-width: 1023px) and (orientation: portrait)';
+
 // The gallery -> detail card flight is scrubbed across INTERACTIVE_UNITS of
 // scroll, but it still plays out in real time whenever the page scrolls itself
 // through that window (the snap after a partial scroll, a tap on the centre

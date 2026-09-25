@@ -199,10 +199,13 @@
   }
 
   .contact-pill {
-    /* 200 of the panel's 370, i.e. 200 of this box's own 324. The pill's type,
-       height and border stay .hero-pill's, so it matches every other button on
-       the site rather than taking this frame's literal 16px. */
-    width: 61.7%;
+    /* The mock's 200-of-370 width was sized for two short labels ("Email",
+       "Telegram"). There is one pill now and it carries a full address, which
+       is wider than that box and would run out of it — .hero-pill is
+       white-space: nowrap. So the pill takes its own content's width, capped
+       by the column. The type, height and border stay .hero-pill's. */
+    width: auto;
+    max-width: 100%;
     justify-content: center;
   }
 
@@ -221,5 +224,32 @@
      would put them behind the panel's gradient and out of sight entirely. */
   .contact-content {
     z-index: 3;
+  }
+}
+
+/* ---------- Tablet portrait ----------
+   A full-screen panel is right on a phone, where the heading, the button and
+   the cans fill it. On a tablet held upright the same rule left the three
+   stranded in the top third of a very tall box. So the panel is sized by what
+   is on it instead: the heading's own gap from the top edge, the button, 50px,
+   the cans, and the same gap again under them.
+
+   The cans are placed from JS (ContactCans.jsx), which reads this back off the
+   panel's resolved padding — the gap below is the only number it needs stated,
+   and the cans' own height is whatever the bottom padding has left over after
+   that gap and the bottom margin. So the two never disagree: there is one
+   definition of this composition and it is here. */
+@media (min-width: 769px) and (max-width: 1023px) and (orientation: portrait) {
+  .contact-panel {
+    /* Between the button and the cans. Also the flag ContactCans switches on —
+       it is declared nowhere else. */
+    --contact-can-gap: 50px;
+    /* The heading's distance from the top edge, and the cans' from the bottom.
+       Off the width, since there is no height to take a share of any more. */
+    --contact-panel-pad: 8.5vw;
+    --contact-can-h: 32vw;
+    height: auto;
+    padding-top: var(--contact-panel-pad);
+    padding-bottom: calc(var(--contact-panel-pad) + var(--contact-can-gap) + var(--contact-can-h));
   }
 }

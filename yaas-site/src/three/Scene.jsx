@@ -36,6 +36,12 @@ const Scene = forwardRef(function Scene(props, ref) {
   return (
     <Canvas
       className="site-canvas"
+      // .site-canvas (index.css) asks for this too, and never got it: r3f
+      // writes pointer-events: auto onto its container INLINE, which no
+      // stylesheet rule can outrank. The canvas is decoration — the slider's
+      // own drag stage sits above it in .ui-layer — and left clickable it
+      // covered the hero wordmark's home link underneath.
+      style={{ pointerEvents: 'none' }}
       // Renders on request only. Every motion this scene has is finite — the
       // mount flight, the scroll-scrubbed entrance, the drag and its snap, the
       // detail transitions, the cursor parallax — and each one asks for its own

@@ -10,6 +10,11 @@ export default function FlavorStoryScene({ flavorId, rotation, spin, anchor }) {
   return (
     <Canvas
       className="flavor-story-canvas"
+      // r3f puts pointer-events: auto on its container inline, which beats the
+      // `none` on the layer around it (.flavor-story-canvas-layer) — so this
+      // decorative full-bleed canvas was taking every click on the screen,
+      // the wordmark's home link underneath it included.
+      style={{ pointerEvents: 'none' }}
       // On request only. In scroll mode the rig asks for a frame on the ticks
       // where the scroll actually moved the can; in simple mode the spin is
       // endless, so it asks only while the canvas is on screen. See

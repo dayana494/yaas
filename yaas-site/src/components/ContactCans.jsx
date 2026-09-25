@@ -81,13 +81,28 @@ export default function ContactCans({ panelRef }) {
       const panelTop = panelRect.top - layerRect.top;
 
       const narrow = layerRect.width < NARROW_MAX_WIDTH;
+
+      // Tablet portrait sizes the panel by its content rather than by the
+      // screen (contact.css), which turns the can placement around: the cans
+      // are no longer a share of a known panel height — they are part of what
+      // decides it. So the panel's own resolved padding is read back for them:
+      // the bottom padding is the gap under the button, the cans, and the
+      // margin beneath them, and the top padding is that same margin. --contact
+      // -can-gap exists only in that one rule, so its presence is the mode.
+      const panelStyle = getComputedStyle(panel);
+      const stackedGap = parseFloat(panelStyle.getPropertyValue('--contact-can-gap'));
+      const stacked = stackedGap > 0;
+      const stackedMargin = stacked ? parseFloat(panelStyle.paddingTop) : 0;
+
       const bodyHeight = narrow
         ? panelRect.height * CAN_HEIGHT_RATIO_NARROW
         : Math.max(
             CAN_HEIGHT_MIN_PX,
             Math.min(CAN_HEIGHT_MAX_PX, panelRect.height * CAN_HEIGHT_RATIO)
           );
-      const height = bodyHeight * TILTED_HEIGHT_RATIO;
+      const height = stacked
+        ? parseFloat(panelStyle.paddingBottom) - stackedMargin - stackedGap
+        : bodyHeight * TILTED_HEIGHT_RATIO;
 
       floats.forEach((t) => t.kill());
       floats.length = 0;
@@ -100,7 +115,9 @@ export default function ContactCans({ panelRef }) {
 
         gsap.set(el, {
           left: panelLeft + panelRect.width * pose.x,
-          top: panelTop + panelRect.height * pose.y,
+          top: stacked
+            ? panelTop + panelRect.height - stackedMargin - height / 2
+            : panelTop + panelRect.height * pose.y,
           width: height * (natural.w / natural.h),
           height,
           // The tilt's DIRECTION is already in the capture and already right

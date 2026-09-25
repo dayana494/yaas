@@ -17,9 +17,15 @@
   background-size: cover;
 }
 
+/* Both of these are full-bleed layers with holes in them, the same pattern
+   .ui-layer (index.css) and .hero-copy below already use — and .hero-screen
+   sits above .app-root, so as a solid layer it took every click that was not
+   on one of its own controls, the wordmark's home link included (that link is
+   inside .app-root, underneath). The controls name themselves below. */
 .hero-screen {
   position: absolute;
   inset: 0;
+  pointer-events: none;
 }
 
 /* ---------- Stage ----------
@@ -38,6 +44,7 @@
 .hero-stage {
   position: absolute;
   inset: 0;
+  pointer-events: none;
   /* Fades + blurs away over the first half of the hero->gallery entrance
      (see .intro-pin's --h2g in index.css) — applied to both stages so the
      giant wordmark and the nav/copy fade together as one unit, even though
@@ -48,7 +55,6 @@
 
 .hero-stage-back {
   z-index: 1;
-  pointer-events: none;
 }
 
 .hero-stage-front {
@@ -65,7 +71,48 @@
   pointer-events: none;
 }
 
+/* The home link around every rendered wordmark (HeroWordmark.jsx). It fills
+   its container and re-centres what it wraps, so wrapping the wordmark in it
+   changes neither the box the wordmark sits in nor where it sits in it.
+   It takes no pointer event itself — .hero-stage-back and the mobile banner
+   row are both pointer-events: none, and re-enabling the whole layer would put
+   a link across the entire hero. Only the wordmark's own box is clickable. */
+.hero-logo-home {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  /* Both load-bearing. An anchor's default underline is drawn in the LINK's
+     own colour, not the wordmark's, and its thickness scales with the font —
+     at the mobile banner's ~120px that is a solid blue (or, once visited,
+     purple) bar the width of the letters sitting right under them. */
+  text-decoration: none;
+  color: inherit;
+}
+
+.hero-logo-home .logo-text {
+  pointer-events: auto;
+}
+
+/* Once the hero starts fading into the gallery it is on its way off screen —
+   the same moment .hero-screen stops taking clicks (index.css). Without this
+   the wordmark's link would go on catching taps over the gallery underneath it
+   long after there was anything to see. */
+.intro-pin.is-entrance-active .hero-logo-home .logo-text {
+  pointer-events: none;
+}
+
+/* A block of known width, not an inline run: useInkFitWidth measures the
+   element's own box against the ink inside it, and for an inline span that box
+   is the text's advance width rather than the container's — the fit would then
+   solve for the wrong target. The desktop rule below states its own 1200px for
+   the same reason. */
 .hero-logo-giant .logo-text {
+  display: block;
+  width: 100%;
+  text-align: center;
   font-size: clamp(160px, 78vw, 420px);
   letter-spacing: -0.01em;
   color: var(--ink);
@@ -137,6 +184,8 @@
   border: 1px solid #ffffff;
   background: rgba(217, 217, 217, 0.05);
   transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+  /* One of the holes in the layers above — see .hero-screen. */
+  pointer-events: auto;
 }
 
 .hero-pill:hover {
@@ -182,6 +231,14 @@
      the padding amount (confirmed directly: it did). */
   left: 24px;
   right: 24px;
+  /* The row IS the ink: the wordmark inside it is fitted so its letters span
+     the row's width exactly and are centred in its height (useInkFitWidth's
+     `centreInk`, HeroWordmark.jsx), and 3.105 is that ink's own aspect. Stated
+     as a ratio rather than a height so it holds against whatever the left/right
+     insets leave, at this breakpoint and the tablet one below.
+     Everything that measures the wordmark — the row's own `top` further down,
+     the flavor page's can anchor — is written against this box. */
+  aspect-ratio: 3.105;
   overflow: hidden;
   pointer-events: none;
   /* Same fade-away-during-entrance as .hero-stage (this row replaces
@@ -203,14 +260,26 @@
   filter: blur(calc(var(--h2g, 0) * 14px));
 }
 
-/* The wordmark is vector outlines (YaasWordmarkSvg.jsx), not live text: as
-   text it read soft on real phones. The viewBox is the ink itself, so a full
-   width box is the letters edge to edge across the row with no fitting script,
-   and its height follows from the ink aspect, 3.105. */
+/* The same wordmark component the desktop hero and the flavor-page masthead
+   render (Logo), not a separate SVG of the same letters — there is one YAAS on
+   this site and it is this one. It used to be vector outlines here, because as
+   plain text at an unfitted size it read soft on real phones; the fit
+   (useInkFitWidth) is a UNIFORM scale, deliberately not a scaleX, so that does
+   not come back.
+   The font-size has to land near the fit's answer, or the fit would be
+   scaling live text up or down by a visible factor and the softness would be
+   back: 2.282 is "YAAS" in Soledago, ink width against font-size, measured
+   through the same canvas metrics the fit itself uses. The row's own box then
+   does the rest. */
 .hero-mobile-banner-logo {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  font-size: calc((100vw - 48px) / 2.282);
+  line-height: 1;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: nowrap;
   color: var(--ink);
 }
 
@@ -297,6 +366,10 @@
     left: var(--content-gutter);
     right: var(--content-gutter);
     overflow: visible;
+  }
+
+  .hero-mobile-banner-logo {
+    font-size: calc((100vw - 2 * var(--content-gutter)) / 2.282);
   }
 
   /* Copy block: subhead top 253.37/850, left 10/390, 323/390 wide; the CTA
@@ -489,5 +562,57 @@
     font-size: 16px;
     padding: 10px 20px;
     min-height: 0;
+  }
+}
+
+/* ---------- Tablet: the orientation split ----------
+   769-1023 used to be styled exactly like a phone — every "tablet" rule in
+   this file, layout.css, contact.css and brand-teaser.css lived inside a
+   max-width, and there was not one orientation query in the codebase. Which
+   composition a tablet should read as depends on which way it is held, so
+   that is the split:
+
+     PORTRAIT keeps the mobile composition it already inherits — nav,
+       wordmark, subhead, CTA, cans, top to bottom. Nothing here overrides it;
+       the rules above are it. The can rig follows through
+       MOBILE_COMPOSITION_QUERY (data/layout.js), which this range's portrait
+       half is part of.
+     LANDSCAPE follows desktop: the nav at the same offset, the wordmark on
+       desktop's own line, and the subhead sitting as far off the bottom edge
+       as desktop's copy row does.
+
+   Only the placement crosses over, never the type scale: --block-heading stays
+   on the mobile/tablet clamp at both orientations (index.css), so a heading is
+   the same size whichever way the tablet is turned.
+
+   After the max-width: 1023px block on purpose — these are overrides on top of
+   it, not a second composition written out in full. */
+@media (min-width: 769px) and (max-width: 1023px) and (orientation: landscape) {
+  /* Desktop's own 20, against the 2.59svh (~16px) this range inherits. */
+  .hero-nav {
+    top: 20px;
+  }
+
+  /* Desktop's rule, with its two numbers taken off the 650-tall stage they are
+     written against and re-applied to the viewport: 46/650 and 539/650. The
+     ink fit (HeroWordmark.jsx) then scales the wordmark down to this width
+     about the box's own centre — and since that centre lands on 48.5% of the
+     screen either way, the letters sit exactly where desktop puts them. */
+  .hero-logo-giant .logo-text {
+    position: absolute;
+    left: 0;
+    top: 7.08svh;
+    width: 100%;
+    font-size: 82.9svh;
+  }
+
+  /* Desktop's copy row ends 56 above the bottom of its 650-tall stage — 8.6%.
+     The mobile rules hang this block off the TOP instead (29.8svh + 53px),
+     which on a short landscape screen leaves it stranded in the middle. */
+  .hero-copy {
+    top: auto;
+    bottom: 8.6svh;
+    margin-top: 0;
+    gap: 16px;
   }
 }
