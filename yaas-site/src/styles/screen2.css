@@ -1,7 +1,12 @@
 /* ---------- Screen 2 (homepage): line-by-line headline + scenario cards ---------- */
 
 .site-container {
-  max-width: 1400px;
+  /* --content-max plus the two side gutters that sit inside it (the padding
+     below) — the same "1340 of content, 1400 with its own gutters" relationship
+     the variable's own comment describes (index.css), computed instead of
+     copied so this can't quietly drift from --content-inline's own number
+     again the way it already had. */
+  max-width: calc(var(--content-max) + 2 * var(--content-gutter));
   margin: 0 auto;
   padding: 0 var(--content-gutter);
 }
