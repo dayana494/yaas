@@ -56,37 +56,13 @@
      that must line up with it at every width read this rather than repeating
      the number — see .contact-frame. */
   --content-gutter: 30px;
-  /* The widest the content column gets — and the side padding that puts a
-     full-width block's content in exactly that column: the gutter, or more
-     once the screen is wider than the column plus two gutters. A percentage,
-     so it must sit on an element whose containing block is the full width.
-
-     3000, not the FAQ's own original 1340 (.site-container: 1400 including
-     its 30px gutters). That number came from one Figma frame's own column and
-     was never meant to describe every block on the page — but every block
-     that reads --content-inline (About Brand, Contact, the footer) inherited
-     it anyway, while the hero and the flavor page's own first screen use a
-     completely different mechanism (the scaled 1200x650 stage, hooks/
-     useHeroScale.js) that has no such ceiling at all: at 1920px it renders
-     ~1860px wide, at 2560px ~2500px — a 500-900px gap against the other
-     blocks' flat 1340, growing every pixel past 1400px of viewport width.
-     Confirmed live before changing this: at 2560x1440 the hero measured
-     2500px of content against the contact panel's untouched 1340.
-
-     3000 is picked to match the hero's own width at the two most common real
-     desktop resolutions specifically — 1920x1080 and 2560x1440, both
-     width-bound on the hero's own min(width-ratio, height-ratio) scale — by
-     staying OUT OF THE WAY there entirely: (1920-3000)/2 and (2560-3000)/2
-     are both negative, so --content-inline resolves to the plain 30px gutter
-     at both widths, same as the hero's own fixed 30px margin, and the two
-     read as one width. It only starts pulling back before an even wider
-     screen (from 3000px of viewport up), which on most desktop monitors
-     never happens; ultrawide displays (3440px and up) are the one case where
-     this cap and the hero's own (height-bound there, not width-bound) part
-     ways again — reasonable, since nothing scales identically past every
-     possible aspect ratio, and it is a large improvement on today's flat 1340
-     regardless. */
-  --content-max: 3000px;
+  /* The widest the content column gets — the FAQ's (.site-container: 1400
+     including its 30px gutters, so 1340 of content) — and the side padding
+     that puts a full-width block's content in exactly that column: the
+     gutter, or more once the screen is wider than the column plus two
+     gutters. A percentage, so it must sit on an element whose containing
+     block is the full width. */
+  --content-max: 1340px;
   --content-inline: max(var(--content-gutter), calc((100% - var(--content-max)) / 2));
 
   --paper: #fdfaf1;

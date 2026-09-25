@@ -126,11 +126,7 @@
 
 /* ---------- Arc carousel (every width — see the top-of-file comment) ---------- */
 .advantages-content {
-  /* Same column every other full-width block on the page reads off
-     --content-max (index.css) — was its own separate copy of the same 1400,
-     which is exactly how the two silently drifted apart before: --content-max
-     changed and this literal did not. */
-  max-width: calc(var(--content-max) + 2 * var(--content-gutter));
+  max-width: 1400px;
   padding-left: clamp(20px, 6vw, 40px);
   padding-right: clamp(20px, 6vw, 40px);
 }
